@@ -261,9 +261,15 @@ abstract final class SharePerksTheme {
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: scaffoldBackground,
+        backgroundColor: AppColors.brand,
         foregroundColor: colorScheme.onSurface,
-        titleTextStyle: textTheme.bodyLarge,
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w600,
+        ),
+        actionsIconTheme: IconThemeData(color: Colors.white),
       ),
       cardTheme: CardThemeData(
         color: isLight

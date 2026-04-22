@@ -730,7 +730,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: bba35fb644a4c4ac358d57a55c4bd6c0470f5866
+      resolved-ref: b903fcb311b0b6eef1cbb296cc33e5cbde9a057b
       url: "https://github.com/shareperks/soui.git"
     source: git
     version: "1.0.0+1"

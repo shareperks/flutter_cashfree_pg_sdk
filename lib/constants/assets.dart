@@ -16,6 +16,43 @@ class Assets {
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/Valentine%20Gift.png)
   static const String ASSETS_VALENTINE_GIFT_PNG = 'assets/Valentine Gift.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Card.png)
+  static const String ASSETS_CARDS_CARD_PNG = 'assets/cards/Card.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Data%20safety.png)
+  static const String ASSETS_CARDS_DATA_SAFETY_PNG =
+      'assets/cards/Data safety.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Link%20Dark.png)
+  static const String ASSETS_CARDS_LINK_DARK_PNG = 'assets/cards/Link Dark.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Link%20Light.png)
+  static const String ASSETS_CARDS_LINK_LIGHT_PNG =
+      'assets/cards/Link Light.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/reminder.png)
+  static const String ASSETS_CARDS_REMINDER_PNG = 'assets/cards/reminder.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/EligibleReward.svg)
+  static const String ASSETS_ICONS_ELIGIBLEREWARD_SVG =
+      'assets/icons/EligibleReward.svg';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/NewAdditions.svg)
+  static const String ASSETS_ICONS_NEWADDITIONS_SVG =
+      'assets/icons/NewAdditions.svg';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/app-brand.png)
+  static const String ASSETS_ICONS_APP_BRAND_PNG = 'assets/icons/app-brand.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/cashback.png)
+  static const String ASSETS_ICONS_CASHBACK_PNG = 'assets/icons/cashback.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/discount.png)
+  static const String ASSETS_ICONS_DISCOUNT_PNG = 'assets/icons/discount.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/giftcard.png)
+  static const String ASSETS_ICONS_GIFTCARD_PNG = 'assets/icons/giftcard.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/logo.png)
   static const String ASSETS_LOGO_PNG = 'assets/logo.png';
 

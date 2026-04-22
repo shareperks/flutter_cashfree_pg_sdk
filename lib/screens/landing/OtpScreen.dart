@@ -7,6 +7,7 @@ import 'package:shareperks/components/ResendOtp.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/network.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 
@@ -95,10 +96,13 @@ class _OtpScreenState extends State<OtpScreen> {
         );
         return;
       }
+      await TokenManager.setToken(response.token!);
       if (response.isProfileComplete == true) {
-        context.pushNamed(RouteNames.HOME_SCREEN);
+        context.goNamed(RouteNames.HOME_SCREEN);
+        return;
       } else {
         context.pushNamed(RouteNames.SETUP_SCREEN);
+        return;
       }
     } catch (e) {
       Fluttertoast.showToast(

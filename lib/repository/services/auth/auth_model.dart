@@ -108,3 +108,46 @@ class SessionResponse {
     );
   }
 }
+
+// {{baseUrl}}/api/onload
+class VersionModel {
+  bool? success;
+  String? version;
+  String? latestVersion;
+  bool? isUpdateAvailable;
+  bool? isForceUpdate;
+  String? title;
+  String? message;
+
+  VersionModel({
+    this.success,
+    this.version,
+    this.latestVersion,
+    this.isUpdateAvailable,
+    this.isForceUpdate,
+    this.title,
+    this.message,
+  });
+
+  VersionModel.fromJson(Map<String, dynamic> json) {
+    success = json['success'];
+    version = json['version'];
+    latestVersion = json['latestVersion'];
+    isUpdateAvailable = json['isUpdateAvailable'];
+    isForceUpdate = json['isForceUpdate'];
+    title = json['title'];
+    message = json['message'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['success'] = this.success;
+    data['version'] = this.version;
+    data['latestVersion'] = this.latestVersion;
+    data['isUpdateAvailable'] = this.isUpdateAvailable;
+    data['isForceUpdate'] = this.isForceUpdate;
+    data['title'] = this.title;
+    data['message'] = this.message;
+    return data;
+  }
+}

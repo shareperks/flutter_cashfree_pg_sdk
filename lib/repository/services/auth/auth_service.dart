@@ -1,10 +1,38 @@
 import 'package:dio/dio.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/network.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 
 class AuthService {
   static final Dio _dio = createDio(Host.authUrl);
+
+  static Future<bool> isLoggedIn() async {
+    final token = TokenManager.getToken();
+    if (token == null) {
+      return false;
+    }
+    return true;
+  }
+
+  static Future<void> logout() async {
+    await TokenManager.removeToken();
+  }
+
+  // {{baseUrl}}/api/onload
+  static Future<VersionModel> getVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String version = packageInfo.version;
+    try {
+      final response = await _dio.get(
+        '/api/onload',
+        queryParameters: {'versionNumber': version},
+      );
+      return VersionModel.fromJson(response.data['version']);
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   // api/login/mobile
   static Future<AuthResponse> login(LoginMobilePayload payload) async {

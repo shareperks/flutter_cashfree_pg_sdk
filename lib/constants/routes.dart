@@ -14,6 +14,7 @@ import 'package:shareperks/screens/landing/LoginScreen.dart';
 import 'package:shareperks/screens/landing/OtpScreen.dart';
 import 'package:shareperks/screens/landing/ProfileSuccessScreen.dart';
 import 'package:shareperks/screens/landing/SetupScreen.dart';
+import 'package:shareperks/screens/main/CategotyScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
 
 // Routes names
@@ -30,6 +31,7 @@ class RouteNames {
   static const String LINK_DEMAT_INFO_SCREEN = 'LinkDematInfoScreen';
   static const String INFO_SLIDE_SCREEN = 'InfoSlideScreen';
   static const String HOME_SCREEN = 'HomeScreen';
+  static const String CATEGORY_SCREEN = 'CategoryScreen';
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
 }
@@ -95,6 +97,11 @@ final List<GoRoute> routes = [
     builder: (BuildContext context, GoRouterState state) => HomeScreen(),
   ),
   GoRoute(
+    name: RouteNames.CATEGORY_SCREEN,
+    path: RouteNames.path(RouteNames.CATEGORY_SCREEN),
+    builder: (BuildContext context, GoRouterState state) => CategoryScreen(),
+  ),
+  GoRoute(
     name: RouteNames.NO_INTERNET,
     path: RouteNames.path(RouteNames.NO_INTERNET),
     builder: (BuildContext context, GoRouterState state) => NoInternetScreen(
@@ -106,8 +113,14 @@ final List<GoRoute> routes = [
   GoRoute(
     name: RouteNames.NEW_UPDATE,
     path: RouteNames.path(RouteNames.NEW_UPDATE),
-    builder: (BuildContext context, GoRouterState state) =>
-        NewUpdateScreen(onLater: () {}, onUpdate: () {}),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra as Map<String, dynamic>;
+      return NewUpdateScreen(
+        title: extra['title'] as String,
+        message: extra['message'] as String,
+        isForceUpdate: extra['isForceUpdate'] as bool,
+      );
+    },
   ),
 ];
 

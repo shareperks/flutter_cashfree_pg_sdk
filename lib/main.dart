@@ -4,13 +4,23 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/function/localstorage.dart';
-
+import 'package:provider/provider.dart';
+import 'package:shareperks/repository/providers/home-data.provider.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
 import 'constants/theme_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalStorage.init();
-  runApp(SharePerksApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserProvider()),
+        ChangeNotifierProvider(create: (context) => HomeDataProvider()),
+      ],
+      child: SharePerksApp(),
+    ),
+  );
 }
 
 class SharePerksApp extends StatefulWidget {
@@ -68,6 +78,8 @@ class _SharePerksAppState extends State<SharePerksApp>
       color: SharePerksColors.backgroundLight,
       child: SafeArea(
         top: false,
+        left: false,
+        right: false,
         child: MaterialApp.router(
           title: 'SharePerks',
           theme: SharePerksTheme.light,

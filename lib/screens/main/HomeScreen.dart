@@ -1,116 +1,516 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:provider/provider.dart';
+import 'package:shareperks/components/BottomNavBar.dart';
+import 'package:shareperks/components/BrandCard.dart';
+import 'package:shareperks/components/CategoryView.dart';
+import 'package:shareperks/components/CopyRight.dart';
+import 'package:shareperks/components/OptionView.dart';
+import 'package:shareperks/components/RewardCard.dart';
+import 'package:shareperks/components/WelcomeCard.dart';
+import 'package:shareperks/components/loader/homepageLoader.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/models/HomeDataModel.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
+import 'package:shareperks/repository/services/listing/home-data.service.dart';
+import 'package:shareperks/utils/image_url.dart';
+import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:soui/elements/title_view.dart';
+import 'package:soui/theme.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _loading = true;
+  bool _isError = false;
+  HomeDataModel? data;
+
+  Future loadData() async {
+    setState(() {
+      _isError = false;
+      _loading = true;
+    });
+    try {
+      data = await HomeDataService.getHomeData();
+    } catch (e) {
+      _isError = true;
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         centerTitle: true,
         title: SvgPicture.asset(
           Assets.ASSETS_LOGO_SVG,
-          height: 20,
+          height: 22,
           fit: BoxFit.contain,
         ),
-      ),
-      body: Column(
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 200.0,
-              autoPlay: true,
-              autoPlayInterval: Duration(seconds: 3),
-              autoPlayAnimationDuration: Duration(milliseconds: 800),
-              autoPlayCurve: Curves.easeInOut,
-              aspectRatio: 16 / 9,
-              viewportFraction: 1.0,
-            ),
-            items: [
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(SharePerksRadii.lg),
-                  child: Container(
-                    color: Colors.white,
-                    child: Image.asset(
-                      Assets.ASSETS_VALENTINE_GIFT_PNG,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+        actions: [
+          Badge(
+            label: Text("0"),
+            backgroundColor: AppColors.accent,
+            child: Icon(HugeIconsSolid.notification01, color: AppColors.brand),
           ),
-          SizedBox(height: SharePerksSpacing.sm),
-          BorderCard(
-            padding: EdgeInsets.all(16),
-            width: double.infinity,
-            borderWidth: 1,
-            color: SharePerksColors.primary.withValues(alpha: 0.3),
-            borderRadius: SharePerksRadii.lg,
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  spacing: 10,
+          SizedBox(width: 24),
+        ],
+      ),
+      body: Builder(
+        builder: (context) {
+          if (_loading) {
+            return HomePageLoader();
+          }
+          if (_isError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Welcome back,',
+                      'Failed to load home data',
                       style: TextStyle(
                         color: SharePerksColors.textPrimaryLight,
                         fontSize: 16,
                         fontFamily: SharePerksFonts.albertSans,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Text(
-                      'Himanshu',
-                      style: TextStyle(
-                        color: const Color(0xFF6400E0),
-                        fontSize: 16,
-                        fontFamily: 'Albert Sans',
-                        fontWeight: FontWeight.w500,
-                        height: 1.38,
-                      ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: loadData,
+                      child: const Text('Retry'),
                     ),
                   ],
                 ),
-
-                SizedBox(height: 10),
-                Container(
-                  height: 80,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: SharePerksColors.backgroundLight,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color.fromARGB(
-                          116,
-                          123,
-                          123,
-                          123,
-                        ).withValues(alpha: 0.1),
-                        offset: Offset(0, 3),
-                        blurRadius: 3,
+              ),
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: () async {
+              loadData();
+            },
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Column(
+                    children: [
+                      CarouselSlider(
+                        options: CarouselOptions(
+                          height: 200.0,
+                          autoPlay: true,
+                          autoPlayInterval: Duration(seconds: 3),
+                          autoPlayAnimationDuration: Duration(
+                            milliseconds: 800,
+                          ),
+                          autoPlayCurve: Curves.easeInOut,
+                          aspectRatio: 16 / 9,
+                          viewportFraction: 1.0,
+                        ),
+                        items: List.generate(data?.data?.slides?.length ?? 0, (
+                          index,
+                        ) {
+                          String url = data?.data?.slides?[index].image ?? "";
+                          return Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                SharePerksRadii.lg,
+                              ),
+                              child: Container(
+                                color: Colors.white,
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return ImageBuilder(
+                                      imageUrl: url,
+                                      fit: BoxFit.cover,
+                                      width: constraints.maxWidth,
+                                      height: 100,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      SizedBox(height: SharePerksSpacing.sm),
+                      BorderCard(
+                        padding: EdgeInsets.all(16),
+                        width: double.infinity,
+                        borderWidth: 1,
+                        color: SharePerksColors.primary.withValues(alpha: 0.3),
+                        borderRadius: SharePerksRadii.lg,
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              spacing: 10,
+                              children: [
+                                Text(
+                                  'Welcome back,',
+                                  style: TextStyle(
+                                    color: SharePerksColors.textPrimaryLight,
+                                    fontSize: 16,
+                                    fontFamily: SharePerksFonts.albertSans,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  '${context.watch<UserProvider>().user?.name?.split(" ")[0] ?? ''}',
+                                  style: TextStyle(
+                                    color: const Color(0xFF6400E0),
+                                    fontSize: 16,
+                                    fontFamily: SharePerksFonts.albertSans,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            if (data?.data?.unlockedRewards?.isBrokeConnected ==
+                                false)
+                              Image.asset(
+                                Assets.ASSETS_CARDS_LINK_LIGHT_PNG,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
+                            if (data?.data?.unlockedRewards?.isBrokeConnected ==
+                                true)
+                              RewardCountCard(
+                                activePerks:
+                                    (data?.data?.unlockedRewards?.total ?? "0")
+                                        .toString(),
+                                newRewards: "0",
+                              ),
+                          ],
+                        ),
                       ),
                     ],
-                    borderRadius: BorderRadius.circular(SharePerksRadii.md),
                   ),
-                ),
-              ],
+                  SizedBox(height: SharePerksSpacing.sm),
+                  BorderCard(
+                    width: double.infinity,
+                    borderWidth: 1,
+                    color: SharePerksColors.accent.withValues(alpha: 0.3),
+                    borderRadius: SharePerksRadii.lg,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: 16,
+                            left: 16,
+                            right: 16,
+                            bottom: 10,
+                          ),
+                          child: TitleView(
+                            title: Text(
+                              'Top Perks',
+                              style: TextStyle(
+                                color: SharePerksColors.accent,
+                                fontSize: 18,
+                                fontFamily: SharePerksFonts.albertSans,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            trailing: LabelWithForwardIcon(
+                              iconColor: SharePerksColors.accent,
+                              iconSize: 18,
+                              label: Text(
+                                'View all',
+                                style: TextStyle(
+                                  color: SharePerksColors.accent,
+                                  fontSize: 13,
+                                  fontFamily: SharePerksFonts.inter,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            spacing: 12,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(width: 6),
+                              ...List.generate(
+                                data?.data?.topRewards?.length ?? 0,
+                                (index) {
+                                  RewardItem reward =
+                                      data!.data!.topRewards![index];
+                                  return RewardCard(
+                                    rewardId: reward.id!,
+                                    type: reward.type!,
+                                    typeName: reward.type,
+                                    title: reward.title ?? "--",
+                                    imageUrl: imageUrl(reward.image ?? ""),
+                                    isEligible: reward.isEligible ?? false,
+                                    eligibility: reward.companyName ?? "--",
+                                  );
+                                },
+                              ),
+                              SizedBox(width: 6),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: TitleView(
+                          title: Text(
+                            'Top Brands',
+                            style: TextStyle(
+                              color: const Color(0xFF333333),
+                              fontSize: 18,
+                              fontFamily: SharePerksFonts.albertSans,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          trailing: LabelWithForwardIcon(
+                            iconSize: 18,
+                            label: Text(
+                              'View all',
+                              style: TextStyle(
+                                color: const Color(0xFF333333),
+                                fontSize: 13,
+                                fontFamily: SharePerksFonts.albertSans,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          spacing: 12,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(width: 6),
+                            ...List.generate(
+                              data?.data?.topBrands?.length ?? 0,
+                              (index) {
+                                BrandItem brand = data!.data!.topBrands![index];
+                                return BrandCard(
+                                  isNew: brand.isNew ?? false,
+                                  title: brand.name ?? "--",
+                                  ticker: brand.tickerName ?? "--",
+                                  imageUrl: imageUrl(brand.image ?? ""),
+                                );
+                              },
+                            ),
+                            SizedBox(width: 6),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 30),
+                  Image.asset(Assets.ASSETS_CARDS_DATA_SAFETY_PNG),
+                  SizedBox(height: 30),
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: TitleView(
+                          title: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Explore',
+                                  style: TextStyle(
+                                    color: const Color(0xFF333333),
+                                    fontSize: 18,
+                                    fontFamily: 'Albert Sans',
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.33,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: ' ',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontFamily: SharePerksFonts.albertSans,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'Catagories',
+                                  style: TextStyle(
+                                    color: SharePerksColors.primary,
+                                    fontSize: 18,
+                                    fontFamily: SharePerksFonts.albertSans,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          trailing: LabelWithForwardIcon(
+                            iconSize: 18,
+                            iconColor: SharePerksColors.textSecondaryLight,
+                            label: Text(
+                              'View all',
+                              style: TextStyle(
+                                color: SharePerksColors.textSecondaryLight,
+                                fontSize: 13,
+                                fontFamily: SharePerksFonts.albertSans,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          spacing: 12,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(width: 6),
+                            ...List.generate(
+                              data?.data?.categories?.length ?? 0,
+                              (index) {
+                                HomeCategory category =
+                                    data!.data!.categories![index];
+                                return CategoryView(
+                                  image: imageUrl(category.image ?? ""),
+                                  title: category.name ?? "--",
+                                );
+                              },
+                            ),
+                            SizedBox(width: 6),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      if (data?.data?.unlockedRewards?.remainderReimport ??
+                          false)
+                        Column(
+                          children: [
+                            Image.asset(
+                              Assets.ASSETS_CARDS_REMINDER_PNG,
+                              width: MediaQuery.of(context).size.width,
+                            ),
+                            SizedBox(height: 30),
+                          ],
+                        ),
+
+                      Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: TitleView(
+                              title: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Explore',
+                                      style: TextStyle(
+                                        color: const Color(0xFF333333),
+                                        fontSize: 18,
+                                        fontFamily: SharePerksFonts.albertSans,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: ' ',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontFamily: SharePerksFonts.albertSans,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'Types of Perks',
+                                      style: TextStyle(
+                                        color: SharePerksColors.primary,
+                                        fontSize: 18,
+                                        fontFamily: SharePerksFonts.albertSans,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              trailing: SizedBox(),
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: Row(
+                              spacing: 20,
+                              children: [
+                                OptionView(
+                                  image: Assets.ASSETS_ICONS_GIFTCARD_PNG,
+                                  title: "Credits",
+                                ),
+                                OptionView(
+                                  image: Assets.ASSETS_ICONS_DISCOUNT_PNG,
+                                  title: "Discount\nCoupons",
+                                ),
+                                OptionView(
+                                  image: Assets.ASSETS_ICONS_CASHBACK_PNG,
+                                  title: "Benefits",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Copyright(),
+                      SizedBox(height: 80),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
+      bottomNavigationBar: BottomNavigationBarComponent(),
     );
   }
 }

@@ -1,17 +1,25 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/services/auth/auth_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Full-screen prompt when a newer app version is available.
 class NewUpdateScreen extends StatelessWidget {
-  const NewUpdateScreen({super.key, this.onUpdate, this.onLater});
-
-  /// Opens store / in-app update. No-op if null.
-  final VoidCallback? onUpdate;
-
-  /// Dismisses the prompt. Defaults to [Navigator.maybePop] if null.
-  final VoidCallback? onLater;
+  final String title;
+  final String message;
+  final bool isForceUpdate;
+  const NewUpdateScreen({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.isForceUpdate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +41,7 @@ class NewUpdateScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'New update available',
+                  title,
                   style: text.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: cs.onSurface,
@@ -43,7 +51,7 @@ class NewUpdateScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: SharePerksSpacing.sm),
                 Text(
-                  'A newer version of StarVest is ready. Update for the latest features and fixes.',
+                  message,
                   style: text.bodyLarge?.copyWith(
                     color: cs.onSurfaceVariant,
                     height: 1.45,
@@ -54,7 +62,26 @@ class NewUpdateScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: onUpdate ?? () {},
+                    onPressed: () {
+                      // check platform
+                      if (Platform.isAndroid) {
+                        // open play store
+                        launchUrl(
+                          Uri.parse(
+                            'https://play.google.com/store/apps/details?id=com.shareperks',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } else if (Platform.isIOS) {
+                        // open app store
+                        launchUrl(
+                          Uri.parse(
+                            'https://apps.apple.com/in/app/shareperks/id6746847398',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
                     icon: const Icon(Icons.system_update_alt_rounded, size: 22),
                     label: const Text('Update now'),
                     style: FilledButton.styleFrom(
@@ -70,22 +97,24 @@ class NewUpdateScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: SharePerksSpacing.sm),
-                TextButton(
-                  onPressed: () {
-                    if (onLater != null) {
-                      onLater!();
-                    } else {
-                      Navigator.of(context).maybePop();
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: SharePerksColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: SharePerksSpacing.sm,
+                if (!isForceUpdate)
+                  TextButton(
+                    onPressed: () async {
+                      final isLoggedIn = await AuthService.isLoggedIn();
+                      if (isLoggedIn) {
+                        context.goNamed(RouteNames.HOME_SCREEN);
+                      } else {
+                        context.goNamed(RouteNames.LOGIN_SCREEN);
+                      }
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: SharePerksColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: SharePerksSpacing.sm,
+                      ),
                     ),
+                    child: const Text('Not now'),
                   ),
-                  child: const Text('Not now'),
-                ),
               ],
             ),
           ),
