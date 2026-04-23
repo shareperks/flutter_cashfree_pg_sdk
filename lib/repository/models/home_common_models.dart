@@ -1,4 +1,5 @@
 // Shared JSON models for home listing payloads (rewards, brands, slides, categories).
+import 'category_model.dart';
 
 /// Parses int from JSON (handles int, double, or string).
 int? parseJsonInt(dynamic v) {
@@ -49,11 +50,13 @@ class RewardItem {
   String? isin;
   String? companyId;
   String? companyName;
+  String? categoryId;
   String? categoryName;
   String? tickerName;
   String? type;
   bool? isEligible;
   bool? isNew;
+  bool? topPerk;
   int? quantity;
   int? holdingDays;
 
@@ -69,11 +72,13 @@ class RewardItem {
     this.isin,
     this.companyId,
     this.companyName,
+    this.categoryId,
     this.categoryName,
     this.tickerName,
     this.type,
     this.isEligible,
     this.isNew,
+    this.topPerk,
     this.quantity,
     this.holdingDays,
   });
@@ -90,11 +95,13 @@ class RewardItem {
     isin = json['isin'] as String?;
     companyId = json['companyId'] as String?;
     companyName = json['companyName'] as String?;
+    categoryId = json['categoryId'] as String?;
     categoryName = json['categoryName'] as String?;
     tickerName = json['tickerName'] as String?;
     type = json['type'] as String?;
     isEligible = json['isEligible'] as bool?;
     isNew = json['isNew'] as bool?;
+    topPerk = json['topPerk'] as bool?;
     quantity = parseJsonInt(json['quantity']);
     holdingDays = parseJsonInt(json['holdingDays']);
   }
@@ -112,11 +119,13 @@ class RewardItem {
       'isin': isin,
       'companyId': companyId,
       'companyName': companyName,
+      'categoryId': categoryId,
       'categoryName': categoryName,
       'tickerName': tickerName,
       'type': type,
       'isEligible': isEligible,
       'isNew': isNew,
+      'topPerk': topPerk,
       'quantity': quantity,
       'holdingDays': holdingDays,
     };
@@ -127,28 +136,40 @@ class BrandItem {
   String? id;
   String? name;
   String? image;
+  String? description;
   String? bannerImage;
   String? companyId;
   String? companyName;
+  bool? listedOnExchange;
   String? isin;
   String? categoryName;
+  String? categoryId;
   String? brandId;
+  String? brandName;
+  String? brandImage;
   String? tickerName;
   String? type;
+  bool? isTopBrand;
   bool? isNew;
 
   BrandItem({
     this.id,
     this.name,
     this.image,
+    this.description,
     this.bannerImage,
     this.companyId,
     this.companyName,
+    this.listedOnExchange,
     this.isin,
     this.categoryName,
+    this.categoryId,
     this.brandId,
+    this.brandName,
+    this.brandImage,
     this.tickerName,
     this.type,
+    this.isTopBrand,
     this.isNew,
   });
 
@@ -156,14 +177,20 @@ class BrandItem {
     id = json['id'] as String?;
     name = json['name'] as String?;
     image = json['image'] as String?;
+    description = json['description'] as String?;
     bannerImage = json['bannerImage'] as String?;
     companyId = json['companyId'] as String?;
     companyName = json['companyName'] as String?;
+    listedOnExchange = json['listedOnExchange'] as bool?;
     isin = json['isin'] as String?;
     categoryName = json['categoryName'] as String?;
+    categoryId = json['categoryId'] as String?;
     brandId = json['brandId'] as String?;
+    brandName = json['brandName'] as String?;
+    brandImage = json['brandImage'] as String?;
     tickerName = json['tickerName'] as String?;
     type = json['type'] as String?;
+    isTopBrand = json['isTopBrand'] as bool?;
     isNew = json['isNew'] as bool?;
   }
 
@@ -172,14 +199,20 @@ class BrandItem {
       'id': id,
       'name': name,
       'image': image,
+      'description': description,
       'bannerImage': bannerImage,
       'companyId': companyId,
       'companyName': companyName,
+      'listedOnExchange': listedOnExchange,
       'isin': isin,
       'categoryName': categoryName,
+      'categoryId': categoryId,
       'brandId': brandId,
+      'brandName': brandName,
+      'brandImage': brandImage,
       'tickerName': tickerName,
       'type': type,
+      'isTopBrand': isTopBrand,
       'isNew': isNew,
     };
   }
@@ -191,6 +224,7 @@ class HomeSlide {
   String? type;
   String? rewardId;
   int? order;
+
   /// JSON key `interface` (reserved in Dart).
   String? slideInterface;
   String? imageUrl;
@@ -232,27 +266,11 @@ class HomeSlide {
   }
 }
 
-class HomeCategory {
-  String? id;
-  String? name;
-  String? image;
-  String? type;
+/// Backward-compatible home payload category model.
+///
+/// The API now returns the same shape as [CategoryModel], including `isNew`.
+class HomeCategory extends CategoryModel {
+  HomeCategory({super.id, super.name, super.image, super.type, super.isNew});
 
-  HomeCategory({this.id, this.name, this.image, this.type});
-
-  HomeCategory.fromJson(Map<String, dynamic> json) {
-    id = json['id'] as String?;
-    name = json['name'] as String?;
-    image = json['image'] as String?;
-    type = json['type'] as String?;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'image': image,
-      'type': type,
-    };
-  }
+  HomeCategory.fromJson(super.json) : super.fromJson();
 }

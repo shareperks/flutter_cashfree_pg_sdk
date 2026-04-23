@@ -16,6 +16,10 @@ import 'package:shareperks/screens/landing/ProfileSuccessScreen.dart';
 import 'package:shareperks/screens/landing/SetupScreen.dart';
 import 'package:shareperks/screens/main/CategotyScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
+import 'package:shareperks/screens/main/TopBrandsScreen.dart';
+import 'package:shareperks/screens/main/TopPerksScreen.dart';
+import 'package:shareperks/screens/main/TypePerkSceen.dart';
+import 'package:shareperks/screens/main/UnlockedPerksScreen%20copy.dart';
 
 // Routes names
 class RouteNames {
@@ -32,6 +36,13 @@ class RouteNames {
   static const String INFO_SLIDE_SCREEN = 'InfoSlideScreen';
   static const String HOME_SCREEN = 'HomeScreen';
   static const String CATEGORY_SCREEN = 'CategoryScreen';
+  static const String UNLOCKED_PERKS_SCREEN = 'UnlockedPerksScreen';
+  static const String TOP_PERKS_SCREEN = 'TopPerksScreen';
+  static const String CASHBACK_PERK_SCREEN = 'CashBackPerkScreen';
+  static const String GIFTCARD_PERK_SCREEN = 'GiftCardPerkScreen';
+  static const String PROMOOCODE_PERK_SCREEN = 'PromoCodePerkScreen';
+  static const String TOP_BRANDS_SCREEN = 'TopBrandScreen';
+
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
 }
@@ -97,9 +108,51 @@ final List<GoRoute> routes = [
     builder: (BuildContext context, GoRouterState state) => HomeScreen(),
   ),
   GoRoute(
+    name: RouteNames.UNLOCKED_PERKS_SCREEN,
+    path: RouteNames.path(RouteNames.UNLOCKED_PERKS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        UnlockedPerksScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.TOP_PERKS_SCREEN,
+    path: RouteNames.path(RouteNames.TOP_PERKS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) => TopPerksScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.CASHBACK_PERK_SCREEN,
+    path: RouteNames.path(RouteNames.CASHBACK_PERK_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        TypePerkScreen(type: "cashback"),
+  ),
+  GoRoute(
+    name: RouteNames.GIFTCARD_PERK_SCREEN,
+    path: RouteNames.path(RouteNames.GIFTCARD_PERK_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        TypePerkScreen(type: "giftcard"),
+  ),
+  GoRoute(
+    name: RouteNames.PROMOOCODE_PERK_SCREEN,
+    path: RouteNames.path(RouteNames.PROMOOCODE_PERK_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        TypePerkScreen(type: "promocode"),
+  ),
+  GoRoute(
     name: RouteNames.CATEGORY_SCREEN,
     path: RouteNames.path(RouteNames.CATEGORY_SCREEN),
-    builder: (BuildContext context, GoRouterState state) => CategoryScreen(),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? categoryId = extra is Map<String, dynamic>
+          ? extra['categoryId'] as String?
+          : null;
+      return CategoryScreen(categoryId: categoryId);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.TOP_BRANDS_SCREEN,
+    path: RouteNames.path(RouteNames.TOP_BRANDS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      return TopBrandsScreen();
+    },
   ),
   GoRoute(
     name: RouteNames.NO_INTERNET,

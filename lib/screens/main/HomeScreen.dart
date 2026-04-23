@@ -1,6 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:shareperks/components/BottomNavBar.dart';
@@ -13,10 +14,11 @@ import 'package:shareperks/components/WelcomeCard.dart';
 import 'package:shareperks/components/loader/homepageLoader.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/HomeDataModel.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
-import 'package:shareperks/repository/services/listing/home-data.service.dart';
+import 'package:shareperks/repository/services/listing/data.service.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
@@ -41,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _loading = true;
     });
     try {
-      data = await HomeDataService.getHomeData();
+      data = await ListingDataService.getHomeData();
     } catch (e) {
       _isError = true;
     } finally {
@@ -182,7 +184,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '${context.watch<UserProvider>().user?.name?.split(" ")[0] ?? ''}',
+                                  context
+                                          .watch<UserProvider>()
+                                          .user
+                                          ?.name
+                                          ?.split(" ")[0] ??
+                                      '',
                                   style: TextStyle(
                                     color: const Color(0xFF6400E0),
                                     fontSize: 16,
@@ -238,16 +245,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            trailing: LabelWithForwardIcon(
-                              iconColor: SharePerksColors.accent,
-                              iconSize: 18,
-                              label: Text(
-                                'View all',
-                                style: TextStyle(
-                                  color: SharePerksColors.accent,
-                                  fontSize: 13,
-                                  fontFamily: SharePerksFonts.inter,
-                                  fontWeight: FontWeight.w600,
+                            trailing: GestureDetector(
+                              onTap: () {
+                                context.pushNamed(RouteNames.TOP_PERKS_SCREEN);
+                              },
+                              child: LabelWithForwardIcon(
+                                iconColor: SharePerksColors.accent,
+                                iconSize: 18,
+
+                                label: Text(
+                                  'View all',
+                                  style: TextStyle(
+                                    color: SharePerksColors.accent,
+                                    fontSize: 13,
+                                    fontFamily: SharePerksFonts.inter,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
@@ -299,15 +312,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          trailing: LabelWithForwardIcon(
-                            iconSize: 18,
-                            label: Text(
-                              'View all',
-                              style: TextStyle(
-                                color: const Color(0xFF333333),
-                                fontSize: 13,
-                                fontFamily: SharePerksFonts.albertSans,
-                                fontWeight: FontWeight.w600,
+                          trailing: GestureDetector(
+                            onTap: () {
+                              context.pushNamed(RouteNames.TOP_BRANDS_SCREEN);
+                            },
+                            child: LabelWithForwardIcon(
+                              iconSize: 18,
+                              label: Text(
+                                'View all',
+                                style: TextStyle(
+                                  color: const Color(0xFF333333),
+                                  fontSize: 13,
+                                  fontFamily: SharePerksFonts.albertSans,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
@@ -341,6 +359,89 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   SizedBox(height: 30),
+                  BorderCard(
+                    width: double.infinity,
+                    borderWidth: 1,
+                    color: SharePerksColors.primary.withValues(alpha: 0.3),
+                    borderRadius: SharePerksRadii.lg,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: 16,
+                            left: 16,
+                            right: 16,
+                            bottom: 10,
+                          ),
+                          child: TitleView(
+                            title: Text(
+                              'Unlocked Perks',
+                              style: TextStyle(
+                                color: SharePerksColors.primary,
+                                fontSize: 18,
+                                fontFamily: SharePerksFonts.albertSans,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            trailing: GestureDetector(
+                              onTap: () {
+                                context.pushNamed(
+                                  RouteNames.UNLOCKED_PERKS_SCREEN,
+                                );
+                              },
+                              child: LabelWithForwardIcon(
+                                iconColor: SharePerksColors.primary,
+                                iconSize: 18,
+                                label: Text(
+                                  'View all',
+                                  style: TextStyle(
+                                    color: SharePerksColors.primary,
+                                    fontSize: 13,
+                                    fontFamily: SharePerksFonts.inter,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            spacing: 12,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(width: 6),
+                              ...List.generate(
+                                data?.data?.unlockedRewards?.rewards?.length ??
+                                    0,
+                                (index) {
+                                  RewardItem reward = data!
+                                      .data!
+                                      .unlockedRewards!
+                                      .rewards![index];
+                                  return RewardCard(
+                                    rewardId: reward.id!,
+                                    type: reward.type!,
+                                    typeName: reward.type,
+                                    title: reward.title ?? "--",
+                                    imageUrl: imageUrl(reward.image ?? ""),
+                                    isEligible: reward.isEligible ?? false,
+                                    eligibility: reward.companyName ?? "--",
+                                  );
+                                },
+                              ),
+                              SizedBox(width: 6),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 26),
+
                   Image.asset(Assets.ASSETS_CARDS_DATA_SAFETY_PNG),
                   SizedBox(height: 30),
                   Column(
@@ -381,16 +482,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          trailing: LabelWithForwardIcon(
-                            iconSize: 18,
-                            iconColor: SharePerksColors.textSecondaryLight,
-                            label: Text(
-                              'View all',
-                              style: TextStyle(
-                                color: SharePerksColors.textSecondaryLight,
-                                fontSize: 13,
-                                fontFamily: SharePerksFonts.albertSans,
-                                fontWeight: FontWeight.w600,
+                          trailing: GestureDetector(
+                            onTap: () {
+                              context.pushNamed(RouteNames.CATEGORY_SCREEN);
+                            },
+                            child: LabelWithForwardIcon(
+                              iconSize: 18,
+                              iconColor: SharePerksColors.textSecondaryLight,
+                              label: Text(
+                                'View all',
+                                style: TextStyle(
+                                  color: SharePerksColors.textSecondaryLight,
+                                  fontSize: 13,
+                                  fontFamily: SharePerksFonts.albertSans,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
@@ -410,9 +516,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               (index) {
                                 HomeCategory category =
                                     data!.data!.categories![index];
-                                return CategoryView(
-                                  image: imageUrl(category.image ?? ""),
-                                  title: category.name ?? "--",
+                                return GestureDetector(
+                                  onTap: () {
+                                    context.pushNamed(
+                                      RouteNames.CATEGORY_SCREEN,
+                                      extra: {"categoryId": category.id},
+                                    );
+                                  },
+                                  child: CategoryView(
+                                    image: imageUrl(category.image ?? ""),
+                                    title: category.name ?? "--",
+                                  ),
                                 );
                               },
                             ),
@@ -484,14 +598,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               spacing: 20,
                               children: [
                                 OptionView(
+                                  onTap: () => context.pushNamed(
+                                    RouteNames.GIFTCARD_PERK_SCREEN,
+                                  ),
                                   image: Assets.ASSETS_ICONS_GIFTCARD_PNG,
                                   title: "Credits",
                                 ),
                                 OptionView(
+                                  onTap: () => context.pushNamed(
+                                    RouteNames.PROMOOCODE_PERK_SCREEN,
+                                  ),
                                   image: Assets.ASSETS_ICONS_DISCOUNT_PNG,
                                   title: "Discount\nCoupons",
                                 ),
                                 OptionView(
+                                  onTap: () => context.pushNamed(
+                                    RouteNames.CASHBACK_PERK_SCREEN,
+                                  ),
                                   image: Assets.ASSETS_ICONS_CASHBACK_PNG,
                                   title: "Benefits",
                                 ),

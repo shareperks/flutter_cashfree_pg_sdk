@@ -13,7 +13,7 @@ class CategoryView extends StatelessWidget {
     return SizedBox(
       width: 90,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 5,
         children: [
@@ -21,6 +21,8 @@ class CategoryView extends StatelessWidget {
           Text(
             '$title',
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: SharePerksColors.surfaceDark,
               fontSize: 12,
@@ -36,20 +38,33 @@ class CategoryView extends StatelessWidget {
 
 class CategoryViewTab extends StatelessWidget {
   final bool isActive;
-  const CategoryViewTab({super.key, this.isActive = false});
+  final String title;
+  final String image;
+  final VoidCallback? onTap;
+  const CategoryViewTab({
+    super.key,
+    this.isActive = false,
+    required this.title,
+    required this.image,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        border: Border.all(
-          width: isActive ? 1 : 0,
-          color: isActive ? SharePerksColors.inputBorderLight : Colors.white,
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(10),
+        height: 144,
+        decoration: BoxDecoration(
+          border: Border.all(
+            width: isActive ? 1 : 1,
+            color: isActive ? SharePerksColors.inputBorderLight : Colors.white,
+          ),
+          borderRadius: BorderRadius.circular(10),
         ),
-        borderRadius: BorderRadius.circular(10),
+        child: CategoryView(image: image, title: title),
       ),
-      child: CategoryView(),
     );
   }
 }

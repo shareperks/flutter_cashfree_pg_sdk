@@ -1,6 +1,7 @@
 import 'home_common_models.dart';
 
 export 'home_common_models.dart';
+export 'category_model.dart';
 
 /// Backward-compatible aliases for previous class names.
 typedef TopRewards = RewardItem;

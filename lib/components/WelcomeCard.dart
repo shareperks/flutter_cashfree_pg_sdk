@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:soui/theme.dart';
 
 class RewardCountCard extends StatelessWidget {
@@ -99,7 +101,9 @@ class RewardCountCard extends StatelessWidget {
             right: -12,
             top: -12,
             child: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                context.pushNamed(RouteNames.UNLOCKED_PERKS_SCREEN);
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.center,
