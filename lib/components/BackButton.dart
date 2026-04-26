@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 
 class AppBackButton extends StatelessWidget {
-  const AppBackButton({super.key});
+  final Color? color;
+  const AppBackButton({super.key, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +14,7 @@ class AppBackButton extends StatelessWidget {
           context.pop();
         }
       },
-      icon: Icon(HugeIconsSolid.arrowLeft02, color: Colors.white),
+      icon: Icon(HugeIconsSolid.arrowLeft02, color: color ?? Colors.white),
     );
   }
 }

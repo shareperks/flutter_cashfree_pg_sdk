@@ -14,6 +14,7 @@ import 'package:shareperks/screens/landing/LoginScreen.dart';
 import 'package:shareperks/screens/landing/OtpScreen.dart';
 import 'package:shareperks/screens/landing/ProfileSuccessScreen.dart';
 import 'package:shareperks/screens/landing/SetupScreen.dart';
+import 'package:shareperks/screens/main/BrandViewScreen.dart';
 import 'package:shareperks/screens/main/CategotyScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
 import 'package:shareperks/screens/main/TopBrandsScreen.dart';
@@ -42,6 +43,7 @@ class RouteNames {
   static const String GIFTCARD_PERK_SCREEN = 'GiftCardPerkScreen';
   static const String PROMOOCODE_PERK_SCREEN = 'PromoCodePerkScreen';
   static const String TOP_BRANDS_SCREEN = 'TopBrandScreen';
+  static const String BRAND_SCREEN = 'BrandScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -152,6 +154,17 @@ final List<GoRoute> routes = [
     path: RouteNames.path(RouteNames.TOP_BRANDS_SCREEN),
     builder: (BuildContext context, GoRouterState state) {
       return TopBrandsScreen();
+    },
+  ),
+  GoRoute(
+    name: RouteNames.BRAND_SCREEN,
+    path: RouteNames.path(RouteNames.BRAND_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? brandId = extra is Map<String, dynamic>
+          ? extra['brandId'] as String?
+          : null;
+      return BrandViewScreen(brandId: brandId!);
     },
   ),
   GoRoute(

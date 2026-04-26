@@ -3,6 +3,7 @@ import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/models/HomeDataModel.dart';
 import 'package:shareperks/repository/models/brand_list_model.dart';
 import 'package:shareperks/repository/models/reward_list_model.dart';
+import 'package:shareperks/repository/models/rewards_by_brand_model.dart';
 import 'package:shareperks/repository/models/unlocked_perks_model.dart';
 import 'package:shareperks/repository/network.dart';
 
@@ -80,5 +81,17 @@ class ListingDataService {
       queryParameters: {"search": search, "sort": sort},
     );
     return BrandListResponse.fromJson(response.data);
+  }
+
+  static Future<RewardsByBrandResponse> getRewardsByBrandId({
+    required String brandId,
+    String? search,
+    String? sort = "a-z",
+  }) async {
+    final response = await _dio.get(
+      '/rewards/by-brand/$brandId',
+      queryParameters: {"search": search, "sort": sort},
+    );
+    return RewardsByBrandResponse.fromJson(response.data);
   }
 }

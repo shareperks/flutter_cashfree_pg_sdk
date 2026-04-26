@@ -142,6 +142,7 @@ class BrandItem {
   String? companyName;
   bool? listedOnExchange;
   String? isin;
+  bool? holding;
   String? categoryName;
   String? categoryId;
   String? brandId;
@@ -162,6 +163,7 @@ class BrandItem {
     this.companyName,
     this.listedOnExchange,
     this.isin,
+    this.holding,
     this.categoryName,
     this.categoryId,
     this.brandId,
@@ -183,6 +185,7 @@ class BrandItem {
     companyName = json['companyName'] as String?;
     listedOnExchange = json['listedOnExchange'] as bool?;
     isin = json['isin'] as String?;
+    holding = json['holding'] as bool?;
     categoryName = json['categoryName'] as String?;
     categoryId = json['categoryId'] as String?;
     brandId = json['brandId'] as String?;
@@ -205,6 +208,7 @@ class BrandItem {
       'companyName': companyName,
       'listedOnExchange': listedOnExchange,
       'isin': isin,
+      'holding': holding,
       'categoryName': categoryName,
       'categoryId': categoryId,
       'brandId': brandId,
