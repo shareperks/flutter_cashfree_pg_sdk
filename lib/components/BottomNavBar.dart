@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:provider/provider.dart';
+import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
+import 'package:shareperks/utils/image_url.dart';
+import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/bottom_navigation.dart';
 import 'package:soui/theme.dart';
 
@@ -51,26 +57,35 @@ class BottomNavigationBarComponent extends StatelessWidget {
 
           CustomBottomNavigationItem(
             icon: HugeIconsSolid.chart01,
-            label: 'History',
+            label: 'Holding',
           ),
           CustomBottomNavigationItem(
             icon: HugeIconsSolid.wallet01,
             label: 'Wallet',
           ),
         ],
-        trailing: Container(
-          padding: EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(100),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: Image.network(
-              "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dXNlcnxlbnwwfHwwfHx8MA%3D%3D",
-              fit: BoxFit.cover,
-              width: 25,
-              height: 25,
+        trailing: GestureDetector(
+          onTap: () {
+            context.pushNamed(RouteNames.MENU_SCREEN);
+          },
+          child: Container(
+            padding: EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(100),
+            ),
+            child: Consumer<UserProvider>(
+              builder: (context, state, child) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(100),
+                  child: ImageBuilder(
+                    imageUrl: imageUrl(state.user?.image ?? ""),
+                    fit: BoxFit.cover,
+                    width: 25,
+                    height: 25,
+                  ),
+                );
+              },
             ),
           ),
         ),

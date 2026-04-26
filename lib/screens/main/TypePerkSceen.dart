@@ -104,7 +104,6 @@ class _TypePerkScreenState extends State<TypePerkScreen> {
           return await applyFilter();
         },
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
           child: Container(
             width: MediaQuery.of(context).size.width,
             padding: EdgeInsets.all(18),

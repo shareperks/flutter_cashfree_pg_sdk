@@ -13,9 +13,6 @@ class Assets {
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/ShowPerks.png)
   static const String ASSETS_SHOWPERKS_PNG = 'assets/ShowPerks.png';
 
-  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/Valentine%20Gift.png)
-  static const String ASSETS_VALENTINE_GIFT_PNG = 'assets/Valentine Gift.png';
-
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Card.png)
   static const String ASSETS_CARDS_CARD_PNG = 'assets/cards/Card.png';
 
@@ -30,8 +27,16 @@ class Assets {
   static const String ASSETS_CARDS_LINK_LIGHT_PNG =
       'assets/cards/Link Light.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/SupportCard.png)
+  static const String ASSETS_CARDS_SUPPORTCARD_PNG =
+      'assets/cards/SupportCard.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/reminder.png)
   static const String ASSETS_CARDS_REMINDER_PNG = 'assets/cards/reminder.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/show-we-show-perks.png)
+  static const String ASSETS_CARDS_SHOW_WE_SHOW_PERKS_PNG =
+      'assets/cards/show-we-show-perks.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/EligibleReward.svg)
   static const String ASSETS_ICONS_ELIGIBLEREWARD_SVG =
@@ -52,9 +57,6 @@ class Assets {
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/giftcard.png)
   static const String ASSETS_ICONS_GIFTCARD_PNG = 'assets/icons/giftcard.png';
-
-  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/logo.png)
-  static const String ASSETS_LOGO_PNG = 'assets/logo.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/logo.svg)
   static const String ASSETS_LOGO_SVG = 'assets/logo.svg';

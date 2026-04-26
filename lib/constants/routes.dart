@@ -6,6 +6,8 @@ import 'package:shareperks/common/NotFound_screen.dart';
 import 'package:shareperks/common/Splash_screen.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/function/initCheck.dart';
+import 'package:shareperks/screens/info/FaqsScreen.dart';
+import 'package:shareperks/screens/info/HelpAndSupportScreen.dart';
 import 'package:shareperks/screens/info/HowShowPerkScreen.dart';
 import 'package:shareperks/screens/info/InfoSlideScreen.dart';
 import 'package:shareperks/screens/info/LinkDematInfoScreen.dart';
@@ -16,7 +18,10 @@ import 'package:shareperks/screens/landing/ProfileSuccessScreen.dart';
 import 'package:shareperks/screens/landing/SetupScreen.dart';
 import 'package:shareperks/screens/main/BrandViewScreen.dart';
 import 'package:shareperks/screens/main/CategotyScreen.dart';
+import 'package:shareperks/screens/main/CompanyViewScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
+import 'package:shareperks/screens/main/MenuListScreen.dart';
+import 'package:shareperks/screens/main/NotifIcationsScreen.dart';
 import 'package:shareperks/screens/main/TopBrandsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
@@ -44,6 +49,11 @@ class RouteNames {
   static const String PROMOOCODE_PERK_SCREEN = 'PromoCodePerkScreen';
   static const String TOP_BRANDS_SCREEN = 'TopBrandScreen';
   static const String BRAND_SCREEN = 'BrandScreen';
+  static const String COMPANY_SCREEN = 'CompanyScreen';
+  static const String MENU_SCREEN = 'MenuScreen';
+  static const String HELP_AND_SUPPORT_SCREEN = 'HelpAndSupportScreen';
+  static const String FAQS_SCREEN = 'FAQsScreen';
+  static const String NOTIFICATION_SCREEN = 'NotificationScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -94,6 +104,17 @@ final List<GoRoute> routes = [
     builder: (BuildContext context, GoRouterState state) => HowShowPerkScreen(),
   ),
   GoRoute(
+    name: RouteNames.HELP_AND_SUPPORT_SCREEN,
+    path: RouteNames.path(RouteNames.HELP_AND_SUPPORT_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        HelpAndSupportScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.FAQS_SCREEN,
+    path: RouteNames.path(RouteNames.FAQS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) => FAQsScreen(),
+  ),
+  GoRoute(
     name: RouteNames.LINK_DEMAT_INFO_SCREEN,
     path: RouteNames.path(RouteNames.LINK_DEMAT_INFO_SCREEN),
     builder: (BuildContext context, GoRouterState state) =>
@@ -114,6 +135,12 @@ final List<GoRoute> routes = [
     path: RouteNames.path(RouteNames.UNLOCKED_PERKS_SCREEN),
     builder: (BuildContext context, GoRouterState state) =>
         UnlockedPerksScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.NOTIFICATION_SCREEN,
+    path: RouteNames.path(RouteNames.NOTIFICATION_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        NotificationsScreen(),
   ),
   GoRoute(
     name: RouteNames.TOP_PERKS_SCREEN,
@@ -165,6 +192,24 @@ final List<GoRoute> routes = [
           ? extra['brandId'] as String?
           : null;
       return BrandViewScreen(brandId: brandId!);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.COMPANY_SCREEN,
+    path: RouteNames.path(RouteNames.COMPANY_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? companyId = extra is Map<String, dynamic>
+          ? extra['companyId'] as String?
+          : null;
+      return CompanyViewScreen(companyId: companyId!);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.MENU_SCREEN,
+    path: RouteNames.path(RouteNames.MENU_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      return MenuListScreen();
     },
   ),
   GoRoute(

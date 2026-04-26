@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shareperks/components/BackButton.dart';
+import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/components/RewardCard.dart';
 import 'package:shareperks/components/loader/brand_view_loader.dart';
 import 'package:shareperks/constants/assets.dart';
@@ -14,6 +15,7 @@ import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
+import 'package:soui/elements/key_value_list.dart';
 import 'package:soui/elements/title_view.dart';
 
 class BrandViewScreen extends StatefulWidget {
@@ -191,7 +193,6 @@ class _BrandViewScreenState extends State<BrandViewScreen> {
                                 child: LabelWithForwardIcon(
                                   iconColor: SharePerksColors.accent,
                                   iconSize: 18,
-
                                   label: Text(
                                     'View all',
                                     style: TextStyle(
@@ -240,6 +241,8 @@ class _BrandViewScreenState extends State<BrandViewScreen> {
                         ],
                       ),
                     ),
+                  SizedBox(height: 16),
+                  Copyright(),
                   SizedBox(height: 16),
                 ],
               ),

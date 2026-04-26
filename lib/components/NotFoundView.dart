@@ -10,18 +10,19 @@ class NotFoundView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 250,
+      height: 350,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 20,
+          spacing: 10,
           children: [
             Icon(
               HugeIconsSolid.packageOpen,
               size: 80,
               color: SharePerksColors.textSecondaryLight,
             ),
+            SizedBox(height: 10),
             Text.rich(
               TextSpan(
                 children: [
@@ -46,6 +47,7 @@ class NotFoundView extends StatelessWidget {
                 ],
               ),
             ),
+            TextButton(onPressed: () {}, child: Text('Request Your Perk')),
           ],
         ),
       ),

@@ -269,32 +269,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            spacing: 12,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(width: 6),
-                              ...List.generate(
-                                data?.data?.topRewards?.length ?? 0,
-                                (index) {
-                                  RewardItem reward =
-                                      data!.data!.topRewards![index];
-                                  return RewardCard(
-                                    rewardId: reward.id!,
-                                    type: reward.type!,
-                                    typeName: reward.type,
-                                    title: reward.title ?? "--",
-                                    imageUrl: imageUrl(reward.image ?? ""),
-                                    isEligible: reward.isEligible ?? false,
-                                    eligibility: reward.companyName ?? "--",
-                                  );
-                                },
-                              ),
-                              SizedBox(width: 6),
-                            ],
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width,
+
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              spacing: 12,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(width: 6),
+                                ...List.generate(
+                                  data?.data?.topRewards?.length ?? 0,
+                                  (index) {
+                                    RewardItem reward =
+                                        data!.data!.topRewards![index];
+                                    return RewardCard(
+                                      rewardId: reward.id!,
+                                      type: reward.type!,
+                                      typeName: reward.type,
+                                      title: reward.title ?? "--",
+                                      imageUrl: imageUrl(reward.image ?? ""),
+                                      isEligible: reward.isEligible ?? false,
+                                      eligibility: reward.companyName ?? "--",
+                                    );
+                                  },
+                                ),
+                                SizedBox(width: 6),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -335,34 +339,38 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(height: 10),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          spacing: 12,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(width: 6),
-                            ...List.generate(
-                              data?.data?.topBrands?.length ?? 0,
-                              (index) {
-                                BrandItem brand = data!.data!.topBrands![index];
-                                return BrandCard(
-                                  onTap: () {
-                                    context.pushNamed(
-                                      RouteNames.BRAND_SCREEN,
-                                      extra: {"brandId": brand.id},
-                                    );
-                                  },
-                                  isNew: brand.isNew ?? false,
-                                  title: brand.name ?? "--",
-                                  ticker: brand.tickerName ?? "--",
-                                  imageUrl: imageUrl(brand.image ?? ""),
-                                );
-                              },
-                            ),
-                            SizedBox(width: 6),
-                          ],
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            spacing: 12,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(width: 6),
+                              ...List.generate(
+                                data?.data?.topBrands?.length ?? 0,
+                                (index) {
+                                  BrandItem brand =
+                                      data!.data!.topBrands![index];
+                                  return BrandCard(
+                                    onTap: () {
+                                      context.pushNamed(
+                                        RouteNames.BRAND_SCREEN,
+                                        extra: {"brandId": brand.brandId},
+                                      );
+                                    },
+                                    isNew: brand.isNew ?? false,
+                                    title: brand.name ?? "--",
+                                    ticker: brand.tickerName ?? "--",
+                                    imageUrl: imageUrl(brand.image ?? ""),
+                                  );
+                                },
+                              ),
+                              SizedBox(width: 6),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -415,35 +423,43 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            spacing: 12,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(width: 6),
-                              ...List.generate(
-                                data?.data?.unlockedRewards?.rewards?.length ??
-                                    0,
-                                (index) {
-                                  RewardItem reward = data!
-                                      .data!
-                                      .unlockedRewards!
-                                      .rewards![index];
-                                  return RewardCard(
-                                    rewardId: reward.id!,
-                                    type: reward.type!,
-                                    typeName: reward.type,
-                                    title: reward.title ?? "--",
-                                    imageUrl: imageUrl(reward.image ?? ""),
-                                    isEligible: reward.isEligible ?? false,
-                                    eligibility: reward.companyName ?? "--",
-                                  );
-                                },
-                              ),
-                              SizedBox(width: 6),
-                            ],
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width,
+
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              spacing: 12,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(width: 6),
+                                ...List.generate(
+                                  data
+                                          ?.data
+                                          ?.unlockedRewards
+                                          ?.rewards
+                                          ?.length ??
+                                      0,
+                                  (index) {
+                                    RewardItem reward = data!
+                                        .data!
+                                        .unlockedRewards!
+                                        .rewards![index];
+                                    return RewardCard(
+                                      rewardId: reward.id!,
+                                      type: reward.type!,
+                                      typeName: reward.type,
+                                      title: reward.title ?? "--",
+                                      imageUrl: imageUrl(reward.image ?? ""),
+                                      isEligible: reward.isEligible ?? false,
+                                      eligibility: reward.companyName ?? "--",
+                                    );
+                                  },
+                                ),
+                                SizedBox(width: 6),
+                              ],
+                            ),
                           ),
                         ),
                       ],
