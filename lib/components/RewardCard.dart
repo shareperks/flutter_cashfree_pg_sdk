@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/constants/keys.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 
@@ -150,11 +153,7 @@ class RewardCard extends StatelessWidget {
                 onTap:
                     onTap ??
                     () {
-                      final desc = type == 'OFFER'
-                          ? 'Opened offer'
-                          : type == 'CREDIT'
-                          ? 'Opened credit'
-                          : 'Opened benefit';
+                      navigateRewardScreen(type, rewardId);
                     },
                 child: Container(
                   width: width - 16,
@@ -188,6 +187,15 @@ class RewardCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+navigateRewardScreen(String type, String rewardId) {
+  if (type == "CREDIT") {
+    GoRouterKey.currentContext?.pushNamed(
+      RouteNames.GIFTCARD_VIEW_SCREEN,
+      extra: {"rewardId": rewardId},
     );
   }
 }

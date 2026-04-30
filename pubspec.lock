@@ -177,6 +177,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  dropdown_flutter:
+    dependency: "direct main"
+    description:
+      name: dropdown_flutter
+      sha256: "5ae3d05d768d0bb6030ff735e6b4b93f7b29be3cf3bec7c86cd4f444c8f067ff"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
   fake_async:
     dependency: transitive
     description:
@@ -730,7 +738,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "3b9939b72e411e99c53aac22b4563843575ff1be"
+      resolved-ref: b11e79e61f354f31675449e1c51354b3e9152fca
       url: "https://github.com/shareperks/soui.git"
     source: git
     version: "1.0.0+1"

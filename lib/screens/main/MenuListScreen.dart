@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/components/ProfileCard.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/function/localstorage.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/gredent_list.dart';
 import 'package:soui/theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MenuListScreen extends StatelessWidget {
   const MenuListScreen({super.key});
@@ -115,7 +119,9 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
 
-                    onTap: () {},
+                    onTap: () async {
+                      context.pushNamed(RouteNames.FAQS_SCREEN);
+                    },
                     style: GredentListTileStyle(
                       contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
@@ -172,7 +178,9 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
 
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed(RouteNames.REQUEST_PERK_SCREEN);
+                    },
                     style: GredentListTileStyle(
                       contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
@@ -201,7 +209,12 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
 
-                    onTap: () {},
+                    onTap: () async {
+                      launchUrl(
+                        Uri.parse("https://www.shareperks.in/b2c/policy"),
+                        mode: LaunchMode.inAppBrowserView,
+                      );
+                    },
                     style: GredentListTileStyle(
                       contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
@@ -220,6 +233,9 @@ class MenuListScreen extends StatelessWidget {
                       horizontal: 10,
                       vertical: 0,
                     ),
+                    onTap: () async {
+                      await LocalStorage.clearAll();
+                    },
                     leading: Icon(HugeIconsStroke.logoutCircle01, size: 17),
                     title: Text(
                       'Logout',
@@ -232,9 +248,14 @@ class MenuListScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 15),
-                  Image.asset(
-                    Assets.ASSETS_CARDS_SUPPORTCARD_PNG,
-                    width: MediaQuery.of(context).size.width,
+                  GestureDetector(
+                    onTap: () {
+                      context.pushNamed(RouteNames.HELP_AND_SUPPORT_SCREEN);
+                    },
+                    child: Image.asset(
+                      Assets.ASSETS_CARDS_SUPPORTCARD_PNG,
+                      width: MediaQuery.of(context).size.width,
+                    ),
                   ),
                   Copyright(),
                 ],

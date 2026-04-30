@@ -6,6 +6,7 @@ import 'package:shareperks/common/NotFound_screen.dart';
 import 'package:shareperks/common/Splash_screen.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/function/initCheck.dart';
+import 'package:shareperks/screens/forms/RequestPerkScreen.dart';
 import 'package:shareperks/screens/info/FaqsScreen.dart';
 import 'package:shareperks/screens/info/HelpAndSupportScreen.dart';
 import 'package:shareperks/screens/info/HowShowPerkScreen.dart';
@@ -26,6 +27,7 @@ import 'package:shareperks/screens/main/TopBrandsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
 import 'package:shareperks/screens/main/UnlockedPerksScreen%20copy.dart';
+import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
 
 // Routes names
 class RouteNames {
@@ -54,6 +56,8 @@ class RouteNames {
   static const String HELP_AND_SUPPORT_SCREEN = 'HelpAndSupportScreen';
   static const String FAQS_SCREEN = 'FAQsScreen';
   static const String NOTIFICATION_SCREEN = 'NotificationScreen';
+  static const String REQUEST_PERK_SCREEN = 'RequestPerkScreen';
+  static const String GIFTCARD_VIEW_SCREEN = 'GiftCardViewScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -206,11 +210,27 @@ final List<GoRoute> routes = [
     },
   ),
   GoRoute(
+    name: RouteNames.GIFTCARD_VIEW_SCREEN,
+    path: RouteNames.path(RouteNames.GIFTCARD_VIEW_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? rewardId = extra is Map<String, dynamic>
+          ? extra['rewardId'] as String?
+          : null;
+      return GiftCardRewardScreen(rewardId: rewardId!);
+    },
+  ),
+  GoRoute(
     name: RouteNames.MENU_SCREEN,
     path: RouteNames.path(RouteNames.MENU_SCREEN),
     builder: (BuildContext context, GoRouterState state) {
       return MenuListScreen();
     },
+  ),
+  GoRoute(
+    name: RouteNames.REQUEST_PERK_SCREEN,
+    path: RouteNames.path(RouteNames.REQUEST_PERK_SCREEN),
+    builder: (BuildContext context, GoRouterState state) => RequestPerkScreen(),
   ),
   GoRoute(
     name: RouteNames.NO_INTERNET,

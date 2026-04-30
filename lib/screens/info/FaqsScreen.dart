@@ -4,8 +4,6 @@ import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
 import 'package:shareperks/components/FaqItem.dart';
 import 'package:shareperks/constants/assets.dart';
-import 'package:shareperks/constants/fonts.dart';
-import 'package:shareperks/constants/theme_data.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/tab_buttons.dart';
 

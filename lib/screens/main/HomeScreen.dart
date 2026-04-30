@@ -16,6 +16,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/feature/VotingBrands.dart';
 import 'package:shareperks/repository/models/HomeDataModel.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
@@ -648,6 +649,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
+                      SizedBox(height: 30),
+                      VotingBrands(),
                       Copyright(),
                       SizedBox(height: 80),
                     ],
