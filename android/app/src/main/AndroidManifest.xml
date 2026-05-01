@@ -4,6 +4,46 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
+            android:name="com.smallcase.gateway.screens.mutualfunds.activity.MFHoldingsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:scheme="scgatewaymfhi"
+                    android:host="shareperks" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.smallcase.gateway.screens.transaction.activity.TransactionProcessActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="shareperks"
+                    android:scheme="scgateway" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.smallcase.gateway.screens.common.RedirectActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="shareperks"
+                    android:scheme="scgatewayredirect" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"

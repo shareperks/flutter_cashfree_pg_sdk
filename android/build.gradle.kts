@@ -1,7 +1,15 @@
+buildscript {
+    // Some 3rd-party plugins still expect this legacy Gradle property.
+    extra.set("kotlin_version", "2.2.20")
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://artifactory.smallcase.com/artifactory/SCGateway")
+        }
     }
 }
 

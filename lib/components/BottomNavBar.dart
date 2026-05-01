@@ -58,6 +58,9 @@ class BottomNavigationBarComponent extends StatelessWidget {
           CustomBottomNavigationItem(
             icon: HugeIconsSolid.chart01,
             label: 'Holding',
+            onTap: () {
+              context.pushNamed(RouteNames.MY_HOLDING_VIEW_SCREEN);
+            },
           ),
           CustomBottomNavigationItem(
             icon: HugeIconsSolid.wallet01,

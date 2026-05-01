@@ -5,6 +5,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 
@@ -82,6 +83,7 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
       );
       if (!response.success) {
+        await LocalStorage.setString("userId", response.user?.id ?? "");
         Fluttertoast.showToast(
           msg: response.message,
           backgroundColor: Colors.red,

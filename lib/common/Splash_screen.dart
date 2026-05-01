@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/function/initCheck.dart';
+import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
@@ -39,6 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
       final user = await AuthService.verifySession();
       if (user.success == true) {
         context.read<UserProvider>().setUser(user.user!);
+        await LocalStorage.setString("userId", user.user?.id ?? "");
         if (user.user?.isActive != true) {
           await AuthService.logout();
           Fluttertoast.showToast(

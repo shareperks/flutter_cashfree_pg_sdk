@@ -1,5 +1,11 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '13.0'
+
+# default source for all other pods
+source 'https://cdn.cocoapods.org'
+
+# private podspec for smallcase (only for versions < 2.2.0)
+source 'https://github.com/smallcase/cocoapodspecs.git'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,5 +45,13 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Fix: "Using bridging headers with module interfaces is unsupported"
+    # This happens when a target tries to emit Swift module interfaces
+    # (library evolution / distribution mode) while also using a bridging header.
+    target.build_configurations.each do |config|
+      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+      config.build_settings['SWIFT_ENABLE_LIBRARY_EVOLUTION'] = 'NO'
+    end
   end
 end

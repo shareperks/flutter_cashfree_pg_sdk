@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/function/localstorage.dart';
+import 'package:shareperks/integrations/smallcase_gateway.dart';
 import 'package:provider/provider.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';

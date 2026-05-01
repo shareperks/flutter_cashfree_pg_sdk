@@ -15,10 +15,11 @@ dependencies:
   lottie: ^3.3.3
   connectivity_plus: ^7.1.1
   go_router: ^17.2.0
-  device_info_plus: ^13.0.0
-  package_info_plus: ^10.0.0
+  device_info_plus: ^12.2.0
+  package_info_plus: ^9.0.1
   shared_preferences: ^2.5.5
   carousel_slider: ^5.1.2
+  dotted_border: ^3.1.0
   fluttertoast: ^9.0.0
   dio: ^5.9.2
   logger: ^2.7.0
@@ -27,14 +28,18 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.4.1
   url_launcher: ^6.3.2
-  share_plus: ^13.0.0
   flutter_svg: ^2.2.4
   flutter_animate: ^4.5.2
   pinput: ^6.0.2
   dropdown_flutter: ^1.0.3
+  file_picker: ^11.0.2
   soui:
     git:
       url: https://github.com/shareperks/soui.git
+      ref: main
+  scgateway_flutter_plugin:
+    git:
+      url: https://github.com/shareperks/scgateway_flutter_plugin.git
       ref: main
 
 dev_dependencies:
@@ -53,6 +58,7 @@ flutter:
     - assets/lottie/
     - assets/cards/
     - assets/icons/
+    - assets/brokers/
 
   fonts:
     - family: AlbertSans

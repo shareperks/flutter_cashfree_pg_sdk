@@ -4,4 +4,5 @@ class Host {
   static String listingUrl = 'https://listing.shareperks.in';
   static String brokerUrl = 'https://broker.shareperks.in';
   static String submitApi = 'https://from-api.shareperks.in';
+  static String holdingApi = "https://holding-api.shareperks.in";
 }
