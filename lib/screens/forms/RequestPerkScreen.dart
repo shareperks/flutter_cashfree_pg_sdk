@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/perk_request_payload.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
@@ -97,12 +98,8 @@ class _RequestPerkScreenState extends State<RequestPerkScreen> {
         ),
       );
       if (!mounted) return;
-      Fluttertoast.showToast(
-        msg: 'Request submitted',
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-      );
-      if (context.canPop()) context.pop();
+      if (context.canPop())
+        context.replaceNamed(RouteNames.EMAIL_SUCCESS_SCREEN);
     } on DioException catch (e) {
       final msg = e.response?.data is Map
           ? (e.response!.data as Map)['message']?.toString()

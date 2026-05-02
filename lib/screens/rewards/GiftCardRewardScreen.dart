@@ -128,6 +128,12 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                           Padding(
                             padding: const EdgeInsets.all(14.0),
                             child: PerkTerms(
+                              onViewAll: () {
+                                context.pushNamed(
+                                  RouteNames.REWARD_TERM_VIEW_SCREEN,
+                                  extra: {"contentId": data?.data?.content?.id},
+                                );
+                              },
                               termsAndConditions:
                                   data?.data?.content?.termsAndConditions ?? '',
                             ),

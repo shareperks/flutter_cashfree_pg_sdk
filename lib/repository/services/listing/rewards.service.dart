@@ -3,6 +3,8 @@ import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
+import 'package:shareperks/repository/models/my_claimed_rewards_model.dart';
+import 'package:shareperks/repository/models/reward_content_model.dart';
 import 'package:shareperks/repository/network.dart';
 
 class RewardListingDataService {
@@ -42,5 +44,29 @@ class RewardListingDataService {
       throw StateError('Promocode detail: empty response body');
     }
     return PromocodeDetailResponse.fromJson(body);
+  }
+
+  /// `GET /reward/content/:id` — legal / terms (short + full HTML).
+  static Future<RewardContent> getRewardContent(String id) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/reward/content/$id',
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('Reward content: empty response body');
+    }
+    return RewardContent.fromJson(body);
+  }
+
+  /// `GET /rewards/my-claimed` — claimed gift cards & promo codes + totals.
+  static Future<MyClaimedRewardsResponse> getMyClaimedRewards() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/rewards/my-claimed',
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('My claimed rewards: empty response body');
+    }
+    return MyClaimedRewardsResponse.fromJson(body);
   }
 }

@@ -6,6 +6,7 @@ import 'package:shareperks/common/NotFound_screen.dart';
 import 'package:shareperks/common/Splash_screen.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/function/initCheck.dart';
+import 'package:shareperks/screens/Status/EmailSuccessStatusScreen.dart';
 import 'package:shareperks/screens/forms/RequestPerkScreen.dart';
 import 'package:shareperks/screens/forms/UpdateProfileScreen.dart';
 import 'package:shareperks/screens/holding/ListBrokersScreen.dart';
@@ -27,6 +28,7 @@ import 'package:shareperks/screens/main/CompanyViewScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
 import 'package:shareperks/screens/main/MenuListScreen.dart';
 import 'package:shareperks/screens/main/NotifIcationsScreen.dart';
+import 'package:shareperks/screens/main/SettingScreen.dart';
 import 'package:shareperks/screens/main/TopBrandsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
@@ -34,8 +36,10 @@ import 'package:shareperks/screens/main/UnlockedPerksScreen.dart';
 import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
+import 'package:shareperks/screens/rewards/ClaimedPerksScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
 import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
+import 'package:shareperks/screens/rewards/ReadRewardTermScreen.dart';
 
 // Routes names
 class RouteNames {
@@ -68,12 +72,16 @@ class RouteNames {
   static const String GIFTCARD_VIEW_SCREEN = 'GiftCardViewScreen';
   static const String CASHBACK_VIEW_SCREEN = 'CashBackViewScreen';
   static const String PROMOCODE_VIEW_SCREEN = 'PromoCodeViewScreen';
+  static const String REWARD_TERM_VIEW_SCREEN = 'RewardTermScreen';
   static const String MY_HOLDING_VIEW_SCREEN = 'MyHoldingViewScreen';
   static const String LIST_BROKER_VIEW_SCREEN = 'ListBrokerViewScreen';
   static const String UPLOAD_HOLDING_SCREEN = 'UploadHoldingScreen';
   static const String PROFILE_EDIT_SCREEN = 'ProfileEditScreen';
   static const String REFER_CODE_SCREEN = 'ReferAndEarnCodeScreen';
   static const String MY_REFER_LIST_SCREEN = 'MyReferScreen';
+  static const String SETTINGS_SCREEN = 'SettingsScreen';
+  static const String EMAIL_SUCCESS_SCREEN = 'SuccessScreen';
+  static const String CLAIMED_PERKS_SCREEN = 'CLAIMED_PERKS_SCREEN';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -285,6 +293,24 @@ final List<GoRoute> routes = [
       return MenuListScreen();
     },
   ),
+  GoRoute(
+    name: RouteNames.REWARD_TERM_VIEW_SCREEN,
+    path: RouteNames.path(RouteNames.REWARD_TERM_VIEW_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? contentId = extra is Map<String, dynamic>
+          ? extra['contentId'] as String?
+          : null;
+      return ReadRewardTermScreen(contentId: contentId!);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.SETTINGS_SCREEN,
+    path: RouteNames.path(RouteNames.SETTINGS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      return SettingsScreen();
+    },
+  ),
 
   GoRoute(
     name: RouteNames.REQUEST_PERK_SCREEN,
@@ -317,6 +343,18 @@ final List<GoRoute> routes = [
     ),
   ),
   GoRoute(
+    name: RouteNames.EMAIL_SUCCESS_SCREEN,
+    path: RouteNames.path(RouteNames.EMAIL_SUCCESS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        EmailSuccessStatusScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.CLAIMED_PERKS_SCREEN,
+    path: RouteNames.path(RouteNames.CLAIMED_PERKS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        ClaimedPerksScreen(),
+  ),
+  GoRoute(
     name: RouteNames.NEW_UPDATE,
     path: RouteNames.path(RouteNames.NEW_UPDATE),
     builder: (BuildContext context, GoRouterState state) {
@@ -334,6 +372,7 @@ List<String> offlineRoutes = [
   RouteNames.SPLASH,
   RouteNames.NO_INTERNET,
   RouteNames.NEW_UPDATE,
+  RouteNames.EMAIL_SUCCESS_SCREEN,
 ];
 
 /// Logs whenever the user pops the top route (system back, `pop`, etc.).
@@ -355,7 +394,7 @@ final class StarvestRouteObserver extends NavigatorObserver {
 
 // GoRouter configuration
 final GoRouter router = GoRouter(
-  initialLocation: RouteNames.path(RouteNames.SPLASH),
+  initialLocation: RouteNames.path(RouteNames.CLAIMED_PERKS_SCREEN),
   routes: routes,
   navigatorKey: GoRouterKey,
   observers: [StarvestRouteObserver()],

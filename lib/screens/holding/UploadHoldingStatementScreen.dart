@@ -43,7 +43,7 @@ class _UploadHoldingStatementScreenState
   /// `multiple_request`).
   bool _pickGate = false;
 
-  final String _brokerCode = 'statement';
+  final String _brokerCode = 'cdsl';
   final String _depository = 'CDSL';
 
   @override

@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/BrandCard.dart';
 import 'package:shareperks/components/NotFoundView.dart';
 import 'package:shareperks/components/loader/brand_page_loader.dart';
 import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/repository/models/home_common_models.dart';
 import 'package:shareperks/repository/models/brand_list_model.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
@@ -176,6 +178,12 @@ class _TopBrandsScreenState extends State<TopBrandsScreen> {
                             title: brand.name ?? "--",
                             ticker: brand.tickerName ?? "--",
                             imageUrl: imageUrl(brand.image ?? ""),
+                            onTap: () {
+                              context.pushNamed(
+                                RouteNames.BRAND_SCREEN,
+                                extra: {"brandId": brand.id},
+                              );
+                            },
                           );
                         }),
                       ),

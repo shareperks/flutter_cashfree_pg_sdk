@@ -152,7 +152,9 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
 
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed(RouteNames.SETTINGS_SCREEN);
+                    },
                     style: GredentListTileStyle(
                       contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(

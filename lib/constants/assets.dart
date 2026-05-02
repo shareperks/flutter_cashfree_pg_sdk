@@ -160,6 +160,10 @@ class Assets {
   static const String ASSETS_LOTTIE_SUCCESSFULCHECK_JSON =
       'assets/lottie/Successfulcheck.json';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/lottie/emailtailwind.json)
+  static const String ASSETS_LOTTIE_EMAILTAILWIND_JSON =
+      'assets/lottie/emailtailwind.json';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/lottie/panda.json)
   static const String ASSETS_LOTTIE_PANDA_JSON = 'assets/lottie/panda.json';
 

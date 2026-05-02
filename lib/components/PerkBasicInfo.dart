@@ -323,7 +323,7 @@ class PerkTerms extends StatelessWidget {
           trailing: InkWell(
             onTap: termsAndConditions.trim().isEmpty
                 ? null
-                : () => _defaultViewAll(context),
+                : () => _defaultViewAll(context, onViewAll: onViewAll),
             child: LabelWithForwardIcon(
               iconSize: 18,
               iconColor: SharePerksColors.textSecondaryLight,

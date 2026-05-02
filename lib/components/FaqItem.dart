@@ -4,7 +4,16 @@ import 'package:shareperks/constants/theme_data.dart';
 
 class FaqItem extends StatelessWidget {
   final bool showBorder;
-  const FaqItem({super.key, this.showBorder = false});
+  final String question;
+  final String answer;
+
+  const FaqItem({
+    super.key,
+    this.showBorder = false,
+    this.question = 'What is the Wallets section?',
+    this.answer =
+        'This is where you connect and verify your Demat holdings to unlock eligible shareholder perks.',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +31,7 @@ class FaqItem extends StatelessWidget {
       child: ListTile(
         contentPadding: EdgeInsets.all(0),
         title: Text(
-          'What is the Wallets section?',
+          question,
           style: TextStyle(
             color: const Color(0xFF333333),
             fontSize: 12,
@@ -33,7 +42,7 @@ class FaqItem extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            'This is where you connect and verify your Demat holdings to unlock eligible shareholder perks.',
+            answer,
             style: TextStyle(
               color: const Color(0xFF898989),
               fontSize: 10,
