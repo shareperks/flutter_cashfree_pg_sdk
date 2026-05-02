@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 
 class NotFoundView extends StatelessWidget {
@@ -47,7 +49,12 @@ class NotFoundView extends StatelessWidget {
                 ],
               ),
             ),
-            TextButton(onPressed: () {}, child: Text('Request Your Perk')),
+            TextButton(
+              onPressed: () {
+                context.pushNamed(RouteNames.REQUEST_PERK_SCREEN);
+              },
+              child: Text('Request Your Perk'),
+            ),
           ],
         ),
       ),

@@ -3,11 +3,14 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:pinput/pinput.dart';
+import 'package:provider/provider.dart';
 import 'package:shareperks/components/ResendOtp.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/repository/network.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 
@@ -98,6 +101,9 @@ class _OtpScreenState extends State<OtpScreen> {
       }
       await TokenManager.setToken(response.token!);
       if (response.isProfileComplete == true) {
+        final user = await AuthService.verifySession();
+        await LocalStorage.setString("userId", user.user?.id ?? "");
+        context.read<UserProvider>().setUser(user.user!);
         context.goNamed(RouteNames.HOME_SCREEN);
         return;
       } else {

@@ -293,10 +293,10 @@ class _CompanyViewScreenState extends State<CompanyViewScreen> {
                               ),
                             ),
                           ),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width,
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
                               child: Row(
                                 spacing: 12,
                                 mainAxisSize: MainAxisSize.min,

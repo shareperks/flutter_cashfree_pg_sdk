@@ -100,7 +100,6 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
           return await applyFilter();
         },
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
           child: Container(
             width: MediaQuery.of(context).size.width,
             padding: EdgeInsets.all(18),

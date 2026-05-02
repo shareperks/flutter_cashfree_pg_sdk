@@ -103,6 +103,18 @@ class Assets {
   static const String ASSETS_CARDS_LOYELSHAREHOLDER_PNG =
       'assets/cards/LoyelShareholder.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/ReferAndEarnSteps.png)
+  static const String ASSETS_CARDS_REFERANDEARNSTEPS_PNG =
+      'assets/cards/ReferAndEarnSteps.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/ReferBannerCard.png)
+  static const String ASSETS_CARDS_REFERBANNERCARD_PNG =
+      'assets/cards/ReferBannerCard.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/ReferSteps.png)
+  static const String ASSETS_CARDS_REFERSTEPS_PNG =
+      'assets/cards/ReferSteps.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/SupportCard.png)
   static const String ASSETS_CARDS_SUPPORTCARD_PNG =
       'assets/cards/SupportCard.png';

@@ -90,6 +90,7 @@ class Data {
 }
 
 class UnlockedRewards {
+  bool? isImportInProgress;
   bool? isBrokeConnected;
   bool? remainderReimport;
   int? credit;
@@ -99,6 +100,7 @@ class UnlockedRewards {
   List<RewardItem>? rewards;
 
   UnlockedRewards({
+    this.isImportInProgress,
     this.isBrokeConnected,
     this.remainderReimport,
     this.credit,
@@ -109,6 +111,7 @@ class UnlockedRewards {
   });
 
   UnlockedRewards.fromJson(Map<String, dynamic> json) {
+    isImportInProgress = json['isImportInProgress'] as bool?;
     isBrokeConnected = json['isBrokeConnected'] as bool?;
     remainderReimport = json['remainderReimport'] as bool?;
     credit = parseJsonInt(json['credit']);
@@ -125,6 +128,7 @@ class UnlockedRewards {
 
   Map<String, dynamic> toJson() {
     return {
+      'isImportInProgress': isImportInProgress,
       'isBrokeConnected': isBrokeConnected,
       'remainderReimport': remainderReimport,
       'credit': credit,

@@ -7,6 +7,7 @@ import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -34,12 +35,16 @@ class _UploadHoldingStatementScreenState
   String? _fileError;
 
   bool _submitting = false;
+
   /// True while UI shows spinner; kept in sync with [_pickGate] lifecycle.
   bool _pickingFile = false;
 
   /// Synchronous mutex so two [pickFiles] native calls cannot overlap (iOS:
   /// `multiple_request`).
   bool _pickGate = false;
+
+  final String _brokerCode = 'statement';
+  final String _depository = 'CDSL';
 
   @override
   void dispose() {
@@ -115,9 +120,9 @@ class _UploadHoldingStatementScreenState
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not pick file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not pick file: $e')));
     } finally {
       _pickGate = false;
       if (mounted) setState(() => _pickingFile = false);
@@ -148,11 +153,7 @@ class _UploadHoldingStatementScreenState
       return false;
     }
 
-    final password = _pdfPasswordController.text;
-    if (password.trim().isEmpty) {
-      setState(() => _passwordError = 'PDF password is required');
-      return false;
-    }
+    // Password is optional; many PDFs are not password protected.
 
     if (_pickedFile == null) {
       setState(() => _fileError = 'Please select a PDF statement');
@@ -163,24 +164,40 @@ class _UploadHoldingStatementScreenState
       setState(() => _fileError = 'Only PDF files are allowed');
       return false;
     }
+    if (_pickedFile!.path == null || _pickedFile!.path!.trim().isEmpty) {
+      setState(() => _fileError = 'Could not read file path. Please reselect.');
+      return false;
+    }
 
     return true;
   }
 
   Future<void> _onUploadPressed() async {
     if (!_validate()) return;
-    setState(() => _submitting = true);
+    setState(() {
+      _submitting = true;
+    });
     try {
-      // Wire HoldingService upload when API is available.
-      await Future<void>.delayed(Duration.zero);
+      final filePath = _pickedFile!.path!;
+      final password = _pdfPasswordController.text.trim();
+
+      final job = await HoldingService.importHoldings(
+        filePath: filePath,
+        brokerCode: _brokerCode,
+        depository: _depository,
+        password: password,
+      );
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Ready to import: ${_pickedFile!.name}\n(PAN ${_panController.text.trim().toUpperCase()})',
-          ),
-        ),
+        SnackBar(content: Text('Import queued successfully. (${job.status})')),
       );
+      Navigator.of(context).maybePop();
+    } on Exception catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -238,7 +255,7 @@ class _UploadHoldingStatementScreenState
               ),
               _InputField(
                 label: 'PDF password',
-                hint: 'Required for your CAS PDF',
+                hint: 'Optional (only if your PDF is password protected)',
                 controller: _pdfPasswordController,
                 keyboardType: TextInputType.visiblePassword,
                 obscureText: true,

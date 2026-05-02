@@ -11,6 +11,7 @@ import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/components/OptionView.dart';
 import 'package:shareperks/components/RewardCard.dart';
 import 'package:shareperks/components/WelcomeCard.dart';
+import 'package:shareperks/components/holding/ImportProgressSection.dart';
 import 'package:shareperks/components/loader/homepageLoader.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
@@ -224,7 +225,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: SharePerksSpacing.sm),
+                  if (data?.data?.unlockedRewards?.isImportInProgress ?? false)
+                    Padding(
+                      padding: const EdgeInsets.all(18.0),
+                      child: ImportProgressSection(),
+                    ),
+                  SizedBox(height: SharePerksSpacing.md),
                   BorderCard(
                     width: double.infinity,
                     borderWidth: 1,

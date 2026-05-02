@@ -238,6 +238,75 @@ class DiscardHoldingResponse {
   }
 }
 
+// holding-api: POST /holdings/import
+// holding-api: GET /holdings/import/:id
+
+class HoldingImportJob {
+  final String id;
+  final String status;
+  final String message;
+
+  HoldingImportJob({
+    required this.id,
+    required this.status,
+    required this.message,
+  });
+
+  factory HoldingImportJob.fromJson(Map<String, dynamic> json) {
+    return HoldingImportJob(
+      id: json['id'] as String,
+      status: json['status'] as String,
+      message: json['message'] as String,
+    );
+  }
+}
+
+/// Common envelope returned by holding-api for imports.
+///
+/// Example success:
+/// `{ "id": "...", "status": "PENDING", "message": "Queued..." }`
+///
+/// Example error:
+/// `{ "statusCode": 400, "message": "...", "data": null }`
+class HoldingImportResponse {
+  final int? statusCode;
+  final String? message;
+  final dynamic data;
+
+  /// Present on success.
+  final HoldingImportJob? job;
+
+  HoldingImportResponse({
+    required this.statusCode,
+    required this.message,
+    required this.data,
+    required this.job,
+  });
+
+  factory HoldingImportResponse.fromJson(Map<String, dynamic> json) {
+    final bool hasJob = json['id'] != null &&
+        json['status'] != null &&
+        json['message'] != null &&
+        (json['statusCode'] == null);
+
+    if (hasJob) {
+      return HoldingImportResponse(
+        statusCode: null,
+        message: json['message'] as String,
+        data: null,
+        job: HoldingImportJob.fromJson(json),
+      );
+    }
+
+    return HoldingImportResponse(
+      statusCode: (json['statusCode'] as num?)?.round(),
+      message: json['message'] as String?,
+      data: json['data'],
+      job: null,
+    );
+  }
+}
+
 String? _nullableString(dynamic value) {
   if (value == null) return null;
   if (value is String) {

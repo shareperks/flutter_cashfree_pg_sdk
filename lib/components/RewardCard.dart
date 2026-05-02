@@ -198,4 +198,16 @@ navigateRewardScreen(String type, String rewardId) {
       extra: {"rewardId": rewardId},
     );
   }
+  if (type == "BENEFIT") {
+    GoRouterKey.currentContext?.pushNamed(
+      RouteNames.CASHBACK_VIEW_SCREEN,
+      extra: {"rewardId": rewardId},
+    );
+  }
+  if (type == "OFFER") {
+    GoRouterKey.currentContext?.pushNamed(
+      RouteNames.PROMOCODE_VIEW_SCREEN,
+      extra: {"rewardId": rewardId},
+    );
+  }
 }

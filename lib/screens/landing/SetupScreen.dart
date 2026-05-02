@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:provider/provider.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/function/localstorage.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 
@@ -83,7 +85,6 @@ class _SetupScreenState extends State<SetupScreen> {
         ),
       );
       if (!response.success) {
-        await LocalStorage.setString("userId", response.user?.id ?? "");
         Fluttertoast.showToast(
           msg: response.message,
           backgroundColor: Colors.red,
@@ -91,6 +92,8 @@ class _SetupScreenState extends State<SetupScreen> {
         );
         return;
       }
+      await LocalStorage.setString("userId", response.user?.id ?? "");
+      context.read<UserProvider>().setUser(response.user!);
       context.goNamed(RouteNames.PROFILE_SUCCESS_SCREEN);
     } catch (e) {
       Fluttertoast.showToast(

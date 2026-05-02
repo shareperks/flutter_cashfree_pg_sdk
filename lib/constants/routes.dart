@@ -7,6 +7,7 @@ import 'package:shareperks/common/Splash_screen.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/function/initCheck.dart';
 import 'package:shareperks/screens/forms/RequestPerkScreen.dart';
+import 'package:shareperks/screens/forms/UpdateProfileScreen.dart';
 import 'package:shareperks/screens/holding/ListBrokersScreen.dart';
 import 'package:shareperks/screens/holding/MyHoldingScreen.dart';
 import 'package:shareperks/screens/holding/UploadHoldingStatementScreen.dart';
@@ -29,8 +30,12 @@ import 'package:shareperks/screens/main/NotifIcationsScreen.dart';
 import 'package:shareperks/screens/main/TopBrandsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
-import 'package:shareperks/screens/main/UnlockedPerksScreen%20copy.dart';
+import 'package:shareperks/screens/main/UnlockedPerksScreen.dart';
+import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
+import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
+import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
+import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
 
 // Routes names
 class RouteNames {
@@ -61,9 +66,14 @@ class RouteNames {
   static const String NOTIFICATION_SCREEN = 'NotificationScreen';
   static const String REQUEST_PERK_SCREEN = 'RequestPerkScreen';
   static const String GIFTCARD_VIEW_SCREEN = 'GiftCardViewScreen';
+  static const String CASHBACK_VIEW_SCREEN = 'CashBackViewScreen';
+  static const String PROMOCODE_VIEW_SCREEN = 'PromoCodeViewScreen';
   static const String MY_HOLDING_VIEW_SCREEN = 'MyHoldingViewScreen';
   static const String LIST_BROKER_VIEW_SCREEN = 'ListBrokerViewScreen';
   static const String UPLOAD_HOLDING_SCREEN = 'UploadHoldingScreen';
+  static const String PROFILE_EDIT_SCREEN = 'ProfileEditScreen';
+  static const String REFER_CODE_SCREEN = 'ReferAndEarnCodeScreen';
+  static const String MY_REFER_LIST_SCREEN = 'MyReferScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -153,6 +163,12 @@ final List<GoRoute> routes = [
         NotificationsScreen(),
   ),
   GoRoute(
+    name: RouteNames.PROFILE_EDIT_SCREEN,
+    path: RouteNames.path(RouteNames.PROFILE_EDIT_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        UpdateProfileScreen(),
+  ),
+  GoRoute(
     name: RouteNames.TOP_PERKS_SCREEN,
     path: RouteNames.path(RouteNames.TOP_PERKS_SCREEN),
     builder: (BuildContext context, GoRouterState state) => TopPerksScreen(),
@@ -194,6 +210,20 @@ final List<GoRoute> routes = [
     },
   ),
   GoRoute(
+    name: RouteNames.REFER_CODE_SCREEN,
+    path: RouteNames.path(RouteNames.REFER_CODE_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      return ReferAndEarnCodeScreen();
+    },
+  ),
+  GoRoute(
+    name: RouteNames.MY_REFER_LIST_SCREEN,
+    path: RouteNames.path(RouteNames.MY_REFER_LIST_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      return MyReferralListScreen();
+    },
+  ),
+  GoRoute(
     name: RouteNames.BRAND_SCREEN,
     path: RouteNames.path(RouteNames.BRAND_SCREEN),
     builder: (BuildContext context, GoRouterState state) {
@@ -224,6 +254,28 @@ final List<GoRoute> routes = [
           ? extra['rewardId'] as String?
           : null;
       return GiftCardRewardScreen(rewardId: rewardId!);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.CASHBACK_VIEW_SCREEN,
+    path: RouteNames.path(RouteNames.CASHBACK_VIEW_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? rewardId = extra is Map<String, dynamic>
+          ? extra['rewardId'] as String?
+          : null;
+      return CashBackRewardScreen(rewardId: rewardId!);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.PROMOCODE_VIEW_SCREEN,
+    path: RouteNames.path(RouteNames.PROMOCODE_VIEW_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? rewardId = extra is Map<String, dynamic>
+          ? extra['rewardId'] as String?
+          : null;
+      return PromoCodeRewardScreen(rewardId: rewardId!);
     },
   ),
   GoRoute(
@@ -308,7 +360,9 @@ final GoRouter router = GoRouter(
   navigatorKey: GoRouterKey,
   observers: [StarvestRouteObserver()],
   onEnter: (context, currentState, nextState, goRouter) async {
-    print('${currentState.name} -> ${nextState.name}');
+    if (currentState.name != nextState.name) {
+      print('${currentState.name} -> ${nextState.name}');
+    }
     final path = nextState.uri.path;
     final name = nextState.name;
     bool isOfflineRoute =

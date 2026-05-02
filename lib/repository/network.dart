@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shareperks/constants/logger.dart';
 import 'package:shareperks/function/localstorage.dart';
-import 'package:shareperks/repository/host.dart';
 
 class TokenManager {
   static Future<void> setToken(String token) async {

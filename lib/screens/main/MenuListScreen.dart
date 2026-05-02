@@ -86,7 +86,9 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
                     color: AppColors.accent,
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed(RouteNames.MY_REFER_LIST_SCREEN);
+                    },
                     trailing: Container(
                       width: 18,
                       height: 18,

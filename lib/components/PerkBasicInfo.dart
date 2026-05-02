@@ -3,14 +3,63 @@ import 'package:shareperks/components/EligibilityCards.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/elements/collaps_card.dart';
 import 'package:soui/elements/key_value_list.dart';
 import 'package:soui/elements/title_view.dart';
 
+class PerkBasicInfoData {
+  final String imageUrl;
+  final String typeLabel;
+  final String title;
+  final String tickerLabel;
+  final String tickerValue;
+  final bool underlineTicker;
+  final String perkIdLabel;
+  final String perkIdValue;
+  final String detailsTitle;
+  final String detailsBody;
+  final EligibilityCardsData? eligibility;
+
+  const PerkBasicInfoData({
+    required this.imageUrl,
+    required this.typeLabel,
+    required this.title,
+    this.tickerLabel = "Ticker",
+    required this.tickerValue,
+    this.underlineTicker = true,
+    this.perkIdLabel = "Perk ID",
+    required this.perkIdValue,
+    this.detailsTitle = 'Perk Details',
+    required this.detailsBody,
+    this.eligibility,
+  });
+
+  static const PerkBasicInfoData placeholder = PerkBasicInfoData(
+    imageUrl:
+        'https://www.youngurbanproject.com/wp-content/uploads/2025/05/Zomato-Case-Study.jpg',
+    typeLabel: 'Credit',
+    title: 'Reward Title on the given brand',
+    tickerLabel: 'Ticker',
+    tickerValue: 'Eternal Ltd.',
+    perkIdLabel: 'Perk ID',
+    perkIdValue: 'ZOM023',
+    detailsBody: 'Loading perk details…',
+    eligibility: EligibilityCardsData.placeholder,
+  );
+}
+
 class PerkBasicInfo extends StatelessWidget {
-  const PerkBasicInfo({super.key});
+  const PerkBasicInfo({
+    super.key,
+    this.data = PerkBasicInfoData.placeholder,
+    this.onTickerTap,
+  });
+
+  final PerkBasicInfoData data;
+  final VoidCallback? onTickerTap;
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +74,7 @@ class PerkBasicInfo extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ImageBuilder(
-            imageUrl:
-                "https://www.youngurbanproject.com/wp-content/uploads/2025/05/Zomato-Case-Study.jpg",
+            imageUrl: imageUrl(data.imageUrl),
             width: MediaQuery.of(context).size.width,
             borderRadius: 14,
             alignment: Alignment.bottomLeft,
@@ -39,9 +87,9 @@ class PerkBasicInfo extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 6,
               children: [
-                PerkInfoBar(type: "Credit"),
+                PerkInfoBar(type: data.typeLabel),
                 Text(
-                  'Reward Title on the given brand ',
+                  data.title,
                   style: TextStyle(
                     color: const Color(0xFF333333),
                     fontSize: 20,
@@ -51,7 +99,7 @@ class PerkBasicInfo extends StatelessWidget {
                 ),
                 KeyValueList(
                   keyWidget: Text(
-                    'Ticker',
+                    data.tickerLabel,
                     style: TextStyle(
                       color: const Color(0xFF898989),
                       fontSize: 12,
@@ -59,21 +107,26 @@ class PerkBasicInfo extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  valueWidget: Text(
-                    'Eternal Ltd.',
-                    style: TextStyle(
-                      color: const Color(0xFF5182FE) /* Information */,
-                      fontSize: 12,
-                      fontFamily: SharePerksFonts.inter,
-                      fontWeight: FontWeight.w400,
-                      decoration: TextDecoration.underline,
-                      decorationColor: const Color(0xFF5182FE),
+                  valueWidget: InkWell(
+                    onTap: onTickerTap,
+                    child: Text(
+                      data.tickerValue,
+                      style: TextStyle(
+                        color: const Color(0xFF5182FE) /* Information */,
+                        fontSize: 12,
+                        fontFamily: SharePerksFonts.inter,
+                        fontWeight: FontWeight.w400,
+                        decoration: data.underlineTicker
+                            ? TextDecoration.underline
+                            : null,
+                        decorationColor: const Color(0xFF5182FE),
+                      ),
                     ),
                   ),
                 ),
                 KeyValueList(
                   keyWidget: Text(
-                    'Perk ID',
+                    data.perkIdLabel,
                     style: TextStyle(
                       color: const Color(0xFF898989),
                       fontSize: 12,
@@ -82,7 +135,7 @@ class PerkBasicInfo extends StatelessWidget {
                     ),
                   ),
                   valueWidget: Text(
-                    'ZOM023',
+                    data.perkIdValue,
                     style: TextStyle(
                       fontSize: 12,
                       fontFamily: SharePerksFonts.inter,
@@ -96,7 +149,7 @@ class PerkBasicInfo extends StatelessWidget {
                   title: Padding(
                     padding: const EdgeInsets.only(bottom: 4.0, top: 4),
                     child: Text(
-                      'Perk Details',
+                      data.detailsTitle,
                       style: TextStyle(
                         color: SharePerksColors.accent,
                         fontSize: 16,
@@ -117,13 +170,14 @@ class PerkBasicInfo extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      "1.3 Gain: A measurement of how much light the screen reflects. Higher gain (like 1.3) is better for environments with some ambient light or for increasing the brightness of a 4K/HDR projector.",
+                      data.detailsBody,
                       style: TextStyle(fontSize: 11),
                     ),
                   ),
                 ),
                 SizedBox(height: 5),
-                EligibilityCards(),
+                if (data.eligibility != null)
+                  EligibilityCards(data: data.eligibility!),
               ],
             ),
           ),
@@ -177,16 +231,88 @@ class PerkInfoBar extends StatelessWidget {
 }
 
 class PerkTerms extends StatelessWidget {
-  const PerkTerms({super.key});
+  const PerkTerms({
+    super.key,
+    required this.termsAndConditions,
+    this.title = 'Important Terms & Conditions',
+    this.viewAllLabel = 'View all',
+    this.onViewAll,
+  });
+
+  final String title;
+  final String viewAllLabel;
+  final String termsAndConditions;
+  final VoidCallback? onViewAll;
+
+  void _defaultViewAll(BuildContext context, {VoidCallback? onViewAll}) {
+    final text = termsAndConditions.trim();
+    if (text.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        final bottom = MediaQuery.viewInsetsOf(context).bottom;
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: const Color(0xFF333333),
+                    fontSize: 16,
+                    fontFamily: SharePerksFonts.albertSans,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        color: const Color(0xFF333333),
+                        fontSize: 12,
+                        fontFamily: SharePerksFonts.inter,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                if (onViewAll != null)
+                  Center(
+                    child: TextButton(
+                      onPressed: onViewAll,
+                      child: Text("Read More"),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final preview = termsAndConditions.trim().isEmpty
+        ? 'Terms will appear here.'
+        : termsAndConditions.trim();
+
     return Column(
       spacing: 8,
       children: [
         TitleView(
           title: Text(
-            'Important Terms & Conditions',
+            title,
             style: TextStyle(
               color: const Color(0xFF333333),
               fontSize: 14,
@@ -194,16 +320,21 @@ class PerkTerms extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          trailing: LabelWithForwardIcon(
-            iconSize: 18,
-            iconColor: SharePerksColors.textSecondaryLight,
-            label: Text(
-              'View all',
-              style: TextStyle(
-                color: SharePerksColors.textSecondaryLight,
-                fontSize: 13,
-                fontFamily: SharePerksFonts.albertSans,
-                fontWeight: FontWeight.w600,
+          trailing: InkWell(
+            onTap: termsAndConditions.trim().isEmpty
+                ? null
+                : () => _defaultViewAll(context),
+            child: LabelWithForwardIcon(
+              iconSize: 18,
+              iconColor: SharePerksColors.textSecondaryLight,
+              label: Text(
+                viewAllLabel,
+                style: TextStyle(
+                  color: SharePerksColors.textSecondaryLight,
+                  fontSize: 13,
+                  fontFamily: SharePerksFonts.albertSans,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -221,7 +352,7 @@ class PerkTerms extends StatelessWidget {
               SizedBox(
                 width: MediaQuery.of(context).size.width - 150,
                 child: Text(
-                  'Lorem ipsum dolor sit amet consectetur. Ut pretium nisi aenean diam tincidunt eu. Nam quis massa volutpat turpis nisl nec arcu.',
+                  preview,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

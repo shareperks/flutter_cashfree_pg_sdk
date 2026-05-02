@@ -3,8 +3,33 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:soui/elements/border_card.dart';
 
+class EligibilityCardsData {
+  final int holdingPeriodDays;
+  final int sharesRequired;
+  final int renewEveryDays;
+  final String title;
+
+  const EligibilityCardsData({
+    required this.holdingPeriodDays,
+    required this.sharesRequired,
+    required this.renewEveryDays,
+    this.title = 'Eligibility',
+  });
+
+  static const EligibilityCardsData placeholder = EligibilityCardsData(
+    holdingPeriodDays: 30,
+    sharesRequired: 5,
+    renewEveryDays: 120,
+  );
+}
+
 class EligibilityCards extends StatelessWidget {
-  const EligibilityCards({super.key});
+  const EligibilityCards({
+    super.key,
+    this.data = EligibilityCardsData.placeholder,
+  });
+
+  final EligibilityCardsData data;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +39,7 @@ class EligibilityCards extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Eligibility',
+          data.title,
           style: TextStyle(
             color: const Color(0xFF6400E0),
             fontSize: 15,
@@ -43,7 +68,7 @@ class EligibilityCards extends StatelessWidget {
                     spacing: 2,
                     children: [
                       Text(
-                        '30',
+                        '${data.holdingPeriodDays}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: const Color(0xFF6400E0),
@@ -89,7 +114,7 @@ class EligibilityCards extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    '5',
+                    '${data.sharesRequired}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: SharePerksColors.accent,
@@ -159,7 +184,7 @@ class EligibilityCards extends StatelessWidget {
                         spacing: 2,
                         children: [
                           Text(
-                            '120',
+                            '${data.renewEveryDays}',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: const Color(0xFF6400E0),

@@ -16,10 +16,7 @@ class GiftcardDetailResponse {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      if (data != null) 'data': data!.toJson(),
-    };
+    return {'success': success, if (data != null) 'data': data!.toJson()};
   }
 }
 
@@ -32,6 +29,9 @@ class GiftcardDetailData {
   GiftcardLegalContent? content;
   GiftcardCompany? company;
 
+  /// Same shape as home listing rewards — reuse [RewardItem].
+  List<RewardItem>? relatedPerks;
+
   GiftcardDetailData({
     this.basicInfo,
     this.amount,
@@ -40,6 +40,7 @@ class GiftcardDetailData {
     this.eligibility,
     this.content,
     this.company,
+    this.relatedPerks,
   });
 
   GiftcardDetailData.fromJson(Map<String, dynamic> json) {
@@ -71,6 +72,13 @@ class GiftcardDetailData {
     if (co is Map<String, dynamic>) {
       company = GiftcardCompany.fromJson(co);
     }
+    final rp = json['relatedPerks'];
+    if (rp is List) {
+      relatedPerks = rp
+          .whereType<Map>()
+          .map((e) => RewardItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -82,6 +90,8 @@ class GiftcardDetailData {
       if (eligibility != null) 'eligibility': eligibility!.toJson(),
       if (content != null) 'content': content!.toJson(),
       if (company != null) 'company': company!.toJson(),
+      if (relatedPerks != null)
+        'relatedPerks': relatedPerks!.map((v) => v.toJson()).toList(),
     };
   }
 }
@@ -227,6 +237,7 @@ class GiftcardEligibility {
   int? withHolderRewardRate;
   int? nonHolderRewardRate;
   bool? isEligible;
+  GiftcardBrokerConnected? isBrokerConnected;
 
   GiftcardEligibility({
     this.days,
@@ -235,6 +246,7 @@ class GiftcardEligibility {
     this.withHolderRewardRate,
     this.nonHolderRewardRate,
     this.isEligible,
+    this.isBrokerConnected,
   });
 
   GiftcardEligibility.fromJson(Map<String, dynamic> json) {
@@ -244,6 +256,10 @@ class GiftcardEligibility {
     withHolderRewardRate = parseJsonInt(json['withHolderRewardRate']);
     nonHolderRewardRate = parseJsonInt(json['nonHolderRewardRate']);
     isEligible = json['isEligible'] as bool?;
+    final bc = json['isBrokerConnected'];
+    if (bc is Map<String, dynamic>) {
+      isBrokerConnected = GiftcardBrokerConnected.fromJson(bc);
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -254,7 +270,25 @@ class GiftcardEligibility {
       'withHolderRewardRate': withHolderRewardRate,
       'nonHolderRewardRate': nonHolderRewardRate,
       'isEligible': isEligible,
+      if (isBrokerConnected != null)
+        'isBrokerConnected': isBrokerConnected!.toJson(),
     };
+  }
+}
+
+class GiftcardBrokerConnected {
+  bool? connected;
+  bool? reqReimport;
+
+  GiftcardBrokerConnected({this.connected, this.reqReimport});
+
+  GiftcardBrokerConnected.fromJson(Map<String, dynamic> json) {
+    connected = json['connected'] as bool?;
+    reqReimport = json['reqReimport'] as bool?;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'connected': connected, 'reqReimport': reqReimport};
   }
 }
 
@@ -263,11 +297,7 @@ class GiftcardLegalContent {
   String? description;
   String? termsAndConditions;
 
-  GiftcardLegalContent({
-    this.id,
-    this.description,
-    this.termsAndConditions,
-  });
+  GiftcardLegalContent({this.id, this.description, this.termsAndConditions});
 
   GiftcardLegalContent.fromJson(Map<String, dynamic> json) {
     id = json['id'] as String?;

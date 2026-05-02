@@ -37,12 +37,14 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
   bool _refreshingSmallcase = false;
   bool _settingPrimary = false;
 
-  loadMyHoldings() async {
+  loadMyHoldings({bool? resync}) async {
     try {
       _error = false;
       data = await HoldingService.getHoldings();
       selectItems = HoldingSelectBuilder.build(data);
-      _syncDefaultAccount();
+      if (resync != false) {
+        _syncDefaultAccount();
+      }
     } catch (e) {
       _error = true;
     } finally {
@@ -205,29 +207,13 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
         !mounted) {
       return;
     }
-    final previousId = h.id;
     setState(() => _refreshingSmallcase = true);
     try {
-      final updated = await HoldingService.refreshHoldingTransaction(
-        previousId,
-      );
+      await HoldingService.refreshHoldingTransaction(selectedHolding?.id ?? "");
       if (!mounted) return;
-      final i = data.indexWhere((e) => e.id == previousId);
-      if (i < 0) {
-        setState(() => _refreshingSmallcase = false);
-        await loadMyHoldings();
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Holdings refreshed')));
-        return;
-      }
+
+      loadMyHoldings(resync: false);
       setState(() {
-        data = List<FetchUserHoldingsResponse>.from(data);
-        data[i] = updated;
-        selectItems = HoldingSelectBuilder.build(data);
-        _selectedAccountId = updated.id;
-        selectedHolding = updated;
         _refreshingSmallcase = false;
       });
       ScaffoldMessenger.of(
@@ -294,7 +280,7 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
           }
           return RefreshIndicator(
             onRefresh: () async {
-              await loadMyHoldings();
+              await loadMyHoldings(resync: false);
             },
             child: SingleChildScrollView(
               child: SizedBox(
