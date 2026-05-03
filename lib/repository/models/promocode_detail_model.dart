@@ -2,7 +2,7 @@ import 'cashback_detail_model.dart';
 
 /// `GET /rewards/promocode/:id`
 ///
-/// This payload matches the cashback detail shape (basicInfo/company/brand/category/
-/// eligibility/content/relatedPerks), so we reuse the same typed models.
+/// Same envelope as cashback detail ([CashbackDetailResponse]) plus optional
+/// [PromocodeChimed] on [CashbackDetailData.chimed].
 typedef PromocodeDetailResponse = CashbackDetailResponse;
 typedef PromocodeDetailData = CashbackDetailData;

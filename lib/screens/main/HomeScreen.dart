@@ -383,95 +383,96 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   SizedBox(height: 30),
-                  BorderCard(
-                    width: double.infinity,
-                    borderWidth: 1,
-                    color: SharePerksColors.primary.withValues(alpha: 0.3),
-                    borderRadius: SharePerksRadii.lg,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.only(
-                            top: 16,
-                            left: 16,
-                            right: 16,
-                            bottom: 10,
-                          ),
-                          child: TitleView(
-                            title: Text(
-                              'Unlocked Perks',
-                              style: TextStyle(
-                                color: SharePerksColors.primary,
-                                fontSize: 18,
-                                fontFamily: SharePerksFonts.albertSans,
-                                fontWeight: FontWeight.w600,
-                              ),
+                  if ((data?.data?.unlockedRewards?.rewards?.length ?? 0) != 0)
+                    BorderCard(
+                      width: double.infinity,
+                      borderWidth: 1,
+                      color: SharePerksColors.primary.withValues(alpha: 0.3),
+                      borderRadius: SharePerksRadii.lg,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(
+                              top: 16,
+                              left: 16,
+                              right: 16,
+                              bottom: 10,
                             ),
-                            trailing: GestureDetector(
-                              onTap: () {
-                                context.pushNamed(
-                                  RouteNames.UNLOCKED_PERKS_SCREEN,
-                                );
-                              },
-                              child: LabelWithForwardIcon(
-                                iconColor: SharePerksColors.primary,
-                                iconSize: 18,
-                                label: Text(
-                                  'View all',
-                                  style: TextStyle(
-                                    color: SharePerksColors.primary,
-                                    fontSize: 13,
-                                    fontFamily: SharePerksFonts.inter,
-                                    fontWeight: FontWeight.w600,
+                            child: TitleView(
+                              title: Text(
+                                'Unlocked Perks',
+                                style: TextStyle(
+                                  color: SharePerksColors.primary,
+                                  fontSize: 18,
+                                  fontFamily: SharePerksFonts.albertSans,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              trailing: GestureDetector(
+                                onTap: () {
+                                  context.pushNamed(
+                                    RouteNames.UNLOCKED_PERKS_SCREEN,
+                                  );
+                                },
+                                child: LabelWithForwardIcon(
+                                  iconColor: SharePerksColors.primary,
+                                  iconSize: 18,
+                                  label: Text(
+                                    'View all',
+                                    style: TextStyle(
+                                      color: SharePerksColors.primary,
+                                      fontSize: 13,
+                                      fontFamily: SharePerksFonts.inter,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
 
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width,
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width,
 
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              spacing: 12,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(width: 6),
-                                ...List.generate(
-                                  data
-                                          ?.data
-                                          ?.unlockedRewards
-                                          ?.rewards
-                                          ?.length ??
-                                      0,
-                                  (index) {
-                                    RewardItem reward = data!
-                                        .data!
-                                        .unlockedRewards!
-                                        .rewards![index];
-                                    return RewardCard(
-                                      rewardId: reward.id!,
-                                      type: reward.type!,
-                                      typeName: reward.type,
-                                      title: reward.title ?? "--",
-                                      imageUrl: imageUrl(reward.image ?? ""),
-                                      isEligible: reward.isEligible ?? false,
-                                      eligibility: reward.companyName ?? "--",
-                                    );
-                                  },
-                                ),
-                                SizedBox(width: 6),
-                              ],
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                spacing: 12,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(width: 6),
+                                  ...List.generate(
+                                    data
+                                            ?.data
+                                            ?.unlockedRewards
+                                            ?.rewards
+                                            ?.length ??
+                                        0,
+                                    (index) {
+                                      RewardItem reward = data!
+                                          .data!
+                                          .unlockedRewards!
+                                          .rewards![index];
+                                      return RewardCard(
+                                        rewardId: reward.id!,
+                                        type: reward.type!,
+                                        typeName: reward.type,
+                                        title: reward.title ?? "--",
+                                        imageUrl: imageUrl(reward.image ?? ""),
+                                        isEligible: reward.isEligible ?? false,
+                                        eligibility: reward.companyName ?? "--",
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(width: 6),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   SizedBox(height: 26),
 
                   Image.asset(Assets.ASSETS_CARDS_DATA_SAFETY_PNG),
@@ -489,9 +490,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                     color: const Color(0xFF333333),
                                     fontSize: 18,
-                                    fontFamily: 'Albert Sans',
+                                    fontFamily: SharePerksFonts.albertSans,
                                     fontWeight: FontWeight.w600,
-                                    height: 1.33,
                                   ),
                                 ),
                                 TextSpan(
@@ -534,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 15),
+                      SizedBox(height: 18),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(

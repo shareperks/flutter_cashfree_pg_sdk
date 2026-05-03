@@ -52,7 +52,10 @@ class BottomNavigationBarComponent extends StatelessWidget {
           ),
           CustomBottomNavigationItem(
             icon: HugeIconsSolid.starCircle,
-            label: 'Rewards',
+            onTap: () {
+              context.pushNamed(RouteNames.CLAIMED_PERKS_SCREEN);
+            },
+            label: 'Claimed',
           ),
 
           CustomBottomNavigationItem(

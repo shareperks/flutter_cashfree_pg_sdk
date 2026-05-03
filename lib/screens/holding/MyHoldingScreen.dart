@@ -591,102 +591,138 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  ListView(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    children: List.generate(
-                                      selectedHolding?.holdings.length ?? 0,
-                                      (index) {
-                                        int len =
-                                            (selectedHolding?.holdings.length ??
-                                                0) -
-                                            1;
-                                        UserHoldingLine? holding =
-                                            selectedHolding?.holdings[index];
-                                        return Container(
-                                          decoration: BoxDecoration(
-                                            border: (len) == index
-                                                ? null
-                                                : Border(
-                                                    bottom: BorderSide(
-                                                      width: 1,
-                                                      color: Color.fromARGB(
-                                                        255,
-                                                        239,
-                                                        239,
-                                                        239,
-                                                      ),
-                                                    ),
-                                                  ),
+                                  Builder(
+                                    builder: (context) {
+                                      if (selectedHolding?.holdings.isEmpty ??
+                                          false) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 5,
                                           ),
-                                          child: ListTile(
-                                            dense: true,
-                                            contentPadding: EdgeInsets.all(0),
-                                            leading: ImageBuilder(
-                                              imageUrl: holding?.logo ?? "",
-                                              width: 40,
-                                              height: 40,
-                                              borderRadius: 100,
+                                          child: Text(
+                                            'No Holdings Found',
+                                            style: TextStyle(
+                                              color: const Color(0xFF898989),
+                                              fontSize: 12,
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.w400,
+                                              height: 1.33,
                                             ),
-                                            title: Text(
-                                              '${holding?.name}',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                color: const Color(0xFF333333),
-                                                fontSize: 12,
-                                                fontFamily:
-                                                    SharePerksFonts.inter,
-                                                fontWeight: FontWeight.w400,
+                                          ),
+                                        );
+                                      }
+                                      return ListView(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        children: List.generate(
+                                          selectedHolding?.holdings.length ?? 0,
+                                          (index) {
+                                            int len =
+                                                (selectedHolding
+                                                        ?.holdings
+                                                        .length ??
+                                                    0) -
+                                                1;
+                                            UserHoldingLine? holding =
+                                                selectedHolding
+                                                    ?.holdings[index];
+                                            return Container(
+                                              decoration: BoxDecoration(
+                                                border: (len) == index
+                                                    ? null
+                                                    : Border(
+                                                        bottom: BorderSide(
+                                                          width: 1,
+                                                          color: Color.fromARGB(
+                                                            255,
+                                                            239,
+                                                            239,
+                                                            239,
+                                                          ),
+                                                        ),
+                                                      ),
                                               ),
-                                            ),
-                                            subtitle: Text(
-                                              holding?.isin ?? "",
-                                              style: TextStyle(
-                                                color: const Color(0xFF898989),
-                                                fontSize: 10,
-                                                fontFamily:
-                                                    SharePerksFonts.inter,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                            trailing: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              spacing: 4,
-                                              children: [
-                                                Text(
-                                                  'Qty ${holding?.quantity}',
+                                              child: ListTile(
+                                                dense: true,
+                                                contentPadding: EdgeInsets.all(
+                                                  0,
+                                                ),
+                                                leading: ImageBuilder(
+                                                  imageUrl: holding?.logo ?? "",
+                                                  width: 40,
+                                                  height: 40,
+                                                  borderRadius: 100,
+                                                ),
+                                                title: Text(
+                                                  '${holding?.name}',
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: TextStyle(
                                                     color: const Color(
                                                       0xFF333333,
                                                     ),
-                                                    fontSize: 11,
+                                                    fontSize: 12,
                                                     fontFamily:
                                                         SharePerksFonts.inter,
                                                     fontWeight: FontWeight.w400,
                                                   ),
                                                 ),
-                                                Text(
-                                                  '${holding?.holdingDays} Days',
+                                                subtitle: Text(
+                                                  holding?.isin ?? "",
                                                   style: TextStyle(
                                                     color: const Color(
                                                       0xFF898989,
-                                                    ) /* Success */,
+                                                    ),
                                                     fontSize: 10,
                                                     fontFamily:
                                                         SharePerksFonts.inter,
-                                                    fontWeight: FontWeight.w700,
+                                                    fontWeight: FontWeight.w400,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                                trailing: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  spacing: 4,
+                                                  children: [
+                                                    Text(
+                                                      'Qty ${holding?.quantity}',
+                                                      style: TextStyle(
+                                                        color: const Color(
+                                                          0xFF333333,
+                                                        ),
+                                                        fontSize: 11,
+                                                        fontFamily:
+                                                            SharePerksFonts
+                                                                .inter,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '${holding?.holdingDays} Days',
+                                                      style: TextStyle(
+                                                        color: const Color(
+                                                          0xFF898989,
+                                                        ) /* Success */,
+                                                        fontSize: 10,
+                                                        fontFamily:
+                                                            SharePerksFonts
+                                                                .inter,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ],
                               ),

@@ -130,6 +130,9 @@ class Assets {
   static const String ASSETS_ICONS_ELIGIBLEREWARD_SVG =
       'assets/icons/EligibleReward.svg';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/Expired.svg)
+  static const String ASSETS_ICONS_EXPIRED_SVG = 'assets/icons/Expired.svg';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/NewAdditions.svg)
   static const String ASSETS_ICONS_NEWADDITIONS_SVG =
       'assets/icons/NewAdditions.svg';

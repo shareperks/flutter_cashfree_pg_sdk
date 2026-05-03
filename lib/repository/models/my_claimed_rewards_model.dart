@@ -1,6 +1,6 @@
 import 'home_common_models.dart';
 
-/// `GET /rewards/my-claimed` — envelope `{ success, data }`.
+/// `GET /rewards/my-claimed` — `{ success, data }`.
 class MyClaimedRewardsResponse {
   MyClaimedRewardsResponse({this.success, this.data});
 
@@ -17,267 +17,165 @@ class MyClaimedRewardsResponse {
   }
 
   Map<String, dynamic> toJson() => {
-    'success': success,
-    if (data != null) 'data': data!.toJson(),
-  };
+        'success': success,
+        if (data != null) 'data': data!.toJson(),
+      };
 }
 
-/// `data` object: totals + claimed gift cards and promo codes.
+/// `data`: totals, month stats, holding state, flat [perks] list.
 class MyClaimedRewardsData {
   MyClaimedRewardsData({
     this.totalSaved,
+    this.savedThisMonth,
     this.totalUnlocked,
-    this.giftcards,
-    this.promocodes,
+    this.thisMonthUnlocked,
+    this.isConnected,
+    this.perks,
   });
 
   final int? totalSaved;
+  final int? savedThisMonth;
   final int? totalUnlocked;
-  final List<MyClaimedGiftcardItem>? giftcards;
-  final List<MyClaimedPromocodeItem>? promocodes;
+  final int? thisMonthUnlocked;
+  final MyClaimedHoldingConnection? isConnected;
+  final List<MyClaimedPerk>? perks;
 
   factory MyClaimedRewardsData.fromJson(Map<String, dynamic> json) {
     return MyClaimedRewardsData(
       totalSaved: parseJsonInt(json['totalSaved']),
+      savedThisMonth: parseJsonInt(json['savedThisMonth']),
       totalUnlocked: parseJsonInt(json['totalUnlocked']),
-      giftcards: _mapList(
-        json['giftcards'],
-        (e) => MyClaimedGiftcardItem.fromJson(e),
-      ),
-      promocodes: _mapList(
-        json['promocodes'],
-        (e) => MyClaimedPromocodeItem.fromJson(e),
-      ),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'totalSaved': totalSaved,
-    'totalUnlocked': totalUnlocked,
-    if (giftcards != null)
-      'giftcards': giftcards!.map((e) => e.toJson()).toList(),
-    if (promocodes != null)
-      'promocodes': promocodes!.map((e) => e.toJson()).toList(),
-  };
-
-  static List<T>? _mapList<T>(
-    dynamic raw,
-    T Function(Map<String, dynamic>) from,
-  ) {
-    if (raw is! List<dynamic>) return null;
-    return raw.whereType<Map<String, dynamic>>().map(from).toList();
-  }
-}
-
-/// One claimed gift card row.
-class MyClaimedGiftcardItem {
-  MyClaimedGiftcardItem({
-    this.id,
-    this.isUsedByUser,
-    this.paymentId,
-    this.status,
-    this.card,
-    this.info,
-  });
-
-  final String? id;
-  final bool? isUsedByUser;
-  final String? paymentId;
-  final String? status;
-  final MyClaimedGiftcardCard? card;
-  final MyClaimedRewardInfo? info;
-
-  factory MyClaimedGiftcardItem.fromJson(Map<String, dynamic> json) {
-    return MyClaimedGiftcardItem(
-      id: json['id'] as String?,
-      isUsedByUser: json['isUsedByUser'] as bool?,
-      paymentId: json['paymentId'] as String?,
-      status: json['status'] as String?,
-      card: json['card'] is Map<String, dynamic>
-          ? MyClaimedGiftcardCard.fromJson(json['card'] as Map<String, dynamic>)
-          : null,
-      info: json['info'] is Map<String, dynamic>
-          ? MyClaimedRewardInfo.fromJson(json['info'] as Map<String, dynamic>)
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'isUsedByUser': isUsedByUser,
-    'paymentId': paymentId,
-    'status': status,
-    if (card != null) 'card': card!.toJson(),
-    if (info != null) 'info': info!.toJson(),
-  };
-}
-
-/// Gift card `card` block (codes, amounts, expiry).
-class MyClaimedGiftcardCard {
-  MyClaimedGiftcardCard({
-    this.eligible,
-    this.payAmount,
-    this.rewardAmount,
-    this.savedAmount,
-    this.code,
-    this.pin,
-    this.expireAt,
-    this.expireAtFormatted,
-    this.remainingDays,
-  });
-
-  final bool? eligible;
-  final int? payAmount;
-  final int? rewardAmount;
-  final int? savedAmount;
-  final String? code;
-  final String? pin;
-  final String? expireAt;
-  final String? expireAtFormatted;
-  final int? remainingDays;
-
-  factory MyClaimedGiftcardCard.fromJson(Map<String, dynamic> json) {
-    return MyClaimedGiftcardCard(
-      eligible: json['eligible'] as bool?,
-      payAmount: parseJsonInt(json['payAmount']),
-      rewardAmount: parseJsonInt(json['rewardAmount']),
-      savedAmount: parseJsonInt(json['savedAmount']),
-      code: json['code'] as String?,
-      pin: json['pin'] as String?,
-      expireAt: json['expireAt'] as String?,
-      expireAtFormatted: json['expireAtFormatted'] as String?,
-      remainingDays: parseJsonInt(json['remainingDays']),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'eligible': eligible,
-    'payAmount': payAmount,
-    'rewardAmount': rewardAmount,
-    'savedAmount': savedAmount,
-    'code': code,
-    'pin': pin,
-    'expireAt': expireAt,
-    'expireAtFormatted': expireAtFormatted,
-    'remainingDays': remainingDays,
-  };
-}
-
-/// One claimed promo code row.
-class MyClaimedPromocodeItem {
-  MyClaimedPromocodeItem({this.id, this.isUsedByUser, this.card, this.info});
-
-  final String? id;
-  final bool? isUsedByUser;
-  final MyClaimedPromocodeCard? card;
-  final MyClaimedRewardInfo? info;
-
-  factory MyClaimedPromocodeItem.fromJson(Map<String, dynamic> json) {
-    return MyClaimedPromocodeItem(
-      id: json['id'] as String?,
-      isUsedByUser: json['isUsedByUser'] as bool?,
-      card: json['card'] is Map<String, dynamic>
-          ? MyClaimedPromocodeCard.fromJson(
-              json['card'] as Map<String, dynamic>,
+      thisMonthUnlocked: parseJsonInt(json['thisMonthUnlocked']),
+      isConnected: json['isConnected'] is Map<String, dynamic>
+          ? MyClaimedHoldingConnection.fromJson(
+              json['isConnected'] as Map<String, dynamic>,
             )
           : null,
-      info: json['info'] is Map<String, dynamic>
-          ? MyClaimedRewardInfo.fromJson(json['info'] as Map<String, dynamic>)
-          : null,
+      perks: _mapPerks(json['perks']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'isUsedByUser': isUsedByUser,
-    if (card != null) 'card': card!.toJson(),
-    if (info != null) 'info': info!.toJson(),
-  };
+        'totalSaved': totalSaved,
+        'savedThisMonth': savedThisMonth,
+        'totalUnlocked': totalUnlocked,
+        'thisMonthUnlocked': thisMonthUnlocked,
+        if (isConnected != null) 'isConnected': isConnected!.toJson(),
+        if (perks != null) 'perks': perks!.map((e) => e.toJson()).toList(),
+      };
+
+  static List<MyClaimedPerk>? _mapPerks(dynamic raw) {
+    if (raw is! List<dynamic>) return null;
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(MyClaimedPerk.fromJson)
+        .toList();
+  }
 }
 
-/// Promo `card` block — `eligible` is a string enum (e.g. `NON_HOLDINGS`).
-class MyClaimedPromocodeCard {
-  MyClaimedPromocodeCard({
-    this.eligible,
-    this.code,
-    this.assignedAt,
-    this.assignedAtFormatted,
-    this.usedAt,
-    this.usedAtFormatted,
-  });
+class MyClaimedHoldingConnection {
+  MyClaimedHoldingConnection({this.connected, this.reqReimport});
 
-  final String? eligible;
-  final String? code;
-  final String? assignedAt;
-  final String? assignedAtFormatted;
-  final String? usedAt;
-  final String? usedAtFormatted;
+  final bool? connected;
+  final bool? reqReimport;
 
-  factory MyClaimedPromocodeCard.fromJson(Map<String, dynamic> json) {
-    final el = json['eligible'];
-    return MyClaimedPromocodeCard(
-      eligible: el is String ? el : el?.toString(),
-      code: json['code'] as String?,
-      assignedAt: json['assignedAt'] as String?,
-      assignedAtFormatted: json['assignedAtFormatted'] as String?,
-      usedAt: json['usedAt'] as String?,
-      usedAtFormatted: json['usedAtFormatted'] as String?,
+  factory MyClaimedHoldingConnection.fromJson(Map<String, dynamic> json) {
+    return MyClaimedHoldingConnection(
+      connected: json['connected'] as bool?,
+      reqReimport: json['reqReimport'] as bool?,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    if (eligible != null) 'eligible': eligible,
-    'code': code,
-    'assignedAt': assignedAt,
-    'assignedAtFormatted': assignedAtFormatted,
-    'usedAt': usedAt,
-    'usedAtFormatted': usedAtFormatted,
-  };
+        'connected': connected,
+        'reqReimport': reqReimport,
+      };
 }
 
-/// Shared `info` for gift cards and promos (provider only on gift cards).
-class MyClaimedRewardInfo {
-  MyClaimedRewardInfo({
+/// One row in `data.perks` (gift card, offer, etc.).
+class MyClaimedPerk {
+  MyClaimedPerk({
+    this.claimedId,
     this.rewardId,
-    this.name,
-    this.brandId,
-    this.brandName,
     this.image,
-    this.banner,
-    this.provider,
-    this.categoryName,
+    this.name,
+    this.rewardValue,
+    this.expiredAt,
+    this.expireAtFormatted,
+    this.type,
+    this.used,
+    this.term,
+    this.expired,
+    this.code,
   });
 
-  final String? rewardId;
-  final String? name;
-  final String? brandId;
-  final String? brandName;
-  final String? image;
-  final String? banner;
-  final String? provider;
-  final String? categoryName;
+  /// Claimed-instance id (for `GET /rewards/my-claimed/giftcard/:claimedId`).
+  final String? claimedId;
 
-  factory MyClaimedRewardInfo.fromJson(Map<String, dynamic> json) {
-    return MyClaimedRewardInfo(
+  /// Catalog reward id (for perk detail screens).
+  final String? rewardId;
+
+  final String? image;
+  final String? name;
+  final int? rewardValue;
+
+  /// ISO expiry (API field `expiredAt`).
+  final String? expiredAt;
+
+  final String? expireAtFormatted;
+
+  /// e.g. `CREDIT`, `OFFER`, `BENEFIT`.
+  final String? type;
+  final bool? used;
+
+  /// Pre-formatted label, e.g. `₹ 10.00` or `₹ 0 OFF`.
+  final String? term;
+
+  /// Server-side expiry flag; when null, [isExpired] falls back to [expiredAt].
+  final bool? expired;
+
+  /// Promo code for `OFFER` rows; omitted for e.g. `CREDIT`.
+  final String? code;
+
+  factory MyClaimedPerk.fromJson(Map<String, dynamic> json) {
+    return MyClaimedPerk(
+      claimedId: json['claimedId'] as String? ?? json['id'] as String?,
       rewardId: json['rewardId'] as String?,
-      name: json['name'] as String?,
-      brandId: json['brandId'] as String?,
-      brandName: json['brandName'] as String?,
       image: json['image'] as String?,
-      banner: json['banner'] as String?,
-      provider: json['provider'] as String?,
-      categoryName: json['categoryName'] as String?,
+      name: json['name'] as String?,
+      rewardValue: parseJsonInt(json['rewardValue']),
+      expiredAt: json['expiredAt'] as String? ?? json['expireAt'] as String?,
+      expireAtFormatted: json['expireAtFormatted'] as String?,
+      type: json['type'] as String?,
+      used: json['used'] as bool?,
+      term: json['term'] as String?,
+      expired: json['expired'] as bool?,
+      code: json['code'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'rewardId': rewardId,
-    'name': name,
-    'brandId': brandId,
-    'brandName': brandName,
-    'image': image,
-    'banner': banner,
-    'provider': provider,
-    'categoryName': categoryName,
-  };
+        'claimedId': claimedId,
+        'rewardId': rewardId,
+        'image': image,
+        'name': name,
+        'rewardValue': rewardValue,
+        'expiredAt': expiredAt,
+        'expireAtFormatted': expireAtFormatted,
+        'type': type,
+        'used': used,
+        'term': term,
+        'expired': expired,
+        'code': code,
+      };
+
+  /// Uses [expired] when set; otherwise derives from [expiredAt].
+  bool get isExpired {
+    if (expired != null) return expired == true;
+    final raw = expiredAt?.trim();
+    if (raw == null || raw.isEmpty) return false;
+    final d = DateTime.tryParse(raw);
+    if (d == null) return false;
+    return d.isBefore(DateTime.now());
+  }
 }

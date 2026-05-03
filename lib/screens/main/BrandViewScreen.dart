@@ -15,7 +15,6 @@ import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
-import 'package:soui/elements/key_value_list.dart';
 import 'package:soui/elements/title_view.dart';
 
 class BrandViewScreen extends StatefulWidget {

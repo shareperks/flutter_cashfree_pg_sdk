@@ -28,6 +28,9 @@ class CashbackDetailData {
   CashbackEligibility? eligibility;
   CashbackLegalContent? content;
 
+  /// Present on `GET /rewards/promocode/:id` — claim state and revealed code.
+  PromocodeChimed? chimed;
+
   /// Same shape as home listing rewards — reuse [RewardItem].
   List<RewardItem>? relatedPerks;
 
@@ -38,6 +41,7 @@ class CashbackDetailData {
     this.category,
     this.eligibility,
     this.content,
+    this.chimed,
     this.relatedPerks,
   });
 
@@ -60,6 +64,9 @@ class CashbackDetailData {
     final ct = json['content'];
     if (ct is Map<String, dynamic>) content = CashbackLegalContent.fromJson(ct);
 
+    final ch = json['chimed'];
+    if (ch is Map<String, dynamic>) chimed = PromocodeChimed.fromJson(ch);
+
     final rp = json['relatedPerks'];
     if (rp is List) {
       relatedPerks = rp
@@ -77,6 +84,7 @@ class CashbackDetailData {
       if (category != null) 'category': category!.toJson(),
       if (eligibility != null) 'eligibility': eligibility!.toJson(),
       if (content != null) 'content': content!.toJson(),
+      if (chimed != null) 'chimed': chimed!.toJson(),
       if (relatedPerks != null)
         'relatedPerks': relatedPerks!.map((v) => v.toJson()).toList(),
     };
@@ -247,6 +255,37 @@ class RewardBrokerConnected {
   }
 
   Map<String, dynamic> toJson() => {'connected': connected, 'reqReimport': reqReimport};
+}
+
+/// `data.chimed` on `GET /rewards/promocode/:id`.
+class PromocodeChimed {
+  bool? claimed;
+  String? code;
+  bool? isEligible;
+  String? chimedAt;
+
+  PromocodeChimed({
+    this.claimed,
+    this.code,
+    this.isEligible,
+    this.chimedAt,
+  });
+
+  PromocodeChimed.fromJson(Map<String, dynamic> json) {
+    claimed = json['claimed'] as bool?;
+    code = json['code'] as String?;
+    isEligible = json['isEligible'] as bool?;
+    chimedAt = json['chimedAt'] as String?;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'claimed': claimed,
+      'code': code,
+      'isEligible': isEligible,
+      'chimedAt': chimedAt,
+    };
+  }
 }
 
 class CashbackLegalContent {

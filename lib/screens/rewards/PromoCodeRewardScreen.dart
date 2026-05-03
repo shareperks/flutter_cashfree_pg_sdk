@@ -1,16 +1,22 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/EligibilityCards.dart';
 import 'package:shareperks/components/PerkBasicInfo.dart';
 import 'package:shareperks/components/ReletedPerksCard.dart';
 import 'package:shareperks/components/loader/GiftCardRewardShimmer.dart';
 import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:soui/elements/SpScafold.dart';
+import 'package:soui/elements/title_view.dart';
 
 class PromoCodeRewardScreen extends StatefulWidget {
   final String rewardId;
@@ -114,18 +120,34 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                               ),
                             ),
                           ),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              child: Text("Verify Eligibility"),
+                          if (data?.data?.chimed?.claimed ?? false)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: MyPromoCodeView(data: data?.data?.chimed),
                             ),
-                          ),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {},
-                              child: Text("Claim Non-Shareholder Perk"),
+                          if (data?.data?.chimed?.claimed == false)
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              spacing: 10,
+                              children: [
+                                Center(
+                                  child: ElevatedButton(
+                                    onPressed: () {},
+                                    child: Text("Verify Eligibility"),
+                                  ),
+                                ),
+                                Center(
+                                  child: TextButton(
+                                    onPressed: () {},
+                                    child: Text("Claim Non-Shareholder Perk"),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+
                           Padding(
                             padding: const EdgeInsets.all(14.0),
                             child: PerkTerms(
@@ -153,4 +175,156 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
             ),
     );
   }
+}
+
+class MyPromoCodeView extends StatelessWidget {
+  const MyPromoCodeView({super.key, required this.data});
+
+  final PromocodeChimed? data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      spacing: 10,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Discount Code',
+              style: TextStyle(
+                color: SharePerksColors.primary,
+                fontSize: 16,
+                fontFamily: SharePerksFonts.albertSans,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Icon(
+              HugeIconsSolid.copy01,
+              size: 16,
+              color: SharePerksColors.primary,
+            ),
+          ],
+        ),
+        DottedBorder(
+          options: RectDottedBorderOptions(
+            dashPattern: [10, 5],
+            strokeWidth: 1,
+            color: SharePerksColors.primary,
+            padding: EdgeInsets.all(15),
+            strokeCap: StrokeCap.round,
+          ),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: Center(
+              child: Text(
+                data?.code ?? "--",
+                style: TextStyle(
+                  color: SharePerksColors.primary,
+                  fontSize: 23.40,
+                  fontFamily: SharePerksFonts.albertSans,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            LabelWithForwardIcon(
+              iconSize: 17,
+              iconColor: SharePerksColors.primary,
+              label: Text(
+                'How to redeem',
+                style: TextStyle(
+                  color: SharePerksColors.primary,
+                  fontSize: 14,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(
+              'Mark as redeemed',
+              style: TextStyle(
+                color: SharePerksColors.primary,
+                fontSize: 14,
+                fontFamily: SharePerksFonts.inter,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+void showClaimedPromoCodeSheet(
+  BuildContext context, {
+  String? code,
+  String? name,
+  String? subtitle,
+  String? rewardId,
+}) {
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Colors.white,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return SizedBox(
+        width: MediaQuery.of(context).size.width,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Column(
+            spacing: 20,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                spacing: 4,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$name',
+                    style: TextStyle(
+                      color: const Color(0xFF333333),
+                      fontSize: 20,
+                      fontFamily: SharePerksFonts.albertSans,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '$subtitle',
+                    style: TextStyle(
+                      color: const Color(0xFF898989),
+                      fontSize: 12,
+                      fontFamily: SharePerksFonts.inter,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+              MyPromoCodeView(data: PromocodeChimed(code: code)),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Close"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

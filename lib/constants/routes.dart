@@ -37,6 +37,7 @@ import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ClaimedPerksScreen.dart';
+import 'package:shareperks/screens/rewards/GiftCardCodeViewScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
 import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ReadRewardTermScreen.dart';
@@ -81,7 +82,8 @@ class RouteNames {
   static const String MY_REFER_LIST_SCREEN = 'MyReferScreen';
   static const String SETTINGS_SCREEN = 'SettingsScreen';
   static const String EMAIL_SUCCESS_SCREEN = 'SuccessScreen';
-  static const String CLAIMED_PERKS_SCREEN = 'CLAIMED_PERKS_SCREEN';
+  static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
+  static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -355,6 +357,17 @@ final List<GoRoute> routes = [
         ClaimedPerksScreen(),
   ),
   GoRoute(
+    name: RouteNames.CLAIMED_GIFTCARD_SCREEN,
+    path: RouteNames.path(RouteNames.CLAIMED_GIFTCARD_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? claimedId = extra is Map<String, dynamic>
+          ? extra['claimedId'] as String?
+          : null;
+      return GiftCardCodeViewScreen(claimedId: claimedId!);
+    },
+  ),
+  GoRoute(
     name: RouteNames.NEW_UPDATE,
     path: RouteNames.path(RouteNames.NEW_UPDATE),
     builder: (BuildContext context, GoRouterState state) {
@@ -394,7 +407,7 @@ final class StarvestRouteObserver extends NavigatorObserver {
 
 // GoRouter configuration
 final GoRouter router = GoRouter(
-  initialLocation: RouteNames.path(RouteNames.CLAIMED_PERKS_SCREEN),
+  initialLocation: RouteNames.path(RouteNames.SPLASH),
   routes: routes,
   navigatorKey: GoRouterKey,
   observers: [StarvestRouteObserver()],

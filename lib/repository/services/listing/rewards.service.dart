@@ -3,6 +3,7 @@ import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
+import 'package:shareperks/repository/models/my_claimed_giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/my_claimed_rewards_model.dart';
 import 'package:shareperks/repository/models/reward_content_model.dart';
 import 'package:shareperks/repository/network.dart';
@@ -68,5 +69,21 @@ class RewardListingDataService {
       throw StateError('My claimed rewards: empty response body');
     }
     return MyClaimedRewardsResponse.fromJson(body);
+  }
+
+  /// `GET /rewards/my-claimed/giftcard/:claimedId` — one claimed gift card (codes, pin, info).
+  ///
+  /// [claimedId] is [MyClaimedPerk.claimedId] from my-claimed list, not the catalog reward id.
+  static Future<MyClaimedGiftcardDetailResponse> getMyClaimedGiftcardDetail(
+    String claimedId,
+  ) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/rewards/my-claimed/giftcard/$claimedId',
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('My claimed giftcard detail: empty response body');
+    }
+    return MyClaimedGiftcardDetailResponse.fromJson(body);
   }
 }
