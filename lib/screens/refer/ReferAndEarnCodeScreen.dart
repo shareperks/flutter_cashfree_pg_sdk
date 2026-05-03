@@ -63,112 +63,121 @@ class ReferAndEarnCodeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: BorderCard(
-                  isGradientBackground: false,
-                  borderWidth: 1,
-                  borderRadius: 18,
-                  color: AppColors.brand.withAlpha((50)),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 16),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 10,
-                        children: [
-                          Container(
-                            width: 230,
-                            height: 48.26,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 62,
-                              vertical: 7,
-                            ),
-                            decoration: ShapeDecoration(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              shadows: [
-                                BoxShadow(
-                                  color: Color(0x33000000),
-                                  blurRadius: 7.80,
-                                  offset: Offset(0, 4.80),
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              'FGC563',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: const Color(0xFF6400E0),
-                                fontSize: 26.71,
-                                fontFamily: SharePerksFonts.albertSans,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              HugeIconsStroke.copy01,
-                              color: SharePerksColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'Let your friends know you’ve leveled up:',
-                        style: TextStyle(
-                          color: const Color(0xFF898989),
-                          fontSize: 12,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 10,
-                        children: [
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              HugeIconsSolid.whatsapp,
-                              size: 32,
-                              color: Colors.green,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              HugeIconsSolid.facebook01,
-                              size: 32,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              HugeIconsSolid.share08,
-                              size: 28,
-                              color: SharePerksColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      ClickToHelp(),
-                    ],
-                  ),
-                ),
+                child: ReferCodeCard(),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ReferCodeCard extends StatelessWidget {
+  const ReferCodeCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BorderCard(
+      isGradientBackground: false,
+      borderWidth: 1,
+      borderRadius: 18,
+      color: AppColors.brand.withAlpha((50)),
+      child: Column(
+        children: [
+          SizedBox(height: 16),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 10,
+            children: [
+              Container(
+                width: 230,
+                height: 48.26,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 62,
+                  vertical: 7,
+                ),
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  shadows: [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 7.80,
+                      offset: Offset(0, 4.80),
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'FGC563',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xFF6400E0),
+                    fontSize: 26.71,
+                    fontFamily: SharePerksFonts.albertSans,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: Icon(
+                  HugeIconsStroke.copy01,
+                  color: SharePerksColors.primary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Let your friends know you’ve leveled up:',
+            style: TextStyle(
+              color: const Color(0xFF898989),
+              fontSize: 12,
+              fontFamily: SharePerksFonts.inter,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 10,
+            children: [
+              IconButton(
+                onPressed: () {},
+                icon: Icon(
+                  HugeIconsSolid.whatsapp,
+                  size: 32,
+                  color: Colors.green,
+                ),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: Icon(
+                  HugeIconsSolid.facebook01,
+                  size: 32,
+                  color: Colors.blue,
+                ),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: Icon(
+                  HugeIconsSolid.share08,
+                  size: 28,
+                  color: SharePerksColors.primary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
+          ClickToHelp(),
+        ],
       ),
     );
   }

@@ -38,8 +38,7 @@ class PerkBasicInfoData {
   });
 
   static const PerkBasicInfoData placeholder = PerkBasicInfoData(
-    imageUrl:
-        'https://www.youngurbanproject.com/wp-content/uploads/2025/05/Zomato-Case-Study.jpg',
+    imageUrl: '',
     typeLabel: 'Credit',
     title: 'Reward Title on the given brand',
     tickerLabel: 'Ticker',

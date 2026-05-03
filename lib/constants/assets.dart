@@ -143,6 +143,9 @@ class Assets {
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/app-brand.png)
   static const String ASSETS_ICONS_APP_BRAND_PNG = 'assets/icons/app-brand.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/app-logo.png)
+  static const String ASSETS_ICONS_APP_LOGO_PNG = 'assets/icons/app-logo.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/cashback.png)
   static const String ASSETS_ICONS_CASHBACK_PNG = 'assets/icons/cashback.png';
 
