@@ -6,6 +6,7 @@ import 'package:shareperks/repository/models/promocode_detail_model.dart';
 import 'package:shareperks/repository/models/my_claimed_giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/my_claimed_rewards_model.dart';
 import 'package:shareperks/repository/models/reward_content_model.dart';
+import 'package:shareperks/repository/models/toggle_redeemed_model.dart';
 import 'package:shareperks/repository/network.dart';
 
 class RewardListingDataService {
@@ -85,5 +86,35 @@ class RewardListingDataService {
       throw StateError('My claimed giftcard detail: empty response body');
     }
     return MyClaimedGiftcardDetailResponse.fromJson(body);
+  }
+
+  /// `PATCH /rewards/my-claimed/giftcard/:claimedId/toggle-redeemed` — flip redeemed state.
+  ///
+  /// [claimedId] is [MyClaimedPerk.claimedId] from my-claimed list.
+  static Future<ToggleRedeemedResponse> toggleGiftcardRedeemed(
+    String claimedId,
+  ) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/rewards/my-claimed/giftcard/$claimedId/toggle-redeemed',
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('Toggle giftcard redeemed: empty response body');
+    }
+    return ToggleRedeemedResponse.fromJson(body);
+  }
+
+  /// `PATCH /rewards/my-claimed/promocode/:claimedId/toggle-redeemed` — flip redeemed state.
+  static Future<ToggleRedeemedResponse> togglePromocodeRedeemed(
+    String claimedId,
+  ) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/rewards/my-claimed/promocode/$claimedId/toggle-redeemed',
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('Toggle promocode redeemed: empty response body');
+    }
+    return ToggleRedeemedResponse.fromJson(body);
   }
 }
