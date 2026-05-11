@@ -51,4 +51,3 @@ class CategorySearchSortBar extends StatelessWidget {
     );
   }
 }
-

@@ -56,10 +56,12 @@ class CashbackDetailData {
     if (br is Map<String, dynamic>) brand = CashbackBrandRef.fromJson(br);
 
     final cat = json['category'];
-    if (cat is Map<String, dynamic>) category = CashbackCategoryRef.fromJson(cat);
+    if (cat is Map<String, dynamic>)
+      category = CashbackCategoryRef.fromJson(cat);
 
     final el = json['eligibility'];
-    if (el is Map<String, dynamic>) eligibility = CashbackEligibility.fromJson(el);
+    if (el is Map<String, dynamic>)
+      eligibility = CashbackEligibility.fromJson(el);
 
     final ct = json['content'];
     if (ct is Map<String, dynamic>) content = CashbackLegalContent.fromJson(ct);
@@ -144,7 +146,13 @@ class CashbackCompany {
   String? isin;
   bool? listedOnExchange;
 
-  CashbackCompany({this.id, this.name, this.image, this.isin, this.listedOnExchange});
+  CashbackCompany({
+    this.id,
+    this.name,
+    this.image,
+    this.isin,
+    this.listedOnExchange,
+  });
 
   CashbackCompany.fromJson(Map<String, dynamic> json) {
     id = json['id'] as String?;
@@ -238,7 +246,8 @@ class CashbackEligibility {
       'rewardType': rewardType,
       'withHolderRewardRate': withHolderRewardRate,
       'nonHolderRewardRate': nonHolderRewardRate,
-      if (isBrokerConnected != null) 'isBrokerConnected': isBrokerConnected!.toJson(),
+      if (isBrokerConnected != null)
+        'isBrokerConnected': isBrokerConnected!.toJson(),
     };
   }
 }
@@ -254,7 +263,10 @@ class RewardBrokerConnected {
     reqReimport = json['reqReimport'] as bool?;
   }
 
-  Map<String, dynamic> toJson() => {'connected': connected, 'reqReimport': reqReimport};
+  Map<String, dynamic> toJson() => {
+    'connected': connected,
+    'reqReimport': reqReimport,
+  };
 }
 
 /// `data.chimed` on `GET /rewards/promocode/:id`.
@@ -263,17 +275,20 @@ class PromocodeChimed {
   String? code;
   bool? isEligible;
   String? chimedAt;
+  String? claimedId;
 
   PromocodeChimed({
     this.claimed,
     this.code,
     this.isEligible,
     this.chimedAt,
+    this.claimedId,
   });
 
   PromocodeChimed.fromJson(Map<String, dynamic> json) {
     claimed = json['claimed'] as bool?;
     code = json['code'] as String?;
+    claimedId = json['claimedId'] as String?;
     isEligible = json['isEligible'] as bool?;
     chimedAt = json['chimedAt'] as String?;
   }
@@ -284,6 +299,7 @@ class PromocodeChimed {
       'code': code,
       'isEligible': isEligible,
       'chimedAt': chimedAt,
+      'claimedId': claimedId,
     };
   }
 }
@@ -309,4 +325,3 @@ class CashbackLegalContent {
     };
   }
 }
-

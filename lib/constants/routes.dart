@@ -33,6 +33,7 @@ import 'package:shareperks/screens/main/TopBrandsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
 import 'package:shareperks/screens/main/UnlockedPerksScreen.dart';
+import 'package:shareperks/screens/payments/WalletScreen.dart';
 import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
@@ -84,6 +85,7 @@ class RouteNames {
   static const String EMAIL_SUCCESS_SCREEN = 'SuccessScreen';
   static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
+  static const String MY_WALLET_SCREEN = 'MyWalletScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -366,6 +368,11 @@ final List<GoRoute> routes = [
           : null;
       return GiftCardCodeViewScreen(claimedId: claimedId!);
     },
+  ),
+  GoRoute(
+    name: RouteNames.MY_WALLET_SCREEN,
+    path: RouteNames.path(RouteNames.MY_WALLET_SCREEN),
+    builder: (BuildContext context, GoRouterState state) => WalletScreen(),
   ),
   GoRoute(
     name: RouteNames.NEW_UPDATE,

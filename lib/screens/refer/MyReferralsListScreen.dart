@@ -3,19 +3,56 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
+import 'package:shareperks/components/loader/MyReferralsListShimmer.dart';
 import 'package:shareperks/components/category_search_sort_bar.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/models/referral_list_model.dart';
+import 'package:shareperks/repository/services/listing/referral.service.dart';
+import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
 
-class MyReferralListScreen extends StatelessWidget {
-  const MyReferralListScreen({super.key});
+class MyReferralListScreen extends StatefulWidget {
+  MyReferralListScreen({super.key});
 
+  @override
+  State<MyReferralListScreen> createState() => _MyReferralListScreenState();
+}
+
+class _MyReferralListScreenState extends State<MyReferralListScreen> {
   /// Set from referral list API: `referrals.isNotEmpty`.
-  static const bool _hasReferrals = false;
+  bool _hasReferrals = false;
+
+  bool _loading = true;
+  bool _error = false;
+
+  List<ReferralListEntry> _users = [];
+
+  Future<void> loadData() async {
+    try {
+      _error = false;
+      _users = await ReferralListingService.getAllReferrals();
+      _hasReferrals = _users.isNotEmpty;
+    } catch (e) {
+      _error = true;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +69,38 @@ class MyReferralListScreen extends StatelessWidget {
       body: Container(
         padding: const EdgeInsets.all(18),
         width: MediaQuery.of(context).size.width,
-        child: _hasReferrals
-            ? _ReferralsListContent()
+        child: _loading
+            ? const MyReferralsListShimmer()
+            : _error
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Could not load referrals.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontSize: 16,
+                        color: SharePerksColors.textSecondaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () {
+                        setState(() {
+                          _loading = true;
+                          _error = false;
+                        });
+                        loadData();
+                      },
+                      child: const Text('Try again'),
+                    ),
+                  ],
+                ),
+              )
+            : _hasReferrals
+            ? _ReferralsListContent(data: _users)
             : const _NoReferralsView(),
       ),
     );
@@ -103,26 +170,88 @@ class _NoReferralsView extends StatelessWidget {
   }
 }
 
-class _ReferralsListContent extends StatelessWidget {
+class _ReferralsListContent extends StatefulWidget {
+  final List<ReferralListEntry> data;
+  _ReferralsListContent({required this.data});
+
+  @override
+  State<_ReferralsListContent> createState() => _ReferralsListContentState();
+}
+
+class _ReferralsListContentState extends State<_ReferralsListContent> {
+  final TextEditingController _searchController = TextEditingController();
+  String _sortBy = 'a-z';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ReferralListEntry> get _visibleEntries {
+    final q = _searchController.text.trim().toLowerCase();
+    var list = List<ReferralListEntry>.from(widget.data);
+    if (q.isNotEmpty) {
+      list = list.where((e) {
+        final name = (e.name ?? '').toLowerCase();
+        final status = (e.status ?? '').toLowerCase();
+        return name.contains(q) || status.contains(q);
+      }).toList();
+    }
+    list.sort((a, b) {
+      final an = (a.name ?? '').toLowerCase();
+      final bn = (b.name ?? '').toLowerCase();
+      final c = an.compareTo(bn);
+      return _sortBy == 'a-z' ? c : -c;
+    });
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final visible = _visibleEntries;
     return Column(
       spacing: 10,
       children: [
         CategorySearchSortBar(
-          controller: TextEditingController(),
-          sortBy: "",
-          onSearchChanged: (e) {},
-          onToggleSort: () {},
-        ),
-        ReferUser(
-          onTap: () {
-            showInfoReferSteps(context);
+          controller: _searchController,
+          sortBy: _sortBy,
+          onSearchChanged: (_) => setState(() {}),
+          onToggleSort: () {
+            setState(() {
+              _sortBy = _sortBy == 'a-z' ? 'z-a' : 'a-z';
+            });
           },
         ),
-        ReferUser(),
-        ReferUser(),
-        ReferUser(),
+        visible.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: 18.0),
+                child: Center(
+                  child: Text(
+                    'No matching referrals',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: SharePerksColors.textSecondaryLight,
+                      fontFamily: SharePerksFonts.albertSans,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              )
+            : ListView.separated(
+                padding: EdgeInsets.zero,
+                itemCount: visible.length,
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, i) {
+                  final entry = visible[i];
+                  return ReferUser(
+                    data: entry,
+                    onTap: () => showInfoReferSteps(context, entry),
+                  );
+                },
+              ),
         Padding(
           padding: const EdgeInsets.all(18.0),
           child: Column(
@@ -146,7 +275,13 @@ class _ReferralsListContent extends StatelessWidget {
 
 class ReferUser extends StatelessWidget {
   final VoidCallback? onTap;
-  const ReferUser({super.key, this.onTap});
+  final ReferralListEntry data;
+  ReferUser({super.key, this.onTap, required this.data});
+  final List<Color> _colors = [
+    Color(0xFFFF4AA7),
+    Color(0xFF5182FE),
+    Color(0xFFD9D9D9),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -163,14 +298,13 @@ class ReferUser extends StatelessWidget {
         onTap: onTap,
         contentPadding: EdgeInsets.all(0),
         leading: ImageBuilder(
-          imageUrl:
-              "https://img.freepik.com/free-photo/young-male-posing-isolated-against-blank-studio-wall_273609-12356.jpg?semt=ais_hybrid&w=740&q=80",
+          imageUrl: imageUrl(data.image ?? ""),
           width: 48,
           height: 48,
           borderRadius: 50,
         ),
         title: Text(
-          'Himanshu Goyal',
+          data.name ?? "",
           style: TextStyle(
             color: const Color(0xFF333333),
             fontSize: 15,
@@ -179,7 +313,7 @@ class ReferUser extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '24/03/2024',
+          data.dateFormatted ?? "",
           style: TextStyle(
             color: const Color(0xFF898989),
             fontSize: 12,
@@ -195,28 +329,32 @@ class ReferUser extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: ShapeDecoration(
-                color: const Color(0xFFD9D9D9),
+                color: _colors[data.pendingStep ?? 0],
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
               child: Text(
-                'Demat not linked',
+                data.status ?? "",
                 style: TextStyle(
-                  color: const Color(0xFF333333),
+                  color: data.pendingStep == 2
+                      ? const Color(0xFF333333)
+                      : Colors.white,
                   fontSize: 10,
-                  fontFamily: 'Inter',
+                  fontFamily: SharePerksFonts.inter,
                   fontWeight: FontWeight.w700,
-                  height: 1.40,
                 ),
               ),
             ),
+
             Text(
-              'Only 2 steps left!',
+              data.pendingStep != 0
+                  ? 'Only ${data.pendingStep} steps left!'
+                  : "",
               style: TextStyle(
                 color: const Color(0xFF333333),
                 fontSize: 10,
-                fontFamily: 'Inter',
+                fontFamily: SharePerksFonts.inter,
                 fontWeight: FontWeight.w700,
                 height: 1.40,
               ),
@@ -228,7 +366,7 @@ class ReferUser extends StatelessWidget {
   }
 }
 
-void showInfoReferSteps(BuildContext context) {
+void showInfoReferSteps(BuildContext context, ReferralListEntry user) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -255,7 +393,7 @@ void showInfoReferSteps(BuildContext context) {
                 controller: scrollController,
                 padding: EdgeInsets.fromLTRB(16, 14, 16, 16 + bottomInset),
                 children: [
-                  ReferUser(),
+                  ReferUser(data: user),
                   const SizedBox(height: 20),
                   Text(
                     '3 user journey points:',

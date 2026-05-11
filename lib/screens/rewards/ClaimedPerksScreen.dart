@@ -8,6 +8,7 @@ import 'package:shareperks/components/loader/ClaimedPerksShimmer.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/my_claimed_rewards_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
@@ -312,7 +313,15 @@ class _ClaimedPerksScreenState extends State<ClaimedPerksScreen> {
                                             if (card.isExpired) {
                                               showClaimedPromoCodeSheet(
                                                 context,
-                                                code: card.code ?? "",
+                                                data: PromocodeChimed(
+                                                  chimedAt: card.expiredAt,
+                                                  claimed: card.used,
+                                                  code: card.code,
+                                                  claimedId: card.claimedId,
+                                                ),
+                                                onUpdateRedeemed: () {
+                                                  loadData();
+                                                },
                                                 name: card.name,
                                                 rewardId: card.rewardId,
                                                 subtitle: card.term,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:provider/provider.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/theme.dart';
@@ -30,7 +32,10 @@ class ReferAndEarnCodeScreen extends StatelessWidget {
           spacing: 20,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18.0,
+                vertical: 10,
+              ),
               child: Image.asset(
                 Assets.ASSETS_CARDS_REFERANDEARNSTEPS_PNG,
                 width: MediaQuery.of(context).size.width,
@@ -87,51 +92,55 @@ class ReferCodeCard extends StatelessWidget {
         children: [
           SizedBox(height: 16),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 10,
-            children: [
-              Container(
-                width: 230,
-                height: 48.26,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 62,
-                  vertical: 7,
-                ),
-                decoration: ShapeDecoration(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  shadows: [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 7.80,
-                      offset: Offset(0, 4.80),
-                      spreadRadius: 0,
+          Consumer<UserProvider>(
+            builder: (context, state, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 10,
+                children: [
+                  Container(
+                    width: 230,
+                    height: 48.26,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 62,
+                      vertical: 7,
                     ),
-                  ],
-                ),
-                child: Text(
-                  'FGC563',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: const Color(0xFF6400E0),
-                    fontSize: 26.71,
-                    fontFamily: SharePerksFonts.albertSans,
-                    fontWeight: FontWeight.w500,
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      shadows: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 7.80,
+                          offset: Offset(0, 4.80),
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '${state.user?.referCode}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0xFF6400E0),
+                        fontSize: 26.71,
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(
-                  HugeIconsStroke.copy01,
-                  color: SharePerksColors.primary,
-                ),
-              ),
-            ],
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      HugeIconsStroke.copy01,
+                      color: SharePerksColors.primary,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           SizedBox(height: 16),
           Text(

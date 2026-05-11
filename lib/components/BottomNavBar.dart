@@ -68,6 +68,9 @@ class BottomNavigationBarComponent extends StatelessWidget {
           CustomBottomNavigationItem(
             icon: HugeIconsSolid.wallet01,
             label: 'Wallet',
+            onTap: () {
+              context.pushNamed(RouteNames.MY_WALLET_SCREEN);
+            },
           ),
         ],
         trailing: GestureDetector(

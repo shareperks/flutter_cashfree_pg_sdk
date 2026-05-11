@@ -60,8 +60,7 @@ class _SetupScreenState extends State<SetupScreen> {
       );
       return false;
     }
-    if (referralCodeController.text.isNotEmpty &&
-        referralCodeController.text.length != 6) {
+    if (referralCodeController.text.isEmpty) {
       Fluttertoast.showToast(
         msg: 'Please enter a valid referral code.',
         backgroundColor: Colors.red,

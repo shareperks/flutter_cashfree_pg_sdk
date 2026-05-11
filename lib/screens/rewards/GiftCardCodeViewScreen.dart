@@ -1,6 +1,7 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
@@ -380,18 +381,35 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
                           ),
                         ),
                       ),
-                      if (data?.data?.isUsedByUser == false)
-                        GestureDetector(
-                          child: Text(
-                            'Mark as redeemed',
-                            style: TextStyle(
-                              color: const Color(0xFF6400E0),
-                              fontSize: 14,
-                              fontFamily: SharePerksFonts.inter,
-                              fontWeight: FontWeight.w600,
-                            ),
+
+                      GestureDetector(
+                        onTap: _loading
+                            ? null
+                            : () async {
+                                try {
+                                  await RewardListingDataService.toggleGiftcardRedeemed(
+                                    data?.data?.id ?? "",
+                                  );
+                                  loadData();
+                                } catch (e) {
+                                  print(e);
+                                  Fluttertoast.showToast(
+                                    msg: "Failed to update redeemed",
+                                  );
+                                }
+                              },
+                        child: Text(
+                          data?.data?.isUsedByUser == false
+                              ? 'Mark as redeemed'
+                              : 'Mark not redeemed',
+                          style: TextStyle(
+                            color: const Color(0xFF6400E0),
+                            fontSize: 14,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                      ),
                       Column(
                         spacing: 20,
                         children: [

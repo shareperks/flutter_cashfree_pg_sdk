@@ -1,5 +1,6 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
@@ -12,7 +13,6 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
-import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:soui/elements/SpScafold.dart';
@@ -120,14 +120,17 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                               ),
                             ),
                           ),
-                          if (data?.data?.chimed?.claimed ?? false)
+                          if (data?.data?.chimed?.claimed == false)
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16.0,
                               ),
-                              child: MyPromoCodeView(data: data?.data?.chimed),
+                              child: MyPromoCodeView(
+                                data: data?.data?.chimed,
+                                onUpdateRedeemed: () {},
+                              ),
                             ),
-                          if (data?.data?.chimed?.claimed == false)
+                          if (data?.data?.chimed?.claimed == true)
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
@@ -177,11 +180,17 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
   }
 }
 
-class MyPromoCodeView extends StatelessWidget {
-  const MyPromoCodeView({super.key, required this.data});
+class MyPromoCodeView extends StatefulWidget {
+  VoidCallback? onUpdateRedeemed;
+  MyPromoCodeView({super.key, required this.data, this.onUpdateRedeemed});
 
   final PromocodeChimed? data;
 
+  @override
+  State<MyPromoCodeView> createState() => _MyPromoCodeViewState();
+}
+
+class _MyPromoCodeViewState extends State<MyPromoCodeView> {
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -219,7 +228,7 @@ class MyPromoCodeView extends StatelessWidget {
             width: MediaQuery.of(context).size.width,
             child: Center(
               child: Text(
-                data?.code ?? "--",
+                widget.data?.code ?? "--",
                 style: TextStyle(
                   color: SharePerksColors.primary,
                   fontSize: 23.40,
@@ -247,15 +256,36 @@ class MyPromoCodeView extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              'Mark as redeemed',
-              style: TextStyle(
-                color: SharePerksColors.primary,
-                fontSize: 14,
-                fontFamily: SharePerksFonts.inter,
-                fontWeight: FontWeight.w600,
+            if (widget.data?.claimedId != null)
+              GestureDetector(
+                onTap: () async {
+                  try {
+                    if (widget.data?.claimed != null) {
+                      setState(() {
+                        widget.data?.claimed = !(widget.data!.claimed ?? false);
+                      });
+                    }
+                    await RewardListingDataService.togglePromocodeRedeemed(
+                      widget.data?.claimedId ?? "",
+                    );
+                    widget.onUpdateRedeemed?.call();
+                  } catch (e) {
+                    Fluttertoast.showToast(msg: "Failed to update redeemed");
+                    print(e);
+                  }
+                },
+                child: Text(
+                  (widget.data?.claimed == false)
+                      ? 'Mark as redeemed'
+                      : "Mark not redeemed",
+                  style: TextStyle(
+                    color: SharePerksColors.primary,
+                    fontSize: 14,
+                    fontFamily: SharePerksFonts.inter,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ],
@@ -265,10 +295,11 @@ class MyPromoCodeView extends StatelessWidget {
 
 void showClaimedPromoCodeSheet(
   BuildContext context, {
-  String? code,
+  PromocodeChimed? data,
   String? name,
   String? subtitle,
   String? rewardId,
+  Function()? onUpdateRedeemed,
 }) {
   showModalBottomSheet(
     context: context,
@@ -314,7 +345,7 @@ void showClaimedPromoCodeSheet(
                   ),
                 ],
               ),
-              MyPromoCodeView(data: PromocodeChimed(code: code)),
+              MyPromoCodeView(data: data, onUpdateRedeemed: onUpdateRedeemed),
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),

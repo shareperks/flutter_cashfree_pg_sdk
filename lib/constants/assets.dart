@@ -119,12 +119,23 @@ class Assets {
   static const String ASSETS_CARDS_SUPPORTCARD_PNG =
       'assets/cards/SupportCard.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Top5PercentOfInvest.png)
+  static const String ASSETS_CARDS_TOP5PERCENTOFINVEST_PNG =
+      'assets/cards/Top5PercentOfInvest.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/reminder.png)
   static const String ASSETS_CARDS_REMINDER_PNG = 'assets/cards/reminder.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/show-we-show-perks.png)
   static const String ASSETS_CARDS_SHOW_WE_SHOW_PERKS_PNG =
       'assets/cards/show-we-show-perks.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/viewYourReferrals.png)
+  static const String ASSETS_CARDS_VIEWYOURREFERRALS_PNG =
+      'assets/cards/viewYourReferrals.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/Benefits.png)
+  static const String ASSETS_ICONS_BENEFITS_PNG = 'assets/icons/Benefits.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/EligibleReward.svg)
   static const String ASSETS_ICONS_ELIGIBLEREWARD_SVG =
@@ -139,6 +150,9 @@ class Assets {
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/Note.png)
   static const String ASSETS_ICONS_NOTE_PNG = 'assets/icons/Note.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/Referrals.png)
+  static const String ASSETS_ICONS_REFERRALS_PNG = 'assets/icons/Referrals.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/app-brand.png)
   static const String ASSETS_ICONS_APP_BRAND_PNG = 'assets/icons/app-brand.png';

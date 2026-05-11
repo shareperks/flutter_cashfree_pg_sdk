@@ -14,6 +14,7 @@ class InfoSlideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         leadingWidth: 35,
         title: Text(
           "Back",

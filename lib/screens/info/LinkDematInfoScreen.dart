@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 
 class LinkDematInfoScreen extends StatelessWidget {
@@ -123,7 +124,9 @@ class LinkDematInfoScreen extends StatelessWidget {
 
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                context.pushNamed(RouteNames.LIST_BROKER_VIEW_SCREEN);
+              },
               child: Text('Link Account'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SharePerksColors.primary,
