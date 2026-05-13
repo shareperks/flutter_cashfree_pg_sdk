@@ -230,7 +230,7 @@ class _ClaimedPerksScreenState extends State<ClaimedPerksScreen> {
                                 textInputAction: TextInputAction.search,
                                 decoration: InputDecoration(
                                   prefixIcon: Icon(HugeIconsStroke.search01),
-                                  hintText: "Search Perk",
+                                  hint: Text("Search Perk"),
                                   suffixIcon: q.isEmpty
                                       ? null
                                       : IconButton(

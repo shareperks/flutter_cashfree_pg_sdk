@@ -9,6 +9,13 @@ int? parseJsonInt(dynamic v) {
   return int.tryParse(v.toString());
 }
 
+double? parseJsonDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
+}
+
 class User {
   String? id;
   String? name;

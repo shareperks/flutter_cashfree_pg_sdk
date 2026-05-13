@@ -123,49 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Column(
                     children: [
-                      if (data?.data?.slides?.isNotEmpty ?? false)
-                        CarouselSlider(
-                          options: CarouselOptions(
-                            height: 200.0,
-                            autoPlay: true,
-                            autoPlayInterval: Duration(seconds: 3),
-                            autoPlayAnimationDuration: Duration(
-                              milliseconds: 800,
-                            ),
-                            autoPlayCurve: Curves.easeInOut,
-                            aspectRatio: 16 / 9,
-                            viewportFraction: 1.0,
-                          ),
-                          items: List.generate(
-                            data?.data?.slides?.length ?? 0,
-                            (index) {
-                              String url =
-                                  data?.data?.slides?[index].image ?? "";
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    SharePerksRadii.lg,
-                                  ),
-                                  child: Container(
-                                    color: Colors.white,
-                                    child: LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        return ImageBuilder(
-                                          imageUrl: url,
-                                          fit: BoxFit.cover,
-                                          width: constraints.maxWidth,
-                                          height: 100,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      SizedBox(height: SharePerksSpacing.sm),
                       BorderCard(
                         padding: EdgeInsets.all(16),
                         width: double.infinity,
@@ -223,6 +180,49 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      if (data?.data?.slides?.isNotEmpty ?? false)
+                        CarouselSlider(
+                          options: CarouselOptions(
+                            height: 200.0,
+                            autoPlay: true,
+                            autoPlayInterval: Duration(seconds: 3),
+                            autoPlayAnimationDuration: Duration(
+                              milliseconds: 800,
+                            ),
+                            autoPlayCurve: Curves.easeInOut,
+                            aspectRatio: 16 / 9,
+                            viewportFraction: 1.0,
+                          ),
+                          items: List.generate(
+                            data?.data?.slides?.length ?? 0,
+                            (index) {
+                              String url =
+                                  data?.data?.slides?[index].image ?? "";
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    SharePerksRadii.lg,
+                                  ),
+                                  child: Container(
+                                    color: Colors.white,
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        return ImageBuilder(
+                                          imageUrl: url,
+                                          fit: BoxFit.cover,
+                                          width: constraints.maxWidth,
+                                          height: 100,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      SizedBox(height: SharePerksSpacing.sm),
                     ],
                   ),
                   if (data?.data?.unlockedRewards?.isImportInProgress ?? false)

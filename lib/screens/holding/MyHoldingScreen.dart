@@ -688,7 +688,7 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
                                                   spacing: 4,
                                                   children: [
                                                     Text(
-                                                      'Qty ${holding?.quantity}',
+                                                      'Qty ${holding?.quantity.toStringAsFixed(0)}',
                                                       style: TextStyle(
                                                         color: const Color(
                                                           0xFF333333,

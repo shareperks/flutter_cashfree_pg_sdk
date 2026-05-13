@@ -5,4 +5,7 @@ class Host {
   static String brokerUrl = 'https://broker.shareperks.in';
   static String submitApi = 'https://from-api.shareperks.in';
   static String holdingApi = "https://holding-api.shareperks.in";
+
+  /// Payout / withdraw API (`POST /payout/request`). Point to your service (e.g. `http://127.0.0.1:3004` for local).
+  static String payoutUrl = 'https://listing.shareperks.in';
 }

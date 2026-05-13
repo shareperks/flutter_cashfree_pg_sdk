@@ -169,6 +169,9 @@ class Assets {
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/giftcard.png)
   static const String ASSETS_ICONS_GIFTCARD_PNG = 'assets/icons/giftcard.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/payout.png)
+  static const String ASSETS_ICONS_PAYOUT_PNG = 'assets/icons/payout.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/logo.svg)
   static const String ASSETS_LOGO_SVG = 'assets/logo.svg';
 

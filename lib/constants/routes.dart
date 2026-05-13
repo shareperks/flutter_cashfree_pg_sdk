@@ -33,7 +33,12 @@ import 'package:shareperks/screens/main/TopBrandsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
 import 'package:shareperks/screens/main/UnlockedPerksScreen.dart';
+import 'package:shareperks/screens/payments/EarningScreen.dart';
+import 'package:shareperks/screens/payments/WalletHistoryScreen.dart';
 import 'package:shareperks/screens/payments/WalletScreen.dart';
+import 'package:shareperks/screens/payments/payout/PayoutRequestScreen.dart';
+import 'package:shareperks/screens/payments/payout/PayoutScreen.dart';
+import 'package:shareperks/screens/payments/payout/PayoutSucessScreen.dart';
 import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
@@ -86,6 +91,11 @@ class RouteNames {
   static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
   static const String MY_WALLET_SCREEN = 'MyWalletScreen';
+  static const String EARNING_SCREEN = 'EarningScreen';
+  static const String PAYOUT_SCREEN = 'PayoutScreen';
+  static const String PAYOUT_REQUEST_SCREEN = 'PayoutRequestScreen';
+  static const String PAYOUT_SUCCESS_SCREEN = 'PayoutSuccessScreen';
+  static const String WALLET_HISTORY_SCREEN = 'WalletHistoryScreen';
 
   static String path(String route) =>
       "/${route.toLowerCase().replaceAll(" ", "_")}";
@@ -373,6 +383,46 @@ final List<GoRoute> routes = [
     name: RouteNames.MY_WALLET_SCREEN,
     path: RouteNames.path(RouteNames.MY_WALLET_SCREEN),
     builder: (BuildContext context, GoRouterState state) => WalletScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.PAYOUT_SCREEN,
+    path: RouteNames.path(RouteNames.PAYOUT_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? amount = extra is Map<String, dynamic>
+          ? extra['amount'] as String?
+          : null;
+      return PayoutScreen(amount: double.parse(amount ?? "0"));
+    },
+  ),
+  GoRoute(
+    name: RouteNames.PAYOUT_REQUEST_SCREEN,
+    path: RouteNames.path(RouteNames.PAYOUT_REQUEST_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? amount = extra is Map<String, dynamic>
+          ? extra['amount'] as String?
+          : null;
+      return PayoutRequestScreen(amount: double.parse(amount ?? "0"));
+    },
+  ),
+
+  GoRoute(
+    name: RouteNames.WALLET_HISTORY_SCREEN,
+    path: RouteNames.path(RouteNames.WALLET_HISTORY_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        WalletHistoryScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.PAYOUT_SUCCESS_SCREEN,
+    path: RouteNames.path(RouteNames.PAYOUT_SUCCESS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        PayoutSuccessScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.EARNING_SCREEN,
+    path: RouteNames.path(RouteNames.EARNING_SCREEN),
+    builder: (BuildContext context, GoRouterState state) => EarningScreen(),
   ),
   GoRoute(
     name: RouteNames.NEW_UPDATE,

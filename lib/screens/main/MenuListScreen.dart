@@ -47,6 +47,7 @@ class MenuListScreen extends StatelessWidget {
                       size: 17,
                       color: Colors.black,
                     ),
+
                     title: Text(
                       'My Earnings',
                       style: TextStyle(
@@ -57,7 +58,9 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
                     color: AppColors.accent,
-                    onTap: () {},
+                    onTap: () {
+                      context.pushNamed(RouteNames.EARNING_SCREEN);
+                    },
                     style: GredentListTileStyle(
                       contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(

@@ -14,6 +14,7 @@ import 'package:shareperks/repository/services/listing/referral.service.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
+import 'package:soui/elements/tab_buttons.dart';
 
 class MyReferralListScreen extends StatefulWidget {
   MyReferralListScreen({super.key});
@@ -170,6 +171,23 @@ class _NoReferralsView extends StatelessWidget {
   }
 }
 
+bool _referralLooksPending(ReferralListEntry e) {
+  if ((e.pendingStep ?? 0) > 0) return true;
+  final s = (e.status ?? '').toLowerCase();
+  return s.contains('pending');
+}
+
+bool _referralLooksSettled(ReferralListEntry e) {
+  if ((e.pendingStep ?? 0) > 0) return false;
+  final s = (e.status ?? '').toLowerCase().trim();
+  if (s.isEmpty) return false;
+  if (s.contains('pending')) return false;
+  if (RegExp(r'\b(settled|completed|complete|done)\b').hasMatch(s)) {
+    return true;
+  }
+  return s.contains('demat linked');
+}
+
 class _ReferralsListContent extends StatefulWidget {
   final List<ReferralListEntry> data;
   _ReferralsListContent({required this.data});
@@ -182,6 +200,9 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
   final TextEditingController _searchController = TextEditingController();
   String _sortBy = 'a-z';
 
+  /// Matches [TopPerksScreen] tabs; maps to referral filters: 0 all, 1 pending, 2 settled.
+  int _tabIndex = 0;
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -189,13 +210,30 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
   }
 
   List<ReferralListEntry> get _visibleEntries {
-    final q = _searchController.text.trim().toLowerCase();
     var list = List<ReferralListEntry>.from(widget.data);
+    switch (_tabIndex) {
+      case 1:
+        list = list.where(_referralLooksPending).toList();
+        break;
+      case 2:
+        list = list.where(_referralLooksSettled).toList();
+        break;
+      default:
+        break;
+    }
+
+    final q = _searchController.text.trim();
     if (q.isNotEmpty) {
+      final qLower = q.toLowerCase();
       list = list.where((e) {
         final name = (e.name ?? '').toLowerCase();
         final status = (e.status ?? '').toLowerCase();
-        return name.contains(q) || status.contains(q);
+        if (name.contains(qLower)) return true;
+        if (_tabIndex == 0) {
+          if (qLower == 'settled') return _referralLooksSettled(e);
+          if (qLower == 'pending') return _referralLooksPending(e);
+        }
+        return status.contains(qLower);
       }).toList();
     }
     list.sort((a, b) {
@@ -205,6 +243,19 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
       return _sortBy == 'a-z' ? c : -c;
     });
     return list;
+  }
+
+  String _emptyCaption() {
+    final q = _searchController.text.trim();
+    if (q.isNotEmpty) return 'No matching referrals';
+    switch (_tabIndex) {
+      case 1:
+        return 'No pending referrals';
+      case 2:
+        return 'No settled referrals yet';
+      default:
+        return 'No matching referrals';
+    }
   }
 
   @override
@@ -223,12 +274,20 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
             });
           },
         ),
+        TabButtons(
+          selectedIndex: _tabIndex,
+          onTap: (index) {
+            setState(() => _tabIndex = index);
+          },
+          layoutWidthInset: 44,
+          items: const ['All', 'Pending', 'Completed'],
+        ),
         visible.isEmpty
             ? Padding(
                 padding: const EdgeInsets.symmetric(vertical: 18.0),
                 child: Center(
                   child: Text(
-                    'No matching referrals',
+                    _emptyCaption(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: SharePerksColors.textSecondaryLight,

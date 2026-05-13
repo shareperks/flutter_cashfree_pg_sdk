@@ -28,7 +28,7 @@ class CategorySearchSortBar extends StatelessWidget {
             onChanged: onSearchChanged,
             decoration: const InputDecoration(
               prefixIcon: Icon(HugeIconsSolid.search01),
-              hintText: "Search Perks",
+              hint: Text("Search Perks"),
             ),
           ),
         ),
