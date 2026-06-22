@@ -20,7 +20,7 @@ class PerkBasicInfoData {
   final String perkIdLabel;
   final String perkIdValue;
   final String detailsTitle;
-  final String detailsBody;
+  final String? detailsBody;
   final EligibilityCardsData? eligibility;
 
   const PerkBasicInfoData({
@@ -144,35 +144,45 @@ class PerkBasicInfo extends StatelessWidget {
                   ),
                 ),
 
-                CollapseCard(
-                  title: Padding(
-                    padding: const EdgeInsets.only(bottom: 4.0, top: 4),
-                    child: Text(
-                      data.detailsTitle,
-                      style: TextStyle(
-                        color: SharePerksColors.accent,
-                        fontSize: 16,
-                        fontFamily: SharePerksFonts.albertSans,
-                        fontWeight: FontWeight.w700,
+                Builder(
+                  builder: (context) {
+                    if (data.detailsBody == null) {
+                      return SizedBox();
+                    }
+                    return CollapseCard(
+                      title: Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0, top: 4),
+                        child: Text(
+                          data.detailsTitle,
+                          style: TextStyle(
+                            color: SharePerksColors.accent,
+                            fontSize: 16,
+                            fontFamily: SharePerksFonts.albertSans,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
 
-                  color: SharePerksColors.accent,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        width: 1,
-                        color: SharePerksColors.accent,
+                      color: SharePerksColors.accent,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            width: 1,
+                            color: SharePerksColors.accent,
+                          ),
+                        ),
+                        child: Text(
+                          data.detailsBody ?? "",
+                          style: TextStyle(fontSize: 11),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      data.detailsBody,
-                      style: TextStyle(fontSize: 11),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 SizedBox(height: 5),
                 if (data.eligibility != null)

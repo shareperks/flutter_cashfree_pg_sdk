@@ -1,5 +1,28 @@
 import 'home_common_models.dart';
 
+/// `tab` query for `GET /wallet/transitions` — `ALL`, `PAYOUT`, or `EARNING`.
+enum WalletTransitionsTab {
+  all('ALL'),
+  payout('PAYOUT'),
+  earning('EARNING');
+
+  const WalletTransitionsTab(this.queryValue);
+
+  final String queryValue;
+
+  /// Wallet history UI: 0 = All, 1 = Withdrawals, 2 = Earnings.
+  static WalletTransitionsTab fromHistoryTabIndex(int index) {
+    switch (index) {
+      case 1:
+        return WalletTransitionsTab.payout;
+      case 2:
+        return WalletTransitionsTab.earning;
+      default:
+        return WalletTransitionsTab.all;
+    }
+  }
+}
+
 /// `GET /wallet/info` — `{ wallet, transactions }`.
 class WalletInfoResponse {
   WalletInfoResponse({this.wallet, List<WalletTransaction>? transactions})
@@ -23,11 +46,7 @@ class WalletInfoResponse {
   };
 
   static List<WalletTransaction> _mapTransactions(dynamic raw) {
-    if (raw is! List<dynamic>) return <WalletTransaction>[];
-    return raw
-        .whereType<Map>()
-        .map((e) => WalletTransaction.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
+    return WalletTransaction.listFromJsonArray(raw);
   }
 }
 
@@ -119,6 +138,16 @@ class WalletTransaction {
       date: json['date'] as String?,
       time: json['time'] as String?,
     );
+  }
+
+  /// Parses a top-level JSON array (e.g. `GET /wallet/transitions`,
+  /// `GET /wallet/cashback-transitions`, `GET /wallet/payout-transitions`).
+  static List<WalletTransaction> listFromJsonArray(dynamic raw) {
+    if (raw is! List<dynamic>) return const <WalletTransaction>[];
+    return raw
+        .whereType<Map>()
+        .map((e) => WalletTransaction.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   /// `true` when [type] or [reason] is `DEBIT` (case-insensitive).

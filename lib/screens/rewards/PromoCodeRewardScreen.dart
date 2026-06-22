@@ -13,8 +13,10 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
+import 'package:shareperks/repository/models/claim_promocode_response_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
+import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/title_view.dart';
 
@@ -28,6 +30,7 @@ class PromoCodeRewardScreen extends StatefulWidget {
 
 class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
   bool _loading = true;
+  bool _claiming = false;
   PromocodeDetailResponse? data;
   String? _errorMessage;
 
@@ -42,6 +45,67 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
         _loading = false;
       });
     }
+  }
+
+  /// `POST /rewards/promocode/:id/claim` — server picks the WITH_HOLDINGS
+  /// vs NON_HOLDINGS pool itself based on the user's eligibility, so both
+  /// the eligible and non-eligible CTAs route through this single call.
+  Future<void> _claimPromocode() async {
+    if (_claiming) return;
+    setState(() => _claiming = true);
+    try {
+      final claim = await RewardListingDataService.claimPromocode(
+        widget.rewardId,
+      );
+      if (!mounted) return;
+      _applyClaim(claim);
+      Fluttertoast.cancel();
+      Fluttertoast.showToast(
+        msg: claim.alreadyClaimed == true
+            ? 'You already have this code.'
+            : 'Discount code unlocked!',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Fluttertoast.cancel();
+      Fluttertoast.showToast(
+        msg: _readableError(e),
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      if (mounted) setState(() => _claiming = false);
+    }
+  }
+
+  void _applyClaim(ClaimPromocodeResponse claim) {
+    final detail = data?.data;
+    if (detail == null) return;
+    final chimed = detail.chimed ?? PromocodeChimed();
+    chimed
+      ..code = claim.code ?? chimed.code
+      ..claimedId = claim.claimedId ?? chimed.claimedId
+      ..isEligible = claim.isEligible ?? chimed.isEligible
+      ..chimedAt = claim.assignedAt ?? chimed.chimedAt
+      // Newly allocated code is unredeemed; the existing redeem-toggle UI
+      // takes over from here.
+      ..claimed = chimed.claimed ?? false;
+    detail.chimed = chimed;
+    setState(() {});
+  }
+
+  String _readableError(Object e) {
+    if (e is StateError) return e.message;
+    final msg = e.toString();
+    if (msg.startsWith('Exception: ')) return msg.substring(11);
+    return 'Could not claim discount code. Please try again.';
+  }
+
+  bool get _hasClaimedCode {
+    final c = data?.data?.chimed;
+    return c != null && (c.claimedId?.isNotEmpty ?? false);
   }
 
   @override
@@ -120,7 +184,7 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                               ),
                             ),
                           ),
-                          if (data?.data?.chimed?.claimed == false)
+                          if (_hasClaimedCode)
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16.0,
@@ -129,26 +193,13 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                                 data: data?.data?.chimed,
                                 onUpdateRedeemed: () {},
                               ),
-                            ),
-                          if (data?.data?.chimed?.claimed == true)
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              spacing: 10,
-                              children: [
-                                Center(
-                                  child: ElevatedButton(
-                                    onPressed: () {},
-                                    child: Text("Verify Eligibility"),
-                                  ),
-                                ),
-                                Center(
-                                  child: TextButton(
-                                    onPressed: () {},
-                                    child: Text("Claim Non-Shareholder Perk"),
-                                  ),
-                                ),
-                              ],
+                            )
+                          else
+                            _ClaimPromoCodeCta(
+                              isEligible:
+                                  data?.data?.eligibility?.isEligible ?? false,
+                              loading: _claiming,
+                              onPressed: _claimPromocode,
                             ),
 
                           Padding(
@@ -358,4 +409,63 @@ void showClaimedPromoCodeSheet(
       );
     },
   );
+}
+
+/// CTA shown on `PromoCodeRewardScreen` until the user has a claimed code.
+/// Eligible users see "Reveal Discount Code" (primary). Non-eligible users
+/// see a primary "Claim Non-Shareholder Perk" with a soft heads-up that the
+/// non-eligible pool is being used. Either CTA hits the same
+/// `POST /rewards/promocode/:id/claim` endpoint — the server picks the
+/// pool.
+class _ClaimPromoCodeCta extends StatelessWidget {
+  const _ClaimPromoCodeCta({
+    required this.isEligible,
+    required this.loading,
+    required this.onPressed,
+  });
+
+  final bool isEligible;
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = isEligible
+        ? 'Reveal Discount Code'
+        : 'Claim Non-Shareholder Perk';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          ElevatedButton(
+            onPressed: loading ? null : onPressed,
+            child: loading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(label),
+          ),
+          if (!isEligible)
+            Text(
+              "You're not eligible for the shareholder pool, but you can still claim a non-shareholder code.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: SharePerksColors.textSecondaryLight,
+                fontSize: 12,
+                fontFamily: SharePerksFonts.inter,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

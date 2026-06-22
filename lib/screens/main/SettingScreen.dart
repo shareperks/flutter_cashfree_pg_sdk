@@ -169,7 +169,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             )
-          : Container(
+          : SingleChildScrollView(
+              child: Container(
               width: MediaQuery.of(context).size.width,
               padding: EdgeInsets.all(18),
               child: Column(
@@ -279,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ),
-                  Spacer(),
+                  SizedBox(height: 32),
                   Center(
                     child: TextButton(
                       onPressed: () {},
@@ -306,6 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Copyright(),
                 ],
+              ),
               ),
             ),
     );

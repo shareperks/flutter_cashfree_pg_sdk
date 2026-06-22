@@ -2,6 +2,7 @@ class Host {
   static String baseUrl = 'https://api.starvest.com';
   static String authUrl = 'https://auth.shareperks.in';
   static String listingUrl = 'https://listing.shareperks.in';
+  // static String listingUrl = 'http://127.0.0.1:3004';
   static String brokerUrl = 'https://broker.shareperks.in';
   static String submitApi = 'https://from-api.shareperks.in';
   static String holdingApi = "https://holding-api.shareperks.in";

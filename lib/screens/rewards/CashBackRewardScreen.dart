@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/EligibilityCards.dart';
@@ -9,7 +10,9 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
+import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
 import 'package:soui/elements/SpScafold.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CashBackRewardScreen extends StatefulWidget {
   final String rewardId;
@@ -21,6 +24,7 @@ class CashBackRewardScreen extends StatefulWidget {
 
 class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
   bool _loading = true;
+  bool _opening = false;
   CashbackDetailResponse? data;
   String? _errorMessage;
 
@@ -31,15 +35,59 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
+  }
+
+  /// Mints an affiliate tracking link via `GET /cashback/tracking-link` and
+  /// hands it to the OS browser. Shareholder vs non-shareholder pool is
+  /// resolved server-side, so both CTAs go through the same call.
+  Future<void> _openTrackingLink() async {
+    if (_opening) return;
+    setState(() => _opening = true);
+    try {
+      final tracking = await RewardListingDataService.getCashbackTrackingLink(
+        widget.rewardId,
+      );
+      if (!mounted) return;
+
+      final uri = Uri.tryParse(tracking.link);
+      if (uri == null) {
+        throw StateError('Server returned an invalid tracking URL.');
+      }
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw StateError('Could not open the merchant page.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Fluttertoast.cancel();
+      Fluttertoast.showToast(
+        msg: _readableError(e),
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
+
+  String _readableError(Object e) {
+    if (e is StateError) return e.message;
+    final msg = e.toString();
+    if (msg.startsWith('Exception: ')) return msg.substring(11);
+    return 'Could not open the merchant page. Please try again.';
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loadData();
   }
@@ -115,16 +163,31 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                           ),
                           Center(
                             child: ElevatedButton(
-                              onPressed: () {},
-                              child: Text("Verify Eligibility"),
+                              onPressed: _opening ? null : _openTrackingLink,
+                              child: _opening
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      (data?.data?.eligibility?.isEligible ??
+                                              false)
+                                          ? "Shop Now & Earn Cashback"
+                                          : "Verify Eligibility",
+                                    ),
                             ),
                           ),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {},
-                              child: Text("Claim Non-Shareholder Perk"),
+                          if (!(data?.data?.eligibility?.isEligible ?? false))
+                            Center(
+                              child: TextButton(
+                                onPressed: _opening ? null : _openTrackingLink,
+                                child: const Text("Claim Non-Shareholder Perk"),
+                              ),
                             ),
-                          ),
                           Padding(
                             padding: const EdgeInsets.all(14.0),
                             child: PerkTerms(

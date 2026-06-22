@@ -18,6 +18,32 @@ class WalletDataService {
     return WalletInfoResponse.fromJson(data);
   }
 
+  /// `GET /wallet/transitions?tab=…` — filtered wallet history rows.
+  ///
+  /// [tab]: [WalletTransitionsTab.all], [WalletTransitionsTab.payout], or
+  /// [WalletTransitionsTab.earning].
+  static Future<List<WalletTransaction>> getTransitions({
+    WalletTransitionsTab tab = WalletTransitionsTab.all,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      '/wallet/transitions',
+      queryParameters: {'tab': tab.queryValue},
+    );
+    return WalletTransaction.listFromJsonArray(response.data);
+  }
+
+  /// `GET /wallet/cashback-transitions` — cashback credit rows (same shape as [WalletTransaction]).
+  static Future<List<WalletTransaction>> getCashbackTransitions() async {
+    final response = await _dio.get<dynamic>('/wallet/cashback-transitions');
+    return WalletTransaction.listFromJsonArray(response.data);
+  }
+
+  /// `GET /wallet/payout-transitions` — payout / withdrawal debit rows.
+  static Future<List<WalletTransaction>> getPayoutTransitions() async {
+    final response = await _dio.get<dynamic>('/wallet/payout-transitions');
+    return WalletTransaction.listFromJsonArray(response.data);
+  }
+
   /// `POST /payout/request` — withdraw to UPI; auth via [createDio] on [Host.payoutUrl].
   static Future<PayoutRequestResponse> requestPayout(
     PayoutRequestPayload payload,

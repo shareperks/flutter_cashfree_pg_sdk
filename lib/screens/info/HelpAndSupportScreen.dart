@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/components/FaqItem.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/elements/collaps_card.dart';
-import 'package:soui/theme.dart';
 
 class HelpAndSupportScreen extends StatelessWidget {
   const HelpAndSupportScreen({super.key});
@@ -65,9 +66,14 @@ class HelpAndSupportScreen extends StatelessWidget {
                   onChanged: (collapsed) => debugPrint('collapsed: $collapsed'),
                 ),
               ),
-              Image.asset(
-                Assets.ASSETS_CARDS_SHOW_WE_SHOW_PERKS_PNG,
-                width: MediaQuery.of(context).size.width,
+              GestureDetector(
+                onTap: () {
+                  context.pushNamed(RouteNames.HOW_SHOW_PERK_SCREEN);
+                },
+                child: Image.asset(
+                  Assets.ASSETS_CARDS_SHOW_WE_SHOW_PERKS_PNG,
+                  width: MediaQuery.of(context).size.width,
+                ),
               ),
               BorderCard(
                 width: MediaQuery.of(context).size.width,

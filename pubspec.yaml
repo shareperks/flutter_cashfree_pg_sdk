@@ -1,6 +1,6 @@
 name: shareperks
 description: "A clone of the shareplus package."
-version: 1.0.46+1
+version: 1.0.52+45
 
 environment:
   sdk: ^3.11.4
@@ -35,6 +35,10 @@ dependencies:
   file_picker: ^11.0.2
   flutter_widget_from_html: ^0.17.2
   pretty_qr_code: ^3.6.0
+  flutter_cashfree_pg_sdk:
+    git:
+      url: https://github.com/shareperks/flutter_cashfree_pg_sdk.git
+      ref: main
   soui:
     git:
       url: https://github.com/shareperks/soui.git
@@ -61,6 +65,8 @@ flutter:
     - assets/cards/
     - assets/icons/
     - assets/brokers/
+    - shorebird.yaml
+
 
   fonts:
     - family: AlbertSans

@@ -9,6 +9,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
+import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
 import 'package:soui/elements/SpScafold.dart';
 
 class GiftCardRewardScreen extends StatefulWidget {
@@ -115,13 +116,36 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                           ),
                           Center(
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                if (!(data
+                                        ?.data
+                                        ?.eligibility
+                                        ?.isBrokerConnected
+                                        ?.connected ??
+                                    false)) {
+                                  noDematAccountConnectSheet(context);
+                                  return;
+                                }
+                                eligibilitySheet(
+                                  context,
+                                  data?.data?.eligibility?.isEligible ?? false,
+                                  widget.rewardId,
+                                );
+                              },
                               child: Text("Verify Eligibility"),
                             ),
                           ),
                           Center(
                             child: TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                context.pushNamed(
+                                  RouteNames.GIFTCARD_AMOUNT_SCREEN,
+                                  extra: {
+                                    "rewardId": widget.rewardId,
+                                    "isEligible": "false",
+                                  },
+                                );
+                              },
                               child: Text("Claim Non-Shareholder Perk"),
                             ),
                           ),

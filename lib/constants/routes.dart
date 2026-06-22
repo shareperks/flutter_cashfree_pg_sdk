@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shareperks/common/NewUpdate_screen.dart';
@@ -6,6 +8,9 @@ import 'package:shareperks/common/NotFound_screen.dart';
 import 'package:shareperks/common/Splash_screen.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/function/initCheck.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/analytics_service.dart';
+import 'package:shareperks/integrations/analytics/route_observer.dart';
 import 'package:shareperks/screens/Status/EmailSuccessStatusScreen.dart';
 import 'package:shareperks/screens/forms/RequestPerkScreen.dart';
 import 'package:shareperks/screens/forms/UpdateProfileScreen.dart';
@@ -47,6 +52,8 @@ import 'package:shareperks/screens/rewards/GiftCardCodeViewScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
 import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ReadRewardTermScreen.dart';
+import 'package:shareperks/screens/rewards/giftcard/GiftCardAmountScreen.dart';
+import 'package:shareperks/screens/rewards/giftcard/PaymentSucessScreen.dart';
 
 // Routes names
 class RouteNames {
@@ -90,6 +97,8 @@ class RouteNames {
   static const String EMAIL_SUCCESS_SCREEN = 'SuccessScreen';
   static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
+  static const String GIFTCARD_AMOUNT_SCREEN = 'GiftCardAmountScreen';
+  static const String GIFTCARD_PAYMENT_SUCCESS_SCREEN = 'PaymentSuccessScreen';
   static const String MY_WALLET_SCREEN = 'MyWalletScreen';
   static const String EARNING_SCREEN = 'EarningScreen';
   static const String PAYOUT_SCREEN = 'PayoutScreen';
@@ -380,6 +389,42 @@ final List<GoRoute> routes = [
     },
   ),
   GoRoute(
+    name: RouteNames.GIFTCARD_AMOUNT_SCREEN,
+    path: RouteNames.path(RouteNames.GIFTCARD_AMOUNT_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? rewardId = extra is Map<String, dynamic>
+          ? extra['rewardId'] as String?
+          : null;
+      final String isEligible = extra is Map<String, dynamic>
+          ? extra['isEligible'] as String
+          : "false";
+      return GiftCardAmountScreen(
+        rewardId: rewardId!,
+        isEligible: bool.parse(isEligible),
+      );
+    },
+  ),
+  GoRoute(
+    name: RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
+    path: RouteNames.path(RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final map = extra is Map<String, dynamic> ? extra : null;
+      final claimedId = map?['claimedId'] as String?;
+      final orderId = map?['orderId'] as String?;
+      final amountRaw = map?['amount'];
+      final amount = amountRaw is num
+          ? amountRaw.toDouble()
+          : double.tryParse(amountRaw?.toString() ?? '');
+      return PaymentSuccessScreen(
+        orderId: orderId,
+        claimedId: claimedId,
+        amount: amount,
+      );
+    },
+  ),
+  GoRoute(
     name: RouteNames.MY_WALLET_SCREEN,
     path: RouteNames.path(RouteNames.MY_WALLET_SCREEN),
     builder: (BuildContext context, GoRouterState state) => WalletScreen(),
@@ -445,29 +490,13 @@ List<String> offlineRoutes = [
   RouteNames.EMAIL_SUCCESS_SCREEN,
 ];
 
-/// Logs whenever the user pops the top route (system back, `pop`, etc.).
-final class StarvestRouteObserver extends NavigatorObserver {
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPop(route, previousRoute);
-    final from = _routeLabel(route);
-    final to = previousRoute != null ? _routeLabel(previousRoute) : '(root)';
-    print('$to <- $from');
-  }
-
-  String _routeLabel(Route<dynamic> route) {
-    final name = route.settings.name;
-    if (name != null && name.isNotEmpty) return name;
-    return route.runtimeType.toString();
-  }
-}
-
-// GoRouter configuration
+// GoRouter configuration. Screen views are auto-emitted by
+// [AnalyticsRouteObserver] (lib/integrations/analytics/route_observer.dart).
 final GoRouter router = GoRouter(
   initialLocation: RouteNames.path(RouteNames.SPLASH),
   routes: routes,
   navigatorKey: GoRouterKey,
-  observers: [StarvestRouteObserver()],
+  observers: [AnalyticsRouteObserver<PageRoute<dynamic>>()],
   onEnter: (context, currentState, nextState, goRouter) async {
     if (currentState.name != nextState.name) {
       print('${currentState.name} -> ${nextState.name}');
@@ -484,6 +513,12 @@ final GoRouter router = GoRouter(
 
     final online = await checkInternetConnection();
     if (!online && !isOfflineRoute) {
+      unawaited(
+        AnalyticsService.instance.track(AnalyticsEvent.routeBlocked, {
+          'reason': 'no_internet',
+          if (name != null) 'target': name,
+        }),
+      );
       return Block.then(() => goRouter.goNamed(RouteNames.NO_INTERNET));
     }
     return const Allow();

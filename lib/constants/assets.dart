@@ -123,6 +123,14 @@ class Assets {
   static const String ASSETS_CARDS_TOP5PERCENTOFINVEST_PNG =
       'assets/cards/Top5PercentOfInvest.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/eligibleReward.png)
+  static const String ASSETS_CARDS_ELIGIBLEREWARD_PNG =
+      'assets/cards/eligibleReward.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/notEligibleReward.png)
+  static const String ASSETS_CARDS_NOTELIGIBLEREWARD_PNG =
+      'assets/cards/notEligibleReward.png';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/reminder.png)
   static const String ASSETS_CARDS_REMINDER_PNG = 'assets/cards/reminder.png';
 

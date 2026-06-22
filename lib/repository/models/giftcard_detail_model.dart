@@ -151,9 +151,9 @@ class GiftcardBasicInfo {
 }
 
 class GiftcardAmount {
-  int? min;
-  int? max;
-  List<int>? options;
+  double? min;
+  double? max;
+  List<double>? options;
   String? optionType;
   bool? isAmountSelectable;
   bool? isAmountEditable;
@@ -168,12 +168,12 @@ class GiftcardAmount {
   });
 
   GiftcardAmount.fromJson(Map<String, dynamic> json) {
-    min = parseJsonInt(json['min']);
-    max = parseJsonInt(json['max']);
+    min = parseJsonDouble(json['min']);
+    max = parseJsonDouble(json['max']);
     if (json['options'] != null) {
-      options = <int>[];
+      options = <double>[];
       for (final v in json['options'] as List<dynamic>) {
-        final n = parseJsonInt(v);
+        final n = parseJsonDouble(v);
         if (n != null) options!.add(n);
       }
     }
@@ -234,8 +234,8 @@ class GiftcardEligibility {
   int? days;
   int? quantity;
   String? rewardType;
-  int? withHolderRewardRate;
-  int? nonHolderRewardRate;
+  double? withHolderRewardRate;
+  double? nonHolderRewardRate;
   bool? isEligible;
   GiftcardBrokerConnected? isBrokerConnected;
 
@@ -253,8 +253,8 @@ class GiftcardEligibility {
     days = parseJsonInt(json['days']);
     quantity = parseJsonInt(json['quantity']);
     rewardType = json['rewardType'] as String?;
-    withHolderRewardRate = parseJsonInt(json['withHolderRewardRate']);
-    nonHolderRewardRate = parseJsonInt(json['nonHolderRewardRate']);
+    withHolderRewardRate = parseJsonDouble(json['withHolderRewardRate']);
+    nonHolderRewardRate = parseJsonDouble(json['nonHolderRewardRate']);
     isEligible = json['isEligible'] as bool?;
     final bc = json['isBrokerConnected'];
     if (bc is Map<String, dynamic>) {

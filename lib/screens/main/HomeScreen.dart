@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -19,8 +21,10 @@ import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/feature/VotingBrands.dart';
 import 'package:shareperks/repository/models/HomeDataModel.dart';
+import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
+import 'package:shareperks/repository/services/notification/notification.service.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
@@ -39,6 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isError = false;
   HomeDataModel? data;
 
+  /// Bell badge count. Refreshed on initState and again whenever we return
+  /// from `NotificationsScreen` (mark-all-read / delete may have changed it).
+  int _unreadCount = 0;
+
+  /// Last `HomeDataProvider.reloadVersion` we acted on. We re-fetch whenever
+  /// the provider's version advances past this — set elsewhere in the app
+  /// (e.g. after the user changes their primary demat in MyHoldingScreen).
+  int _lastSeenReloadVersion = 0;
+  HomeDataProvider? _homeProvider;
+
   Future loadData() async {
     setState(() {
       _isError = false;
@@ -49,17 +63,52 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       _isError = true;
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  /// Refreshes the bell badge from `GET /notifications/unread-count`.
+  /// Best-effort — the service swallows transport errors and returns 0.
+  Future<void> _refreshUnreadCount() async {
+    final result = await NotificationService.getUnreadCount();
+    if (!mounted) return;
+    setState(() => _unreadCount = result.unreadCount);
+  }
+
+  Future<void> _openNotifications() async {
+    await context.pushNamed(RouteNames.NOTIFICATION_SCREEN);
+    if (!mounted) return;
+    // The user may have read / deleted notifications while away — re-pull.
+    unawaited(_refreshUnreadCount());
+  }
+
+  void _onHomeProviderChanged() {
+    final provider = _homeProvider;
+    if (provider == null) return;
+    if (provider.reloadVersion > _lastSeenReloadVersion) {
+      _lastSeenReloadVersion = provider.reloadVersion;
+      if (mounted) loadData();
     }
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _homeProvider = context.read<HomeDataProvider>();
+    _lastSeenReloadVersion = _homeProvider!.reloadVersion;
+    _homeProvider!.addListener(_onHomeProviderChanged);
     loadData();
+    unawaited(_refreshUnreadCount());
+  }
+
+  @override
+  void dispose() {
+    _homeProvider?.removeListener(_onHomeProviderChanged);
+    super.dispose();
   }
 
   @override
@@ -75,12 +124,24 @@ class _HomeScreenState extends State<HomeScreen> {
           fit: BoxFit.contain,
         ),
         actions: [
-          Badge(
-            label: Text("0"),
-            backgroundColor: AppColors.accent,
-            child: Icon(HugeIconsSolid.notification01, color: AppColors.brand),
+          IconButton(
+            tooltip: 'Notifications',
+            onPressed: _openNotifications,
+            icon: _unreadCount > 0
+                ? Badge(
+                    label: Text(_unreadCount > 99 ? '99+' : '$_unreadCount'),
+                    backgroundColor: AppColors.accent,
+                    child: Icon(
+                      HugeIconsSolid.notification01,
+                      color: AppColors.brand,
+                    ),
+                  )
+                : Icon(
+                    HugeIconsSolid.notification01,
+                    color: AppColors.brand,
+                  ),
           ),
-          SizedBox(width: 24),
+          SizedBox(width: 12),
         ],
       ),
       body: Builder(
@@ -209,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: LayoutBuilder(
                                       builder: (context, constraints) {
                                         return ImageBuilder(
-                                          imageUrl: url,
+                                          imageUrl: imageUrl(url),
                                           fit: BoxFit.cover,
                                           width: constraints.maxWidth,
                                           height: 100,

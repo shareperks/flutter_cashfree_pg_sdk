@@ -7,6 +7,8 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/function/localstorage.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
@@ -92,6 +94,15 @@ class _SetupScreenState extends State<SetupScreen> {
         return;
       }
       await LocalStorage.setString("userId", response.user?.id ?? "");
+      if (response.user?.id != null) {
+        await AnalyticsService.instance.identify(response.user!.id!, {
+          if (response.user!.mobile != null) 'mobile': response.user!.mobile,
+        });
+      }
+      AnalyticsService.instance.track(AnalyticsEvent.profileCompleted);
+      AnalyticsService.instance.track(AnalyticsEvent.signupCompleted, {
+        'has_referral': referralCodeController.text.isNotEmpty,
+      });
       context.read<UserProvider>().setUser(response.user!);
       context.goNamed(RouteNames.PROFILE_SUCCESS_SCREEN);
     } catch (e) {

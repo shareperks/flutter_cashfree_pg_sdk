@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:provider/provider.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
 import 'package:shareperks/components/holding/InvestmentAmountCard.dart';
@@ -11,6 +12,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/repository/services/holding/holding_builder.dart';
 import 'package:shareperks/repository/services/holding/holding_model.dart';
@@ -164,6 +166,9 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
       final res = await HoldingService.markHoldingAsPrimary(holdingSnapshotId);
       if (!mounted) return;
       if (res.result) {
+        // Eligibility on the home feed depends on which holding is primary,
+        // so flag HomeScreen for a refresh on the user's next visit.
+        context.read<HomeDataProvider>().requestReload();
         await loadMyHoldings();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

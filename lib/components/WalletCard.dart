@@ -87,12 +87,14 @@ class TransactionData {
   final String date;
   final String time;
   final String type;
+  final String? label;
 
   TransactionData({
     required this.amount,
     required this.date,
     required this.time,
     required this.type,
+    this.label,
   }) {}
 }
 
@@ -130,14 +132,29 @@ class TransactionCard extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        subtitle: Text(
-          '${data.date}',
-          style: TextStyle(
-            color: const Color(0xFF898989),
-            fontSize: 12,
-            fontFamily: SharePerksFonts.inter,
-            fontWeight: FontWeight.w400,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (data.label != null && data.label!.trim().isNotEmpty)
+              Text(
+                data.label!.trim(),
+                style: TextStyle(
+                  color: const Color(0xFF333333),
+                  fontSize: 12,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            Text(
+              data.date,
+              style: TextStyle(
+                color: const Color(0xFF898989),
+                fontSize: 12,
+                fontFamily: SharePerksFonts.inter,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
         trailing: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),

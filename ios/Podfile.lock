@@ -1,6 +1,15 @@
 PODS:
   - audio_session (0.0.1):
     - Flutter
+  - CashfreeAnalyticsSDK (2.2.0):
+    - CFNetworkSDK (= 2.2.0)
+  - CashfreePG (2.2.7):
+    - CashfreePGUISDK (= 2.2.7)
+  - CashfreePGCoreSDK (2.2.7):
+    - CashfreeAnalyticsSDK (= 2.2.0)
+  - CashfreePGUISDK (2.2.7):
+    - CashfreePGCoreSDK (= 2.2.7)
+  - CFNetworkSDK (2.2.0)
   - connectivity_plus (0.0.1):
     - Flutter
   - device_info_plus (0.0.1):
@@ -40,6 +49,9 @@ PODS:
     - DKImagePickerController/PhotoGallery
     - Flutter
   - Flutter (1.0.0)
+  - flutter_cashfree_pg_sdk (0.0.1):
+    - CashfreePG (= 2.2.7)
+    - Flutter
   - fluttertoast (0.0.2):
     - Flutter
   - just_audio (0.0.1):
@@ -78,6 +90,7 @@ DEPENDENCIES:
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
+  - flutter_cashfree_pg_sdk (from `.symlinks/plugins/flutter_cashfree_pg_sdk/ios`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - just_audio (from `.symlinks/plugins/just_audio/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
@@ -91,6 +104,11 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - CashfreeAnalyticsSDK
+    - CashfreePG
+    - CashfreePGCoreSDK
+    - CashfreePGUISDK
+    - CFNetworkSDK
     - DKImagePickerController
     - DKPhotoGallery
     - SCGateway
@@ -108,6 +126,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/file_picker/ios"
   Flutter:
     :path: Flutter
+  flutter_cashfree_pg_sdk:
+    :path: ".symlinks/plugins/flutter_cashfree_pg_sdk/ios"
   fluttertoast:
     :path: ".symlinks/plugins/fluttertoast/ios"
   just_audio:
@@ -131,12 +151,18 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
+  CashfreeAnalyticsSDK: ae25b71a54607c920d519103d154d9727ca2c15a
+  CashfreePG: 586d6c65a9b2012105f6978eb9cf44c608528f8c
+  CashfreePGCoreSDK: 5b37e5d92ce2ad8e65ba9264f091f21f50b6227d
+  CashfreePGUISDK: 311854bfa21e9f9c3acfeea4736f8d7d0d62e043
+  CFNetworkSDK: 4e431b55f607544f5ca45bc1a36a13e602f51841
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_cashfree_pg_sdk: 465f97872ec71db5d90d2a630e6c2e4e860f9c70
   fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
   just_audio: 4e391f57b79cad2b0674030a00453ca5ce817eed
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499

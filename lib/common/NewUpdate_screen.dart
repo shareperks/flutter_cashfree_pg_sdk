@@ -6,11 +6,13 @@ import 'package:lottie/lottie.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Full-screen prompt when a newer app version is available.
-class NewUpdateScreen extends StatelessWidget {
+class NewUpdateScreen extends StatefulWidget {
   final String title;
   final String message;
   final bool isForceUpdate;
@@ -20,6 +22,19 @@ class NewUpdateScreen extends StatelessWidget {
     required this.message,
     required this.isForceUpdate,
   });
+
+  @override
+  State<NewUpdateScreen> createState() => _NewUpdateScreenState();
+}
+
+class _NewUpdateScreenState extends State<NewUpdateScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.track(AnalyticsEvent.forceUpdateShown, {
+      'is_force_update': widget.isForceUpdate,
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +56,7 @@ class NewUpdateScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  title,
+                  widget.title,
                   style: text.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: cs.onSurface,
@@ -51,7 +66,7 @@ class NewUpdateScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: SharePerksSpacing.sm),
                 Text(
-                  message,
+                  widget.message,
                   style: text.bodyLarge?.copyWith(
                     color: cs.onSurfaceVariant,
                     height: 1.45,
@@ -97,7 +112,7 @@ class NewUpdateScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: SharePerksSpacing.sm),
-                if (!isForceUpdate)
+                if (!widget.isForceUpdate)
                   TextButton(
                     onPressed: () async {
                       final isLoggedIn = await AuthService.isLoggedIn();
