@@ -16,6 +16,7 @@ import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/repository/services/holding/holding_builder.dart';
 import 'package:shareperks/repository/services/holding/holding_model.dart';
+import 'package:shareperks/utils/currency_format.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
@@ -757,7 +758,7 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
 
 String _formatPortfolioInr(FetchUserHoldingsResponse h) {
   final total = h.holdings.fold<double>(0, (sum, line) => sum + line.value);
-  return '₹ ${total.toStringAsFixed(2)}';
+  return formatInrAmount(total, includeSymbol: true);
 }
 
 String _formatSnapshotDate(DateTime d) {
