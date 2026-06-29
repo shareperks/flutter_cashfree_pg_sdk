@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:provider/provider.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/components/ProfileCard.dart';
@@ -8,7 +9,9 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
-import 'package:shareperks/function/localstorage.dart';
+import 'package:shareperks/repository/providers/home-data.provider.dart';
+import 'package:shareperks/repository/providers/user.provider.dart';
+import 'package:shareperks/repository/services/auth/auth_service.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/gredent_list.dart';
 import 'package:soui/theme.dart';
@@ -16,6 +19,35 @@ import 'package:url_launcher/url_launcher.dart';
 
 class MenuListScreen extends StatelessWidget {
   const MenuListScreen({super.key});
+
+  Future<void> _onLogout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !context.mounted) return;
+
+    await AuthService.logout();
+    if (!context.mounted) return;
+
+    context.read<UserProvider>().clearUser();
+    context.read<HomeDataProvider>().setHomeData(null);
+    context.goNamed(RouteNames.LANDING_SCREEN);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -240,9 +272,7 @@ class MenuListScreen extends StatelessWidget {
                       horizontal: 10,
                       vertical: 0,
                     ),
-                    onTap: () async {
-                      await LocalStorage.clearAll();
-                    },
+                    onTap: () => _onLogout(context),
                     leading: Icon(HugeIconsStroke.logoutCircle01, size: 17),
                     title: Text(
                       'Logout',

@@ -62,15 +62,12 @@ class _SetupScreenState extends State<SetupScreen> {
       );
       return false;
     }
-    if (referralCodeController.text.isEmpty) {
-      Fluttertoast.showToast(
-        msg: 'Please enter a valid referral code.',
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-      return false;
-    }
     return true;
+  }
+
+  String? _referralCodeIfProvided() {
+    final code = referralCodeController.text.trim();
+    return code.isEmpty ? null : code;
   }
 
   void completeProfile() async {
@@ -82,7 +79,7 @@ class _SetupScreenState extends State<SetupScreen> {
         CompleteProfilePayload(
           name: "${firstNameController.text} ${lastNameController.text}",
           email: emailController.text,
-          referralCode: referralCodeController.text,
+          referralCode: _referralCodeIfProvided(),
         ),
       );
       if (!response.success) {
@@ -101,7 +98,7 @@ class _SetupScreenState extends State<SetupScreen> {
       }
       AnalyticsService.instance.track(AnalyticsEvent.profileCompleted);
       AnalyticsService.instance.track(AnalyticsEvent.signupCompleted, {
-        'has_referral': referralCodeController.text.isNotEmpty,
+        'has_referral': _referralCodeIfProvided() != null,
       });
       context.read<UserProvider>().setUser(response.user!);
       context.goNamed(RouteNames.PROFILE_SUCCESS_SCREEN);
@@ -231,6 +228,9 @@ class _SetupScreenState extends State<SetupScreen> {
                   onPressed: () {
                     setState(() {
                       isReferralCodeVisible = !isReferralCodeVisible;
+                      if (!isReferralCodeVisible) {
+                        referralCodeController.clear();
+                      }
                     });
                   },
                   child: Text(
@@ -255,7 +255,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     ? TextField(
                         controller: referralCodeController,
                         decoration: InputDecoration(
-                          hintText: 'Referral Code',
+                          hintText: 'Referral Code (optional)',
                           hintStyle: TextStyle(
                             color: SharePerksColors.textSecondaryLight,
                           ),
