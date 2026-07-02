@@ -12,6 +12,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/biometric/biometric_gate.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/repository/services/holding/holding_builder.dart';
@@ -39,11 +40,19 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
   String? _selectedAccountId;
   bool _refreshingSmallcase = false;
   bool _settingPrimary = false;
+  bool _biometricUnlocked = false;
+  bool _holdingsRequested = false;
 
   loadMyHoldings({bool? resync}) async {
     try {
       _error = false;
       data = await HoldingService.getHoldings();
+      if (await HoldingService.ensurePrimaryHoldingIfNeeded(data)) {
+        if (mounted) {
+          context.read<HomeDataProvider>().requestReload();
+        }
+        data = await HoldingService.getHoldings();
+      }
       selectItems = HoldingSelectBuilder.build(data);
       if (resync != false) {
         _syncDefaultAccount();
@@ -60,7 +69,21 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  void _onBiometricUnlocked() {
+    if (!_biometricUnlocked) {
+      setState(() => _biometricUnlocked = true);
+    }
+    if (_holdingsRequested) return;
+    _holdingsRequested = true;
     loadMyHoldings();
+  }
+
+  void _onBiometricLocked() {
+    if (_biometricUnlocked) {
+      setState(() => _biometricUnlocked = false);
+    }
   }
 
   void _syncDefaultAccount() {
@@ -215,10 +238,11 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
     }
     setState(() => _refreshingSmallcase = true);
     try {
-      await HoldingService.refreshHoldingTransaction(selectedHolding?.id ?? "");
+      await HoldingService.refreshHoldingTransaction(h.id);
       if (!mounted) return;
 
-      loadMyHoldings(resync: false);
+      await loadMyHoldings(resync: false);
+      if (!mounted) return;
       setState(() {
         _refreshingSmallcase = false;
       });
@@ -273,7 +297,19 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
           const SizedBox(width: 20),
         ],
       ),
-      body: Builder(
+      body: BiometricGate(
+        reason: 'Verify your identity to view your holdings',
+        onUnlocked: _onBiometricUnlocked,
+        onLocked: _onBiometricLocked,
+        child: _buildHoldingsBody(),
+      ),
+      floatingActionButton:
+          _biometricUnlocked ? _buildSmallcaseRefreshFab() : null,
+    );
+  }
+
+  Widget _buildHoldingsBody() {
+    return Builder(
         builder: (context) {
           if (_loading) {
             return const HoldingsPageShimmer();
@@ -750,9 +786,7 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
             ),
           );
         },
-      ),
-      floatingActionButton: _buildSmallcaseRefreshFab(),
-    );
+      );
   }
 }
 

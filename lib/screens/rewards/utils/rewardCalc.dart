@@ -16,30 +16,39 @@ class GiftCardCalcCalcData {
 
   bool get hasDiscount => percent > 0 && savings > 0;
 
-  String formatInr(double value) {
+  String formatInr(num value) {
     final negative = value < 0;
-    final digits = value.abs().toString();
+    String digits = value.abs().toString();
+
+    // Handle decimal values
+    String decimalPart = '';
+    if (digits.contains('.')) {
+      final parts = digits.split('.');
+      digits = parts[0];
+      decimalPart = '.${parts[1]}';
+    }
+
     if (digits.length <= 3) {
-      return negative ? '-$digits' : digits;
+      return '${negative ? '-' : ''}$digits$decimalPart';
     }
+
+    final lastThree = digits.substring(digits.length - 3);
+    String remaining = digits.substring(0, digits.length - 3);
+
     final buffer = StringBuffer();
-    final firstGroup = digits.length % 3;
-    if (firstGroup == 0) {
-      buffer.write(digits.substring(0, 3));
-      var index = 3;
-      while (index < digits.length) {
-        buffer.write(',${digits.substring(index, index + 3)}');
-        index += 3;
-      }
-    } else {
-      buffer.write(digits.substring(0, firstGroup));
-      var index = firstGroup;
-      while (index < digits.length) {
-        buffer.write(',${digits.substring(index, index + 3)}');
-        index += 3;
-      }
+
+    while (remaining.length > 2) {
+      buffer.write('${remaining.substring(remaining.length - 2)},');
+      remaining = remaining.substring(0, remaining.length - 2);
     }
-    return negative ? '-${buffer.toString()}' : buffer.toString();
+
+    if (remaining.isNotEmpty) {
+      buffer.write('$remaining,');
+    }
+
+    final formatted = '${buffer.toString()}$lastThree';
+
+    return '${negative ? '-' : ''}$formatted$decimalPart';
   }
 
   String get formattedFaceValue => '₹ ${formatInr(amount)}';

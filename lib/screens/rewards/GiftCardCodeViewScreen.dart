@@ -195,7 +195,8 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
                                       ),
                                     ),
                                     valueWidget: Text(
-                                      "${data?.data?.card?.expireAtFormatted}",
+                                      data?.data?.card?.expireAtFormatted ??
+                                          'No expiry',
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontFamily: SharePerksFonts.inter,

@@ -149,6 +149,18 @@ class HoldingService {
     }
   }
 
+  /// Refreshes the primary holdings snapshot when it was linked via Smallcase.
+  static Future<FetchUserHoldingsResponse> refreshPrimarySmallcaseHolding() async {
+    final primary = await getPrimaryHoldings();
+    if (primary.depository.toUpperCase() != 'SMALLCASE') {
+      throw StateError('Primary holding is not linked via Smallcase');
+    }
+    if (primary.id.isEmpty) {
+      throw StateError('Missing holdings snapshot id');
+    }
+    return refreshHoldingTransaction(primary.id);
+  }
+
   /// PUT /holdings/:userId/mark-as-primary/:holdingId
   ///
   /// [holdingId] is the holdings snapshot `id` (e.g. from [FetchUserHoldingsResponse.id]).
@@ -174,6 +186,22 @@ class HoldingService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Marks the first linked account as primary when the user has holdings but
+  /// none are flagged primary (e.g. right after the first broker import).
+  static Future<bool> ensurePrimaryHoldingIfNeeded([
+    List<FetchUserHoldingsResponse>? holdings,
+  ]) async {
+    final list = holdings ?? await getHoldings();
+    if (list.isEmpty) return false;
+    if (list.any((h) => h.primary)) return false;
+
+    final candidate = list.first;
+    if (candidate.id.isEmpty) return false;
+
+    final res = await markHoldingAsPrimary(candidate.id);
+    return res.result;
   }
 
   /// DELETE /holdings/:userId/discard/:holdingId

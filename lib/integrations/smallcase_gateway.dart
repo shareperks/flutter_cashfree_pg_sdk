@@ -48,8 +48,8 @@ class SmallcaseGateway {
       );
       print(fetchHoldingsSmallcaseToken);
 
-      FetchUserHoldingsResponse holdings =
-          await HoldingService.fetchUserHoldings(fetchHoldingsSmallcaseToken);
+      await HoldingService.fetchUserHoldings(fetchHoldingsSmallcaseToken);
+      await HoldingService.ensurePrimaryHoldingIfNeeded();
       isSuccess(true);
     } catch (e) {
       if (e is DioException) {

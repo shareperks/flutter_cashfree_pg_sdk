@@ -281,6 +281,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                 await loadData();
               },
               child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   children: [
                     if (widget.isEligible)

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,7 @@ import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
 import 'package:shareperks/repository/services/notification/notification.service.dart';
+import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
@@ -52,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// (e.g. after the user changes their primary demat in MyHoldingScreen).
   int _lastSeenReloadVersion = 0;
   HomeDataProvider? _homeProvider;
+  bool _refreshingHoldings = false;
 
   Future loadData() async {
     setState(() {
@@ -92,6 +95,43 @@ class _HomeScreenState extends State<HomeScreen> {
     if (provider.reloadVersion > _lastSeenReloadVersion) {
       _lastSeenReloadVersion = provider.reloadVersion;
       if (mounted) loadData();
+    }
+  }
+
+  String _holdingsRefreshErrorMessage(Object e) {
+    if (e is DioException) {
+      final d = e.response?.data;
+      if (d is Map && d['message'] is String) return d['message'] as String;
+      return e.message ?? 'Could not refresh holdings';
+    }
+    if (e is StateError) {
+      return e.message;
+    }
+    return 'Could not refresh holdings';
+  }
+
+  Future<void> _refreshHoldingsFromHome() async {
+    if (_refreshingHoldings || !mounted) return;
+    setState(() => _refreshingHoldings = true);
+    try {
+      await HoldingService.refreshPrimarySmallcaseHolding();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Holdings refreshed')),
+      );
+      await loadData();
+    } on StateError {
+      if (!mounted) return;
+      await context.pushNamed(RouteNames.MY_HOLDING_VIEW_SCREEN);
+      if (!mounted) return;
+      await loadData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_holdingsRefreshErrorMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _refreshingHoldings = false);
     }
   }
 
@@ -177,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           return RefreshIndicator(
             onRefresh: () async {
-              loadData();
+              await Future.wait([loadData(), _refreshUnreadCount()]);
             },
             child: SingleChildScrollView(
               child: Column(
@@ -632,9 +672,27 @@ class _HomeScreenState extends State<HomeScreen> {
                           false)
                         Column(
                           children: [
-                            Image.asset(
-                              Assets.ASSETS_CARDS_REMINDER_PNG,
-                              width: MediaQuery.of(context).size.width,
+                            GestureDetector(
+                              onTap: _refreshingHoldings
+                                  ? null
+                                  : _refreshHoldingsFromHome,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Image.asset(
+                                    Assets.ASSETS_CARDS_REMINDER_PNG,
+                                    width: MediaQuery.of(context).size.width,
+                                  ),
+                                  if (_refreshingHoldings)
+                                    const SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                             SizedBox(height: 30),
                           ],

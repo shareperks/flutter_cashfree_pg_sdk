@@ -1,6 +1,6 @@
 name: shareperks
 description: "A clone of the shareplus package."
-version: 1.0.52+45
+version: 1.0.53+46
 
 environment:
   sdk: ^3.11.4
@@ -31,6 +31,7 @@ dependencies:
   flutter_svg: ^2.2.4
   flutter_animate: ^4.5.2
   pinput: ^6.0.2
+  local_auth: ^2.3.0
   dropdown_flutter: ^1.0.3
   file_picker: ^11.0.2
   flutter_widget_from_html: ^0.17.2

@@ -8,6 +8,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/utils/support_contact.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/elements/collaps_card.dart';
@@ -101,6 +102,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                       ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.all(0),
+                        onTap: () => SupportContact.openEmail(context),
                         title: Text(
                           'Write to us',
                           style: TextStyle(
@@ -111,7 +113,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                           ),
                         ),
                         subtitle: Text(
-                          'shareperks@gmail.com',
+                          SupportContact.email,
                           style: TextStyle(
                             color: const Color(0xFF898989),
                             fontSize: 10,
@@ -136,6 +138,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                       ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.all(0),
+                        onTap: () => SupportContact.openPhone(context),
                         title: Text(
                           'Call us',
                           style: TextStyle(
@@ -146,7 +149,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                           ),
                         ),
                         subtitle: Text(
-                          '+91 7014733904',
+                          SupportContact.phoneDisplay,
                           style: TextStyle(
                             color: const Color(0xFF898989),
                             fontSize: 10,
@@ -176,7 +179,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                 height: 50,
                 width: MediaQuery.of(context).size.width,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => SupportContact.openWhatsApp(context),
                   style: ButtonStyle(
                     backgroundColor: WidgetStatePropertyAll(
                       SharePerksColors.success,

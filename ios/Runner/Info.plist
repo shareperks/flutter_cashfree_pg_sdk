@@ -48,6 +48,12 @@
 	<string>SharePerks requires access to your photo library to save data on your device.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SharePerks needs access to your photos so you can set a profile picture.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>SharePerks uses Face ID to protect your holdings and other sensitive information.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SharePerks uses the camera so you can take a profile photo and scan QR codes when redeeming gift cards or completing payments.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SharePerks does not track your location. Integrated payment services may request location access to help verify transactions and prevent fraud.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
