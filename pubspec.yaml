@@ -1,6 +1,6 @@
 name: shareperks
 description: "A clone of the shareplus package."
-version: 1.0.53+46
+version: 1.0.54+47
 
 environment:
   sdk: ^3.11.4
