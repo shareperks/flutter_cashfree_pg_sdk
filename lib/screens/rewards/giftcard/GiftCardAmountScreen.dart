@@ -24,6 +24,25 @@ import 'package:soui/elements/amount_picker.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/elements/collaps_card.dart';
 
+bool _isCashfreeOrderPaid(Map<String, dynamic> resp) {
+  if (resp['success'] != true) return false;
+
+  final data = resp['data'];
+  if (data is Map<String, dynamic>) {
+    final status = data['order_status'] ?? data['orderStatus'];
+    if (status != null) {
+      return status.toString().toUpperCase() == 'PAID';
+    }
+  }
+
+  final status = resp['order_status'] ?? resp['orderStatus'];
+  if (status != null) {
+    return status.toString().toUpperCase() == 'PAID';
+  }
+
+  return true;
+}
+
 class GiftCardAmountScreen extends StatefulWidget {
   final String rewardId;
   final bool isEligible;
@@ -212,30 +231,40 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         environment: CFEnvironment.PRODUCTION,
         onSuccess: (orderId) async {
           if (!mounted) return;
-          String? claimedId;
           try {
             final resp = await CashfreePaymentService.fetchOrderStatus(orderId);
-            if (resp['success'] == true) {
-              final data = resp['data'];
-              if (data is Map<String, dynamic>) {
-                claimedId = data['claimedId']?.toString();
+            if (!_isCashfreeOrderPaid(resp)) {
+              if (mounted) {
+                Fluttertoast.showToast(msg: 'Payment is not complete');
               }
-              claimedId ??= resp['claimedId']?.toString();
+              return;
             }
-          } catch (_) {}
-          if (!mounted) return;
-          context.pushReplacementNamed(
-            RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
-            extra: {
-              'orderId': orderId,
-              if (claimedId != null) 'claimedId': claimedId,
-              'amount': pricing.discountedAmount,
-            },
-          );
+
+            String? claimedId;
+            final data = resp['data'];
+            if (data is Map<String, dynamic>) {
+              claimedId = data['claimedId']?.toString();
+            }
+            claimedId ??= resp['claimedId']?.toString();
+
+            if (!mounted) return;
+            context.pushReplacementNamed(
+              RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
+              extra: {
+                'orderId': orderId,
+                if (claimedId != null) 'claimedId': claimedId,
+                'amount': pricing.discountedAmount,
+              },
+            );
+          } catch (_) {
+            if (mounted) {
+              Fluttertoast.showToast(msg: 'Payment is not complete');
+            }
+          }
         },
-        onError: (error, _) {
+        onError: (_, __) {
           if (!mounted) return;
-          Fluttertoast.showToast(msg: error.getMessage() ?? 'Payment failed');
+          Fluttertoast.showToast(msg: 'Payment is not complete');
         },
       );
     } on ApiErrorResponse catch (e) {

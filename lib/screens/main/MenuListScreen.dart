@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
@@ -12,13 +14,43 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
+import 'package:shareperks/repository/services/listing/referral.service.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/gredent_list.dart';
 import 'package:soui/theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class MenuListScreen extends StatelessWidget {
+class MenuListScreen extends StatefulWidget {
   const MenuListScreen({super.key});
+
+  @override
+  State<MenuListScreen> createState() => _MenuListScreenState();
+}
+
+class _MenuListScreenState extends State<MenuListScreen> {
+  int _referralCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadReferralCount());
+  }
+
+  Future<void> _loadReferralCount() async {
+    try {
+      final referrals = await ReferralListingService.getAllReferrals();
+      if (!mounted) return;
+      setState(() => _referralCount = referrals.length);
+    } catch (_) {
+      // Best-effort badge — keep previous count on error.
+    }
+  }
+
+  Future<void> _openReferrals() async {
+    await context.pushNamed(RouteNames.MY_REFER_LIST_SCREEN);
+    if (!mounted) return;
+    unawaited(_loadReferralCount());
+  }
 
   Future<void> _onLogout(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -121,22 +153,41 @@ class MenuListScreen extends StatelessWidget {
                       ),
                     ),
                     color: AppColors.accent,
-                    onTap: () {
-                      context.pushNamed(RouteNames.MY_REFER_LIST_SCREEN);
-                    },
-                    trailing: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: SharePerksColors.accent,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Center(
-                        child: Text("5", style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
+                    onTap: _openReferrals,
+                    trailing: _referralCount > 0
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: SharePerksColors.accent,
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _referralCount > 99
+                                      ? '99+'
+                                      : '$_referralCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : null,
                     style: GredentListTileStyle(
                       contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.neutral700.withAlpha(40),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
 
