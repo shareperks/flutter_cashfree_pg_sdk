@@ -7,6 +7,10 @@ import 'package:shareperks/components/ReletedPerksCard.dart';
 import 'package:shareperks/components/loader/GiftCardRewardShimmer.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
+import 'package:shareperks/integrations/analytics/track_eligibility.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
@@ -29,6 +33,18 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
     try {
       _errorMessage = null;
       data = await RewardListingDataService.getGiftcardDetail(widget.rewardId);
+      JourneyContext.setNames(
+        rewardName: data?.data?.basicInfo?.title,
+        brandName: data?.data?.company?.name,
+      );
+      trackAction(AnalyticsEvent.giftcardPerkViewed, {
+        'reward_id': widget.rewardId,
+        'gift_card_name': data?.data?.basicInfo?.title ?? '',
+        'brand_name': data?.data?.company?.name ?? '',
+        'is_eligible': data?.data?.eligibility?.isEligible ?? false,
+        'source': 'reward_detail',
+      });
+      await _trackEligibilityFromData();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -40,9 +56,38 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    if (JourneyContext.currentJourneyId == null) {
+      JourneyContext.startJourney(
+        rewardId: widget.rewardId,
+        perkType: 'giftcard',
+      );
+    }
     loadData();
+  }
+
+  Future<void> _trackEligibilityFromData() async {
+    final eligibility = data?.data?.eligibility;
+    if (eligibility == null) return;
+    final isEligible = eligibility.isEligible ?? false;
+    String? reason;
+    if (!isEligible) {
+      if (eligibility.isBrokerConnected?.connected != true) {
+        reason = 'no_holdings';
+      } else {
+        reason = 'not_eligible';
+      }
+    } else {
+      reason = 'ok';
+    }
+    await trackEligibility(
+      perkType: 'giftcard',
+      rewardId: widget.rewardId,
+      isEligible: isEligible,
+      reason: reason,
+      source: 'reward_detail',
+      brandId: data?.data?.company?.id,
+    );
   }
 
   @override
@@ -117,6 +162,13 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                           Center(
                             child: ElevatedButton(
                               onPressed: () {
+                                trackButtonClick('Verify Eligibility', {
+                                  'gift_card_name':
+                                      data?.data?.basicInfo?.title ?? '',
+                                  'is_eligible':
+                                      data?.data?.eligibility?.isEligible ??
+                                      false,
+                                });
                                 if (!(data
                                         ?.data
                                         ?.eligibility
@@ -138,6 +190,11 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                           Center(
                             child: TextButton(
                               onPressed: () {
+                                trackButtonClick('Claim Non-Shareholder Perk', {
+                                  'gift_card_name':
+                                      data?.data?.basicInfo?.title ?? '',
+                                  'is_eligible': false,
+                                });
                                 context.pushNamed(
                                   RouteNames.GIFTCARD_AMOUNT_SCREEN,
                                   extra: {

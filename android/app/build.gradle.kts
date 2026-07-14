@@ -40,7 +40,7 @@ android {
         applicationId = "com.shareperks"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // Cashfree PG SDK requires API 19+.
+        // Razorpay Flutter SDK requires API 19+.
         minSdk = maxOf(flutter.minSdkVersion, 19)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

@@ -15,19 +15,23 @@ class CategoryView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: 5,
         children: [
           ImageBuilder(imageUrl: image, width: 75, height: 75),
-          Text(
-            '$title',
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: SharePerksColors.surfaceDark,
-              fontSize: 12,
-              fontFamily: SharePerksFonts.inter,
-              fontWeight: FontWeight.w400,
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 32,
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: SharePerksColors.surfaceDark,
+                fontSize: 12,
+                height: 1.2,
+                fontFamily: SharePerksFonts.inter,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
         ],

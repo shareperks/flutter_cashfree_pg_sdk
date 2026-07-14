@@ -9,13 +9,26 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/holdings.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/integrations/smallcase_gateway.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/icon.dart';
 import 'package:soui/theme.dart';
 
-class ListBrokerScreen extends StatelessWidget {
+class ListBrokerScreen extends StatefulWidget {
   const ListBrokerScreen({super.key});
+
+  @override
+  State<ListBrokerScreen> createState() => _ListBrokerScreenState();
+}
+
+class _ListBrokerScreenState extends State<ListBrokerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    trackAction(AnalyticsEvent.brokerListViewed, {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +57,9 @@ class ListBrokerScreen extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () async {
+                    trackAction(AnalyticsEvent.brokerSelected, {
+                      'broker_id': broker.brokerKey,
+                    });
                     if (broker.supportsSmallcase) {
                       await SmallcaseGateway.importHolding(
                         broker,

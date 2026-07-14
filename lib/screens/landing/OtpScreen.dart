@@ -11,6 +11,7 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/network.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
@@ -59,7 +60,7 @@ class _OtpScreenState extends State<OtpScreen> {
       final response = await AuthService.login(
         LoginMobilePayload(phone: widget.phone),
       );
-      AnalyticsService.instance.track(AnalyticsEvent.otpResent);
+      trackAction(AnalyticsEvent.otpResent, {'label': 'Resend OTP'});
       if (!response.success) {
         Fluttertoast.showToast(
           msg: 'OTP sent successfully.',
@@ -95,7 +96,9 @@ class _OtpScreenState extends State<OtpScreen> {
         VerifyOtpMobilePayload(phone: widget.phone, otp: otpController.text),
       );
       if (!response.success) {
-        AnalyticsService.instance.track(AnalyticsEvent.otpFailed, {
+        trackAction(AnalyticsEvent.otpFailed, {
+          'label': 'Verify OTP',
+          'detail': 'failed',
           'reason': 'invalid_response',
           if (response.message.isNotEmpty == true) 'message': response.message,
         });
@@ -107,7 +110,9 @@ class _OtpScreenState extends State<OtpScreen> {
         return;
       }
       await TokenManager.setToken(response.token!);
-      AnalyticsService.instance.track(AnalyticsEvent.otpVerified, {
+      trackAction(AnalyticsEvent.otpVerified, {
+        'label': 'Verify OTP',
+        'detail': 'verified',
         'is_profile_complete': response.isProfileComplete == true,
       });
       if (response.isProfileComplete == true) {
@@ -126,7 +131,9 @@ class _OtpScreenState extends State<OtpScreen> {
         return;
       }
     } catch (e) {
-      AnalyticsService.instance.track(AnalyticsEvent.otpFailed, {
+      trackAction(AnalyticsEvent.otpFailed, {
+        'label': 'Verify OTP',
+        'detail': 'failed',
         'reason': 'exception',
       });
       Fluttertoast.showToast(

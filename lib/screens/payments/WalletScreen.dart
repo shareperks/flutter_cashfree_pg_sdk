@@ -9,6 +9,8 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/wallet_info_model.dart';
 import 'package:shareperks/repository/services/wallet/wallet.service.dart';
 import 'package:soui/elements/SpScafold.dart';
@@ -45,6 +47,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
+    trackAction(AnalyticsEvent.walletViewed, {});
     loadData();
   }
 

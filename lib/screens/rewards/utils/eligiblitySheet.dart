@@ -4,9 +4,13 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 
 /// Bottom sheet after verifying perk eligibility.
 void eligibilitySheet(BuildContext context, bool isEligible, String rewardId) {
+  final restoreScreen = trackBottomSheet('eligibility_result_sheet', {
+    'is_eligible': isEligible,
+  });
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -67,11 +71,12 @@ void eligibilitySheet(BuildContext context, bool isEligible, String rewardId) {
         ),
       );
     },
-  );
+  ).whenComplete(restoreScreen);
 }
 
 /// Shown when the user has no demat / broker linked (cannot verify holdings).
 void noDematAccountConnectSheet(BuildContext context) {
+  final restoreScreen = trackBottomSheet('no_demat_connected_sheet');
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -135,5 +140,5 @@ void noDematAccountConnectSheet(BuildContext context) {
         ),
       );
     },
-  );
+  ).whenComplete(restoreScreen);
 }

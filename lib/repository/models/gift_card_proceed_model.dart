@@ -5,41 +5,66 @@ class GiftCardProceedRequest {
     required this.rewardAmount,
     required this.creditId,
     required this.eligible,
+    this.journeyId,
   });
 
   final double payAmount;
   final double rewardAmount;
   final String creditId;
   final bool eligible;
+  final String? journeyId;
 
   Map<String, dynamic> toJson() => {
     'payAmount': payAmount,
     'rewardAmount': rewardAmount,
     'creditId': creditId,
     'eligible': eligible,
+    if (journeyId != null) 'journey_id': journeyId,
   };
 }
 
-/// Direct `200` body from `POST /payment/giftcard/proceed` (no `data` wrapper).
+/// Direct `200` body from `POST /payment/giftcard/proceed` (Razorpay gateway).
 class GiftCardProceedResponse {
   const GiftCardProceedResponse({
     required this.success,
     required this.message,
-    required this.sessionId,
     required this.orderId,
+    required this.razorpayOrderId,
+    required this.amountPaise,
+    this.keyId,
   });
 
   final bool success;
   final String message;
-  final String sessionId;
   final String orderId;
+  final String razorpayOrderId;
+  /// Amount in paise for Razorpay Checkout.
+  final int amountPaise;
+  final String? keyId;
 
   factory GiftCardProceedResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] is Map<String, dynamic>
+        ? json['data'] as Map<String, dynamic>
+        : json;
+
+    final amountRaw = data['amount'];
+    final amountPaise = amountRaw is int
+        ? amountRaw
+        : amountRaw is num
+        ? amountRaw.round()
+        : int.tryParse(amountRaw?.toString() ?? '') ?? 0;
+
     return GiftCardProceedResponse(
-      success: json['success'] as bool? ?? false,
-      message: json['message'] as String? ?? '',
-      sessionId: json['sessionId'] as String? ?? '',
-      orderId: json['orderId'] as String? ?? '',
+      success: data['success'] as bool? ?? json['success'] as bool? ?? false,
+      message:
+          (data['message'] ?? json['message'])?.toString() ?? '',
+      orderId: (data['orderId'] ?? data['order_id'])?.toString() ?? '',
+      razorpayOrderId:
+          (data['razorpayOrderId'] ?? data['razorpay_order_id'])
+              ?.toString() ??
+          '',
+      amountPaise: amountPaise,
+      keyId: (data['keyId'] ?? data['key_id'])?.toString(),
     );
   }
 }

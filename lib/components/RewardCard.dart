@@ -5,6 +5,9 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 
 Map<String, String> typeNameMap = {
@@ -153,7 +156,11 @@ class RewardCard extends StatelessWidget {
                 onTap:
                     onTap ??
                     () {
-                      navigateRewardScreen(type, rewardId);
+                      navigateRewardScreen(
+                        type,
+                        rewardId,
+                        source: 'home',
+                      );
                     },
                 child: Container(
                   width: width - 16,
@@ -191,7 +198,36 @@ class RewardCard extends StatelessWidget {
   }
 }
 
-navigateRewardScreen(String type, String rewardId) {
+String perkTypeFromRewardType(String type) {
+  switch (type) {
+    case 'CREDIT':
+      return 'giftcard';
+    case 'BENEFIT':
+      return 'cashback';
+    case 'OFFER':
+      return 'promocode';
+    default:
+      return type.toLowerCase();
+  }
+}
+
+void navigateRewardScreen(
+  String type,
+  String rewardId, {
+  String source = 'unknown',
+  int? position,
+  String? brandId,
+}) {
+  final perkType = perkTypeFromRewardType(type);
+  JourneyContext.startJourney(rewardId: rewardId, perkType: perkType);
+  trackAction(AnalyticsEvent.perkCardClicked, {
+    'reward_id': rewardId,
+    'perk_type': perkType,
+    'source': source,
+    if (position != null) 'position': position,
+    if (brandId != null) 'brand_id': brandId,
+  });
+
   if (type == "CREDIT") {
     GoRouterKey.currentContext?.pushNamed(
       RouteNames.GIFTCARD_VIEW_SCREEN,

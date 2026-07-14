@@ -8,6 +8,9 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/home_common_models.dart';
 import 'package:shareperks/repository/models/rewards_by_brand_model.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
@@ -41,6 +44,13 @@ class _BrandViewScreenState extends State<BrandViewScreen> {
       _data = await ListingDataService.getRewardsByBrandId(
         brandId: widget.brandId,
       );
+      final brandName = _data?.data?.brand?.name;
+      JourneyContext.setNames(brandName: brandName);
+      trackAction(AnalyticsEvent.brandViewed, {
+        'brand_id': widget.brandId,
+        'brand_name': brandName ?? '',
+        'source': 'brand_screen',
+      });
     } catch (e) {
       _error = true;
     } finally {
@@ -54,7 +64,6 @@ class _BrandViewScreenState extends State<BrandViewScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loadBrandInfo();
   }

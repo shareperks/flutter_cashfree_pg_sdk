@@ -91,7 +91,7 @@ giftcard_perk_viewed
   → giftcard_eligibility_checked        (eligible: true|false)
     → giftcard_amount_screen_viewed
       → giftcard_amount_selected        (amount, denomination_type)
-        → giftcard_payment_initiated    (cashfree_order_id, amount)
+        → giftcard_payment_initiated    (razorpay_order_id, amount)
           → giftcard_payment_succeeded  ✓ revenue
           → giftcard_payment_failed     ✗ reason, error_code
             → giftcard_payment_retried

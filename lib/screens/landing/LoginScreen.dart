@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 
@@ -45,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void login() async {
+    trackAction(AnalyticsEvent.loginStarted, {});
     setState(() {
       isLoading = true;
     });

@@ -47,6 +47,8 @@ class AnalyticsEvent {
   static const appForegrounded = AnalyticsEvent._('app_foregrounded', EventCategory.lifecycle, requiresConsent: false);
   static const appBackgrounded = AnalyticsEvent._('app_backgrounded', EventCategory.lifecycle, requiresConsent: false);
   static const screenView = AnalyticsEvent._('screen_view', EventCategory.screen);
+  static const screenSession = AnalyticsEvent._('screen_session', EventCategory.screen);
+  static const screenExit = AnalyticsEvent._('screen_exit', EventCategory.screen);
   static const deeplinkOpened = AnalyticsEvent._('deeplink_opened', EventCategory.lifecycle);
   static const forceUpdateShown = AnalyticsEvent._('force_update_shown', EventCategory.lifecycle, requiresConsent: false);
   static const connectivityLost = AnalyticsEvent._('connectivity_lost', EventCategory.lifecycle, requiresConsent: false);
@@ -73,6 +75,7 @@ class AnalyticsEvent {
   static const perkTypeViewed = AnalyticsEvent._('perk_type_viewed', EventCategory.discovery);
   static const unlockedPerksViewed = AnalyticsEvent._('unlocked_perks_viewed', EventCategory.discovery);
   static const perkCardClicked = AnalyticsEvent._('perk_card_clicked', EventCategory.discovery);
+  static const perkEligibilityChecked = AnalyticsEvent._('perk_eligibility_checked', EventCategory.discovery);
   static const requestPerkSubmitted = AnalyticsEvent._('request_perk_submitted', EventCategory.discovery);
   static const votingBrandSelected = AnalyticsEvent._('voting_brand_selected', EventCategory.discovery);
 
@@ -82,21 +85,28 @@ class AnalyticsEvent {
   static const giftcardAmountScreenViewed = AnalyticsEvent._('giftcard_amount_screen_viewed', EventCategory.funnelGiftcard);
   static const giftcardAmountSelected = AnalyticsEvent._('giftcard_amount_selected', EventCategory.funnelGiftcard);
   static const giftcardPaymentInitiated = AnalyticsEvent._('giftcard_payment_initiated', EventCategory.funnelGiftcard, requiresConsent: false);
+  static const giftcardPaymentOrderCreated = AnalyticsEvent._('giftcard_payment_order_created', EventCategory.funnelGiftcard, requiresConsent: false);
+  static const giftcardCheckoutOpened = AnalyticsEvent._('giftcard_checkout_opened', EventCategory.funnelGiftcard, requiresConsent: false);
   static const giftcardPaymentSucceeded = AnalyticsEvent._('giftcard_payment_succeeded', EventCategory.revenue, requiresConsent: false);
   static const giftcardPaymentFailed = AnalyticsEvent._('giftcard_payment_failed', EventCategory.funnelGiftcard, requiresConsent: false);
+  static const giftcardPaymentCancelled = AnalyticsEvent._('giftcard_payment_cancelled', EventCategory.funnelGiftcard, requiresConsent: false);
   static const giftcardPaymentRetried = AnalyticsEvent._('giftcard_payment_retried', EventCategory.funnelGiftcard);
   static const giftcardRedeemedCodeViewed = AnalyticsEvent._('giftcard_redeemed_code_viewed', EventCategory.funnelGiftcard);
   static const giftcardCodeCopied = AnalyticsEvent._('giftcard_code_copied', EventCategory.funnelGiftcard);
+  static const giftcardPaymentAbandoned = AnalyticsEvent._('giftcard_payment_abandoned', EventCategory.funnelGiftcard);
 
   // ——— Cashback funnel ———
   static const cashbackPerkViewed = AnalyticsEvent._('cashback_perk_viewed', EventCategory.funnelCashback);
+  static const cashbackEligibilityChecked = AnalyticsEvent._('cashback_eligibility_checked', EventCategory.funnelCashback);
   static const cashbackTermsRead = AnalyticsEvent._('cashback_terms_read', EventCategory.funnelCashback);
   static const cashbackClaimStarted = AnalyticsEvent._('cashback_claim_started', EventCategory.funnelCashback);
   static const cashbackClaimCompleted = AnalyticsEvent._('cashback_claim_completed', EventCategory.revenue);
 
   // ——— Promocode funnel ———
   static const promocodePerkViewed = AnalyticsEvent._('promocode_perk_viewed', EventCategory.funnelPromocode);
+  static const promocodeEligibilityChecked = AnalyticsEvent._('promocode_eligibility_checked', EventCategory.funnelPromocode);
   static const promocodeRevealed = AnalyticsEvent._('promocode_revealed', EventCategory.funnelPromocode);
+  static const promocodeRevealBlocked = AnalyticsEvent._('promocode_reveal_blocked', EventCategory.funnelPromocode);
   static const promocodeCopied = AnalyticsEvent._('promocode_copied', EventCategory.funnelPromocode);
 
   // ——— Demat / holding funnel ———
@@ -128,6 +138,7 @@ class AnalyticsEvent {
   static const pushReceived = AnalyticsEvent._('push_received', EventCategory.engagement);
   static const pushOpened = AnalyticsEvent._('push_opened', EventCategory.engagement);
   static const notificationScreenViewed = AnalyticsEvent._('notification_screen_viewed', EventCategory.engagement);
+  static const buttonClicked = AnalyticsEvent._('button_clicked', EventCategory.engagement);
   static const inappMessageShown = AnalyticsEvent._('inapp_message_shown', EventCategory.engagement);
   static const inappMessageClicked = AnalyticsEvent._('inapp_message_clicked', EventCategory.engagement);
 

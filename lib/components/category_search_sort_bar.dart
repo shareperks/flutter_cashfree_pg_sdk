@@ -7,6 +7,8 @@ class CategorySearchSortBar extends StatelessWidget {
   final String sortBy; // "a-z" | "z-a"
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onToggleSort;
+  final bool autofocus;
+  final String hintText;
 
   const CategorySearchSortBar({
     super.key,
@@ -14,6 +16,8 @@ class CategorySearchSortBar extends StatelessWidget {
     required this.sortBy,
     required this.onSearchChanged,
     required this.onToggleSort,
+    this.autofocus = false,
+    this.hintText = 'Search Perks',
   });
 
   @override
@@ -25,10 +29,11 @@ class CategorySearchSortBar extends StatelessWidget {
           width: MediaQuery.of(context).size.width - 88,
           child: TextField(
             controller: controller,
+            autofocus: autofocus,
             onChanged: onSearchChanged,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(HugeIconsSolid.search01),
-              hint: Text("Search Perks"),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(HugeIconsSolid.search01),
+              hint: Text(hintText),
             ),
           ),
         ),

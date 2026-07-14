@@ -6,13 +6,26 @@ import 'package:shareperks/components/ClickToHelp.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/theme.dart';
 
-class ReferAndEarnCodeScreen extends StatelessWidget {
+class ReferAndEarnCodeScreen extends StatefulWidget {
   const ReferAndEarnCodeScreen({super.key});
+
+  @override
+  State<ReferAndEarnCodeScreen> createState() => _ReferAndEarnCodeScreenState();
+}
+
+class _ReferAndEarnCodeScreenState extends State<ReferAndEarnCodeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    trackAction(AnalyticsEvent.referScreenViewed, {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +145,11 @@ class ReferCodeCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      trackAction(AnalyticsEvent.referCodeCopied, {
+                        'referral_code': state.user?.referCode ?? '',
+                      });
+                    },
                     icon: Icon(
                       HugeIconsStroke.copy01,
                       color: SharePerksColors.primary,
@@ -159,7 +176,11 @@ class ReferCodeCard extends StatelessWidget {
             spacing: 10,
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  trackAction(AnalyticsEvent.referShareIntent, {
+                    'channel': 'whatsapp',
+                  });
+                },
                 icon: Icon(
                   HugeIconsSolid.whatsapp,
                   size: 32,
@@ -167,7 +188,11 @@ class ReferCodeCard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  trackAction(AnalyticsEvent.referShareIntent, {
+                    'channel': 'facebook',
+                  });
+                },
                 icon: Icon(
                   HugeIconsSolid.facebook01,
                   size: 32,
@@ -175,7 +200,11 @@ class ReferCodeCard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  trackAction(AnalyticsEvent.referShareIntent, {
+                    'channel': 'system',
+                  });
+                },
                 icon: Icon(
                   HugeIconsSolid.share08,
                   size: 28,

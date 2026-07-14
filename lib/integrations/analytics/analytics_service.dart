@@ -4,6 +4,7 @@ import 'analytics_context.dart';
 import 'analytics_event.dart';
 import 'anon_id.dart';
 import 'consent_manager.dart';
+import 'journey_context.dart';
 import 'sinks/analytics_sink.dart';
 import 'sinks/debug_sink.dart';
 import 'sinks/server_sink.dart';
@@ -123,8 +124,9 @@ class AnalyticsService {
     }
   }
 
-  /// Emit a screen view. Convenience wrapper.
+  /// Emit a screen view. Convenience wrapper. Respects consent like [track].
   Future<void> screen(String name, [Map<String, Object?> props = const {}]) async {
+    if (AnalyticsEvent.screenView.requiresConsent && !_consentGiven) return;
     Map<String, Object?> ctx;
     try {
       ctx = await AnalyticsContext.build();
@@ -137,6 +139,16 @@ class AnalyticsService {
       } catch (_) {}
     }
   }
+
+  /// Props to attach when the app moves to background. Call from lifecycle
+  /// handler before [flush].
+  Map<String, Object?> backgroundProps() => {
+        if (JourneyContext.currentScreen != null)
+          'last_screen': JourneyContext.currentScreen!,
+        if (JourneyContext.lastAction != null)
+          'last_action': JourneyContext.lastAction!,
+        ...JourneyContext.baseProps(),
+      };
 
   /// Best-effort flush — call from `AppLifecycleState.paused` to maximise
   /// chance of delivery before the OS suspends us.

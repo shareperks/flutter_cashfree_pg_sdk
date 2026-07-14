@@ -9,6 +9,7 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
@@ -27,6 +28,12 @@ class _SetupScreenState extends State<SetupScreen> {
   final TextEditingController referralCodeController = TextEditingController();
   bool isReferralCodeVisible = false;
   bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.track(AnalyticsEvent.profileSetupStarted);
+  }
 
   bool validateForm() {
     if (firstNameController.text.isEmpty) {
@@ -96,8 +103,9 @@ class _SetupScreenState extends State<SetupScreen> {
           if (response.user!.mobile != null) 'mobile': response.user!.mobile,
         });
       }
-      AnalyticsService.instance.track(AnalyticsEvent.profileCompleted);
-      AnalyticsService.instance.track(AnalyticsEvent.signupCompleted, {
+      trackAction(AnalyticsEvent.profileCompleted, {'label': 'Complete Profile'});
+      trackAction(AnalyticsEvent.signupCompleted, {
+        'label': 'Complete Signup',
         'has_referral': _referralCodeIfProvided() != null,
       });
       context.read<UserProvider>().setUser(response.user!);

@@ -9,6 +9,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/referral_list_model.dart';
 import 'package:shareperks/repository/services/listing/referral.service.dart';
 import 'package:shareperks/utils/image_url.dart';
@@ -426,6 +427,7 @@ class ReferUser extends StatelessWidget {
 }
 
 void showInfoReferSteps(BuildContext context, ReferralListEntry user) {
+  final restoreScreen = trackBottomSheet('refer_steps_sheet');
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -483,5 +485,5 @@ void showInfoReferSteps(BuildContext context, ReferralListEntry user) {
         ),
       );
     },
-  );
+  ).whenComplete(restoreScreen);
 }

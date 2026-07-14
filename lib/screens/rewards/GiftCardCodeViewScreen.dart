@@ -12,6 +12,8 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/my_claimed_giftcard_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
@@ -40,6 +42,11 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
       data = await RewardListingDataService.getMyClaimedGiftcardDetail(
         widget.claimedId,
       );
+      await trackAction(AnalyticsEvent.giftcardRedeemedCodeViewed, {
+        'claimed_id': widget.claimedId,
+        if (data?.data?.info?.rewardId != null)
+          'reward_id': data!.data!.info!.rewardId!,
+      });
       final qrCode = QrCode(8, QrErrorCorrectLevel.H)
         ..addData(data?.data?.card?.code ?? "");
       _qrImage = QrImage(qrCode);

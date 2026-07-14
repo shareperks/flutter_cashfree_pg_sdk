@@ -12,6 +12,10 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
+import 'package:shareperks/integrations/analytics/track_eligibility.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/claim_promocode_response_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
@@ -38,6 +42,10 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
     try {
       _errorMessage = null;
       data = await RewardListingDataService.getPromocodeDetail(widget.rewardId);
+      JourneyContext.setNames(
+        rewardName: data?.data?.basicInfo?.title,
+        brandName: data?.data?.company?.name,
+      );
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -52,6 +60,24 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
   /// the eligible and non-eligible CTAs route through this single call.
   Future<void> _claimPromocode() async {
     if (_claiming) return;
+
+    final isEligible = data?.data?.eligibility?.isEligible ?? false;
+    await trackButtonClick(
+      isEligible ? 'Reveal Discount Code' : 'Claim Non-Shareholder Perk',
+      {
+        'reward_name': data?.data?.basicInfo?.title ?? '',
+        'is_eligible': isEligible,
+      },
+    );
+    await trackEligibility(
+      perkType: 'promocode',
+      rewardId: widget.rewardId,
+      isEligible: isEligible,
+      reason: isEligible ? 'ok' : 'not_eligible',
+      source: 'reward_detail',
+      brandId: data?.data?.company?.id,
+    );
+
     setState(() => _claiming = true);
     try {
       final claim = await RewardListingDataService.claimPromocode(
@@ -59,6 +85,10 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
       );
       if (!mounted) return;
       _applyClaim(claim);
+      await trackAction(AnalyticsEvent.promocodeRevealed, {
+        'reward_id': widget.rewardId,
+        'already_claimed': claim.alreadyClaimed == true,
+      });
       Fluttertoast.cancel();
       Fluttertoast.showToast(
         msg: claim.alreadyClaimed == true
@@ -69,6 +99,9 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      await trackAction(AnalyticsEvent.promocodeRevealBlocked, {
+        'reason': _readableError(e),
+      });
       Fluttertoast.cancel();
       Fluttertoast.showToast(
         msg: _readableError(e),
@@ -110,8 +143,17 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    if (JourneyContext.currentJourneyId == null) {
+      JourneyContext.startJourney(
+        rewardId: widget.rewardId,
+        perkType: 'promocode',
+      );
+    }
+    trackAction(AnalyticsEvent.promocodePerkViewed, {
+      'reward_id': widget.rewardId,
+      'source': 'reward_detail',
+    });
     loadData();
   }
 
@@ -352,6 +394,9 @@ void showClaimedPromoCodeSheet(
   String? rewardId,
   Function()? onUpdateRedeemed,
 }) {
+  final restoreScreen = trackBottomSheet('promocode_claimed_sheet', {
+    if (name != null) 'reward_name': name,
+  });
   showModalBottomSheet(
     context: context,
     showDragHandle: true,
@@ -408,7 +453,7 @@ void showClaimedPromoCodeSheet(
         ),
       );
     },
-  );
+  ).whenComplete(restoreScreen);
 }
 
 /// CTA shown on `PromoCodeRewardScreen` until the user has a claimed code.

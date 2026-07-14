@@ -3,6 +3,7 @@ import 'package:shareperks/components/EligibilityCards.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
@@ -77,7 +78,7 @@ class PerkBasicInfo extends StatelessWidget {
             width: MediaQuery.of(context).size.width,
             borderRadius: 14,
             alignment: Alignment.bottomLeft,
-            aspectRatio: 2.65,
+            aspectRatio: 2.1,
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -257,6 +258,7 @@ class PerkTerms extends StatelessWidget {
     final text = termsAndConditions.trim();
     if (text.isEmpty) return;
 
+    final restoreScreen = trackBottomSheet('perk_terms_sheet');
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -307,7 +309,7 @@ class PerkTerms extends StatelessWidget {
           ),
         );
       },
-    );
+    ).whenComplete(restoreScreen);
   }
 
   @override

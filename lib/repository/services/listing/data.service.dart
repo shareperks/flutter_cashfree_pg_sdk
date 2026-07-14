@@ -60,6 +60,24 @@ class ListingDataService {
     return RewardListResponse.fromJson(response.data);
   }
 
+  /// `GET /rewards/search?search=&sort=a-z&type=` — gift cards, cashback, promo codes.
+  static Future<RewardListResponse> searchRewards({
+    String? search,
+    String sort = 'a-z',
+    String? type,
+  }) async {
+    final query = <String, dynamic>{
+      'sort': sort,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (type != null && type.isNotEmpty) 'type': type,
+    };
+    final response = await _dio.get(
+      '/rewards/search',
+      queryParameters: query,
+    );
+    return RewardListResponse.fromJson(response.data);
+  }
+
   //  '/rewards/$type',
   static Future<RewardListResponse> getTypePerk({
     String? search,

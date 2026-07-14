@@ -88,6 +88,36 @@ class VotingListingItem {
     remainHours = json['remainHours']?.toString();
   }
 
+  /// Whole days left until [endAt] / [remainSec]. At least 1 when any time remains.
+  int? get daysRemaining {
+    if (remainSec != null) {
+      if (remainSec! <= 0) return 0;
+      final days = remainSec! ~/ 86400;
+      return days > 0 ? days : 1;
+    }
+    final hours = double.tryParse(remainHours ?? '');
+    if (hours != null) {
+      if (hours <= 0) return 0;
+      final days = hours ~/ 24;
+      return days > 0 ? days : 1;
+    }
+    final end = DateTime.tryParse(endAt ?? '');
+    if (end == null) return null;
+    final diff = end.difference(DateTime.now());
+    if (diff.isNegative) return 0;
+    final days = diff.inDays;
+    return days > 0 ? days : 1;
+  }
+
+  /// User-facing label, e.g. `20 days remaining`.
+  String get remainingDaysLabel {
+    final days = daysRemaining;
+    if (days == null) return 'Voting open';
+    if (days <= 0) return 'Voting closed';
+    if (days == 1) return 'day remaining';
+    return 'days remaining';
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

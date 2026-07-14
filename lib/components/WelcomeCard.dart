@@ -100,31 +100,38 @@ class RewardCountCard extends StatelessWidget {
           Positioned(
             right: -12,
             top: -12,
-            child: TextButton(
-              onPressed: () {
-                context.pushNamed(RouteNames.UNLOCKED_PERKS_SCREEN);
+            child: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    if (activePerks == "0") {
+                      context.pushNamed(RouteNames.REQUEST_PERK_SCREEN);
+                      return;
+                    }
+                    context.pushNamed(RouteNames.UNLOCKED_PERKS_SCREEN);
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 4,
+                    children: [
+                      Text(
+                        activePerks == "0" ? 'Request a perk' : 'View all',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.brand,
+                        ),
+                      ),
+                      Icon(
+                        HugeIconsSolid.arrowRight02,
+                        size: 15,
+                        color: AppColors.brand,
+                      ),
+                    ],
+                  ),
+                );
               },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                spacing: 4,
-                children: [
-                  Text(
-                    'View all',
-
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.brand,
-                    ),
-                  ),
-                  Icon(
-                    HugeIconsSolid.arrowRight02,
-                    size: 15,
-                    color: AppColors.brand,
-                  ),
-                ],
-              ),
             ),
           ),
         ],

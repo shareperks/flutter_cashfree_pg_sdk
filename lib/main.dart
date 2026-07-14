@@ -9,7 +9,7 @@ import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/integrations/analytics/consent_manager.dart';
-import 'package:shareperks/integrations/cashfree_payment.dart';
+import 'package:shareperks/integrations/razorpay_payment.dart';
 import 'package:shareperks/integrations/smallcase_gateway.dart';
 import 'package:provider/provider.dart';
 import 'package:shareperks/repository/host.dart';
@@ -22,7 +22,7 @@ const _firstOpenKey = 'analytics_first_open_seen_v1';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalStorage.init();
-  CashfreePayment.init();
+  RazorpayPayment.init();
 
   await AnalyticsService.instance.init(
     trackingApiBaseUrl: Host.listingUrl,
@@ -114,7 +114,10 @@ class _SharePerksAppState extends State<SharePerksApp>
       case AppLifecycleState.paused:
         _pausedAt = DateTime.now();
         unawaited(
-          AnalyticsService.instance.track(AnalyticsEvent.appBackgrounded),
+          AnalyticsService.instance.track(
+            AnalyticsEvent.appBackgrounded,
+            AnalyticsService.instance.backgroundProps(),
+          ),
         );
         // Best-effort flush before the OS suspends us.
         unawaited(AnalyticsService.instance.flush());

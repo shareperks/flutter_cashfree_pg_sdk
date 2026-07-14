@@ -7,6 +7,8 @@ import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/payout_request_model.dart';
 import 'package:shareperks/repository/services/wallet/wallet.service.dart';
 import 'package:soui/elements/SpScafold.dart';
@@ -41,6 +43,10 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
     }
     final upi = upiId.text.trim();
     try {
+      trackAction(AnalyticsEvent.payoutRequestSubmitted, {
+        'amount': widget.amount,
+        'method': 'upi',
+      });
       final resp = await WalletDataService.requestPayout(
         PayoutRequestPayload(amount: widget.amount, upi: upi),
       );

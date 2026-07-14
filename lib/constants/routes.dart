@@ -35,6 +35,7 @@ import 'package:shareperks/screens/main/MenuListScreen.dart';
 import 'package:shareperks/screens/main/NotifIcationsScreen.dart';
 import 'package:shareperks/screens/main/SettingScreen.dart';
 import 'package:shareperks/screens/main/TopBrandsScreen.dart';
+import 'package:shareperks/screens/main/SearchRewardsScreen.dart';
 import 'package:shareperks/screens/main/TopPerksScreen.dart';
 import 'package:shareperks/screens/main/TypePerkSceen.dart';
 import 'package:shareperks/screens/main/UnlockedPerksScreen.dart';
@@ -72,6 +73,7 @@ class RouteNames {
   static const String CATEGORY_SCREEN = 'CategoryScreen';
   static const String UNLOCKED_PERKS_SCREEN = 'UnlockedPerksScreen';
   static const String TOP_PERKS_SCREEN = 'TopPerksScreen';
+  static const String SEARCH_REWARDS_SCREEN = 'SearchRewardsScreen';
   static const String CASHBACK_PERK_SCREEN = 'CashBackPerkScreen';
   static const String GIFTCARD_PERK_SCREEN = 'GiftCardPerkScreen';
   static const String PROMOOCODE_PERK_SCREEN = 'PromoCodePerkScreen';
@@ -203,6 +205,12 @@ final List<GoRoute> routes = [
     name: RouteNames.TOP_PERKS_SCREEN,
     path: RouteNames.path(RouteNames.TOP_PERKS_SCREEN),
     builder: (BuildContext context, GoRouterState state) => TopPerksScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.SEARCH_REWARDS_SCREEN,
+    path: RouteNames.path(RouteNames.SEARCH_REWARDS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        SearchRewardsScreen(),
   ),
   GoRoute(
     name: RouteNames.CASHBACK_PERK_SCREEN,

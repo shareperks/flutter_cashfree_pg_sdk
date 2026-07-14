@@ -7,6 +7,8 @@ import 'package:shareperks/components/WalletCard.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:soui/elements/SpScafold.dart';
 
 class PayoutScreen extends StatefulWidget {
@@ -51,6 +53,10 @@ class _PayoutScreenState extends State<PayoutScreen> {
       );
       return;
     }
+
+    trackAction(AnalyticsEvent.payoutStarted, {
+      'amount': value,
+    });
 
     context.pushNamed(
       RouteNames.PAYOUT_REQUEST_SCREEN,

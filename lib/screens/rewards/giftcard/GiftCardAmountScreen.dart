@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
 import 'package:shareperks/components/PerkBasicInfo.dart';
@@ -11,37 +11,22 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
+import 'package:shareperks/integrations/razorpay_payment.dart';
 import 'package:shareperks/repository/models/api_error_model.dart';
 import 'package:shareperks/repository/models/gift_card_proceed_model.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
-import 'package:shareperks/integrations/cashfree_payment.dart';
+import 'package:shareperks/repository/models/razorpay_verify_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
-import 'package:shareperks/repository/services/payment/cashfree.service.dart';
 import 'package:shareperks/repository/services/payment/giftcard_payment.service.dart';
+import 'package:shareperks/repository/services/payment/razorpay.service.dart';
 import 'package:shareperks/screens/rewards/utils/rewardCalc.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/amount_picker.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/elements/collaps_card.dart';
-
-bool _isCashfreeOrderPaid(Map<String, dynamic> resp) {
-  if (resp['success'] != true) return false;
-
-  final data = resp['data'];
-  if (data is Map<String, dynamic>) {
-    final status = data['order_status'] ?? data['orderStatus'];
-    if (status != null) {
-      return status.toString().toUpperCase() == 'PAID';
-    }
-  }
-
-  final status = resp['order_status'] ?? resp['orderStatus'];
-  if (status != null) {
-    return status.toString().toUpperCase() == 'PAID';
-  }
-
-  return true;
-}
 
 class GiftCardAmountScreen extends StatefulWidget {
   final String rewardId;
@@ -58,6 +43,9 @@ class GiftCardAmountScreen extends StatefulWidget {
 class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   bool _loading = true;
   bool _paying = false;
+  bool _paymentStarted = false;
+  bool _paymentFinished = false;
+  int _paymentCheckGeneration = 0;
   GiftcardDetailResponse? data;
   String? _errorMessage;
   int? amount;
@@ -69,6 +57,10 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     try {
       _errorMessage = null;
       data = await RewardListingDataService.getGiftcardDetail(widget.rewardId);
+      JourneyContext.setNames(
+        rewardName: data?.data?.basicInfo?.title,
+        brandName: data?.data?.company?.name,
+      );
       final initial = _amountConfig?.min?.round();
       amount = initial != null && initial > 0 ? initial : null;
       if (_amountConfig?.isAmountEditable == true && amount != null) {
@@ -88,11 +80,33 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   @override
   void initState() {
     super.initState();
+    trackAction(AnalyticsEvent.giftcardAmountScreenViewed, {
+      'reward_id': widget.rewardId,
+      'is_eligible': widget.isEligible,
+    });
     loadData();
+  }
+
+  void _onProceedButtonTap() {
+    trackButtonClick('Proceed to Claim Credit', {
+      'gift_card_name': data?.data?.basicInfo?.title ?? '',
+      'is_eligible': widget.isEligible,
+      if (amount != null) 'selected_amount': amount!,
+    });
+    _onProceedToPay();
   }
 
   @override
   void dispose() {
+    if (_paymentStarted && !_paymentFinished) {
+      trackAction(AnalyticsEvent.giftcardPaymentAbandoned, {
+        'abandon_stage': 'amount_screen',
+        'gift_card_name': data?.data?.basicInfo?.title ?? '',
+        'is_eligible': widget.isEligible,
+        if (amount != null) 'selected_amount': amount!,
+      });
+    }
+    _paymentCheckGeneration++;
     _amountController.dispose();
     super.dispose();
   }
@@ -112,6 +126,13 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     }
 
     setState(() => amount = next);
+    if (next != null) {
+      trackAction(AnalyticsEvent.giftcardAmountSelected, {
+        'label': 'Selected Amount',
+        'amount': next,
+        'denomination_type': 'editable',
+      });
+    }
   }
 
   String? _editableAmountErrorText() {
@@ -177,6 +198,11 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         },
         onAmountSelected: (value) {
           setState(() => amount = value);
+          trackAction(AnalyticsEvent.giftcardAmountSelected, {
+            'label': 'Selected Amount',
+            'amount': value,
+            'denomination_type': 'fixed',
+          });
         },
         amounts: options.map((v) => v.round()).toList(),
       );
@@ -210,78 +236,238 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     return _calc?.calc(selected.toDouble());
   }
 
+  /// "What the user is purchasing" — attached to every payment gateway event so
+  /// the CRM/audit trail shows the gift card, its price, and the discount.
+  Map<String, Object?> _purchaseProps(GiftCardCalcCalcData pricing) => {
+    'payment_gateway': 'razorpay',
+    'gift_card_name': data?.data?.basicInfo?.title ?? '',
+    'brand_name': data?.data?.company?.name ?? '',
+    'reward_id': widget.rewardId,
+    'perk_type': 'giftcard',
+    'face_value': pricing.amount,
+    'amount': pricing.discountedAmount,
+    'discount_percent': pricing.percent,
+    'savings': pricing.savings,
+    'is_eligible': widget.isEligible,
+  };
+
   Future<void> _onProceedToPay() async {
     final pricing = _pricing;
     if (pricing == null || _paying) return;
 
     setState(() => _paying = true);
+    final paymentCheckGeneration = ++_paymentCheckGeneration;
+    _paymentStarted = true;
     try {
+      trackAction(AnalyticsEvent.giftcardPaymentInitiated, {
+        'label': 'Proceed to Payment',
+        ..._purchaseProps(pricing),
+      });
+
       final order = await GiftCardPaymentService.proceedGiftCardPayment(
         GiftCardProceedRequest(
           payAmount: pricing.discountedAmount,
           rewardAmount: pricing.amount,
           creditId: widget.rewardId,
           eligible: widget.isEligible,
+          journeyId: JourneyContext.currentJourneyId,
         ),
       );
 
-      await CashfreePayment.startWebCheckout(
-        orderId: order.orderId,
-        paymentSessionId: order.sessionId,
-        environment: CFEnvironment.PRODUCTION,
-        onSuccess: (orderId) async {
-          if (!mounted) return;
-          try {
-            final resp = await CashfreePaymentService.fetchOrderStatus(orderId);
-            if (!_isCashfreeOrderPaid(resp)) {
-              if (mounted) {
-                Fluttertoast.showToast(msg: 'Payment is not complete');
-              }
-              return;
-            }
+      trackAction(AnalyticsEvent.giftcardPaymentOrderCreated, {
+        'label': 'Payment Order Created',
+        ..._purchaseProps(pricing),
+        'razorpay_order_id': order.razorpayOrderId,
+        'order_id': order.orderId,
+      });
 
-            String? claimedId;
-            final data = resp['data'];
-            if (data is Map<String, dynamic>) {
-              claimedId = data['claimedId']?.toString();
-            }
-            claimedId ??= resp['claimedId']?.toString();
+      trackAction(AnalyticsEvent.giftcardCheckoutOpened, {
+        'label': 'Opened Payment Gateway',
+        ..._purchaseProps(pricing),
+        'razorpay_order_id': order.razorpayOrderId,
+        'order_id': order.orderId,
+      });
 
-            if (!mounted) return;
-            context.pushReplacementNamed(
-              RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
-              extra: {
-                'orderId': orderId,
-                if (claimedId != null) 'claimedId': claimedId,
-                'amount': pricing.discountedAmount,
-              },
-            );
-          } catch (_) {
-            if (mounted) {
-              Fluttertoast.showToast(msg: 'Payment is not complete');
-            }
-          }
-        },
-        onError: (_, __) {
-          if (!mounted) return;
-          Fluttertoast.showToast(msg: 'Payment is not complete');
-        },
+      RazorpayPayment.openCheckout(
+        razorpayOrderId: order.razorpayOrderId,
+        amountPaise: order.amountPaise,
+        keyId: order.keyId,
+        description: data?.data?.basicInfo?.title,
+        onSuccess: (response) => _handleRazorpaySuccess(
+          response: response,
+          internalOrderId: order.orderId,
+          paymentCheckGeneration: paymentCheckGeneration,
+          amount: pricing.discountedAmount,
+        ),
+        onError: (error) => _handleRazorpayError(
+          error: error,
+          paymentCheckGeneration: paymentCheckGeneration,
+          razorpayOrderId: order.razorpayOrderId,
+          internalOrderId: order.orderId,
+        ),
       );
     } on ApiErrorResponse catch (e) {
+      trackAction(AnalyticsEvent.giftcardPaymentFailed, {
+        'label': 'Payment Failed',
+        'detail': 'failed',
+        ..._purchaseProps(pricing),
+        'failure_stage': 'order_creation',
+        'reason': e.displayMessage,
+      });
       print(e);
       if (mounted) {
         Fluttertoast.showToast(msg: e.displayMessage);
+        setState(() => _paying = false);
       }
     } catch (e) {
+      trackAction(AnalyticsEvent.giftcardPaymentFailed, {
+        'label': 'Payment Failed',
+        'detail': 'failed',
+        ..._purchaseProps(pricing),
+        'failure_stage': 'checkout_launch',
+        'reason': e.toString(),
+      });
       print(e);
       if (mounted) {
         Fluttertoast.showToast(msg: 'Could not start payment');
-      }
-    } finally {
-      if (mounted) {
         setState(() => _paying = false);
       }
     }
+  }
+
+  bool _isCurrentPaymentCheck(int generation) =>
+      mounted && generation == _paymentCheckGeneration;
+
+  Future<void> _handleRazorpaySuccess({
+    required PaymentSuccessResponse response,
+    required String internalOrderId,
+    required int paymentCheckGeneration,
+    required double amount,
+  }) async {
+    if (!_isCurrentPaymentCheck(paymentCheckGeneration)) return;
+
+    final pricing = _pricing;
+    final razorpayOrderId = response.orderId ?? '';
+    final paymentId = response.paymentId ?? '';
+    final signature = response.signature ?? '';
+
+    try {
+      RazorpayVerifyResponse? verified;
+      try {
+        verified = await RazorpayPaymentService.verifyPayment(
+          RazorpayVerifyRequest(
+            orderId: internalOrderId,
+            razorpayOrderId: razorpayOrderId,
+            razorpayPaymentId: paymentId,
+            razorpaySignature: signature,
+          ),
+        );
+      } catch (_) {
+        // Transient verify failure — one status fetch recovery.
+        final status = await RazorpayPaymentService.fetchGiftCardOrderStatus(
+          internalOrderId,
+        );
+        if (GiftCardOrderStatusData.isPaid(status)) {
+          verified = RazorpayVerifyResponse(
+            paid: true,
+            claimedId: GiftCardOrderStatusData.claimedIdOf(status),
+            orderStatus: GiftCardOrderStatusData.orderStatusOf(status),
+            raw: status,
+          );
+        }
+      }
+
+      if (!_isCurrentPaymentCheck(paymentCheckGeneration)) return;
+
+      if (verified == null || !verified.paid) {
+        trackAction(AnalyticsEvent.giftcardPaymentFailed, {
+          'label': 'Payment Failed',
+          'detail': 'failed',
+          if (pricing != null) ..._purchaseProps(pricing),
+          'reason': 'payment_not_complete',
+          'razorpay_order_id': razorpayOrderId,
+          'order_id': internalOrderId,
+          if (paymentId.isNotEmpty) 'razorpay_payment_id': paymentId,
+          if (verified?.orderStatus != null)
+            'order_status': verified!.orderStatus!,
+        });
+        Fluttertoast.showToast(msg: 'Payment is not complete');
+        return;
+      }
+
+      _paymentFinished = true;
+
+      trackAction(AnalyticsEvent.giftcardPaymentSucceeded, {
+        'label': 'Payment Completed',
+        'detail': 'success',
+        if (pricing != null) ..._purchaseProps(pricing),
+        'razorpay_order_id': razorpayOrderId,
+        'order_id': internalOrderId,
+        if (paymentId.isNotEmpty) 'razorpay_payment_id': paymentId,
+        if (verified.orderStatus != null) 'order_status': verified.orderStatus!,
+        if (verified.claimedId != null) 'claimed_id': verified.claimedId!,
+      });
+
+      if (!_isCurrentPaymentCheck(paymentCheckGeneration)) return;
+      if (!mounted) return;
+
+      context.pushReplacementNamed(
+        RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
+        extra: {
+          'orderId': internalOrderId,
+          if (verified.claimedId != null) 'claimedId': verified.claimedId,
+          'amount': amount,
+        },
+      );
+    } catch (_) {
+      if (_isCurrentPaymentCheck(paymentCheckGeneration)) {
+        Fluttertoast.showToast(msg: 'Payment is not complete');
+      }
+    } finally {
+      if (_isCurrentPaymentCheck(paymentCheckGeneration)) {
+        setState(() => _paying = false);
+      }
+    }
+  }
+
+  void _handleRazorpayError({
+    required PaymentFailureResponse error,
+    required int paymentCheckGeneration,
+    required String razorpayOrderId,
+    required String internalOrderId,
+  }) {
+    if (paymentCheckGeneration == _paymentCheckGeneration) {
+      _paymentCheckGeneration++;
+    }
+    final pricing = _pricing;
+    final cancelled = RazorpayPayment.isCheckoutCancelled(error);
+    if (cancelled) {
+      trackAction(AnalyticsEvent.giftcardPaymentCancelled, {
+        'label': 'Payment Cancelled',
+        'detail': 'cancelled',
+        if (pricing != null) ..._purchaseProps(pricing),
+        'reason': 'user_cancelled_checkout',
+        'razorpay_order_id': razorpayOrderId,
+        'order_id': internalOrderId,
+      });
+    } else {
+      trackAction(AnalyticsEvent.giftcardPaymentFailed, {
+        'label': 'Payment Failed',
+        'detail': 'failed',
+        if (pricing != null) ..._purchaseProps(pricing),
+        'failure_stage': 'checkout',
+        'reason': error.message ?? 'razorpay_checkout_error',
+        'error_code': '${error.code}',
+        'razorpay_order_id': razorpayOrderId,
+        'order_id': internalOrderId,
+      });
+    }
+    if (!mounted) return;
+    // Quiet dismiss when the user closes Checkout; toast only on real failures.
+    if (!cancelled) {
+      Fluttertoast.showToast(msg: 'Payment Failed Please try again');
+    }
+    setState(() => _paying = false);
   }
 
   @override
@@ -491,7 +677,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                   SharePerksColors.accent,
                 ),
               ),
-              onPressed: _pricing == null || _paying ? null : _onProceedToPay,
+              onPressed: _pricing == null || _paying
+                  ? null
+                  : _onProceedButtonTap,
               child: _paying
                   ? const SizedBox(
                       height: 22,

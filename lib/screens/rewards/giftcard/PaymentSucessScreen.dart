@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
@@ -26,6 +27,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   @override
   void initState() {
     super.initState();
+    // `giftcard_payment_succeeded` is emitted at gateway confirmation
+    // (GiftCardAmountScreen._handleRazorpaySuccess) with full purchase details;
+    // this screen just closes out the journey.
+    JourneyContext.clearJourney();
     _goNextAfterSuccess();
   }
 

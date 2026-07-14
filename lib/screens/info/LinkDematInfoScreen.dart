@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 
-class LinkDematInfoScreen extends StatelessWidget {
+class LinkDematInfoScreen extends StatefulWidget {
   const LinkDematInfoScreen({super.key});
+
+  @override
+  State<LinkDematInfoScreen> createState() => _LinkDematInfoScreenState();
+}
+
+class _LinkDematInfoScreenState extends State<LinkDematInfoScreen> {
+  @override
+  void initState() {
+    super.initState();
+    trackAction(AnalyticsEvent.linkDematStarted, {
+      'source': 'ineligible_perk',
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

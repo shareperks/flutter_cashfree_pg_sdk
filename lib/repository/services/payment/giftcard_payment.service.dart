@@ -4,13 +4,13 @@ import 'package:shareperks/repository/models/api_error_model.dart';
 import 'package:shareperks/repository/models/gift_card_proceed_model.dart';
 import 'package:shareperks/repository/network.dart';
 
-/// Gift card checkout — create Cashfree session via listing API.
+/// Gift card checkout — create Razorpay order via listing API.
 class GiftCardPaymentService {
   GiftCardPaymentService._();
 
   static final Dio _dio = createDio(Host.listingUrl);
 
-  /// `POST /payment/giftcard/proceed` — returns Cashfree `sessionId` + `orderId`.
+  /// `POST /payment/giftcard/proceed` — returns Razorpay order fields.
   ///
   /// Throws [ApiErrorResponse] on `4xx`/`5xx` with a JSON error body.
   static Future<GiftCardProceedResponse> proceedGiftCardPayment(
@@ -29,13 +29,14 @@ class GiftCardPaymentService {
 
       final result = GiftCardProceedResponse.fromJson(data);
       if (!result.success ||
-          result.sessionId.isEmpty ||
-          result.orderId.isEmpty) {
+          result.orderId.isEmpty ||
+          result.razorpayOrderId.isEmpty ||
+          result.amountPaise <= 0) {
         throw ApiErrorResponse(
           success: false,
           message: result.message.isNotEmpty
               ? result.message
-              : 'Could not create payment session',
+              : 'Could not create payment order',
         );
       }
       return result;

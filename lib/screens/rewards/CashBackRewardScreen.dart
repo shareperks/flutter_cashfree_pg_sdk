@@ -8,6 +8,10 @@ import 'package:shareperks/components/ReletedPerksCard.dart';
 import 'package:shareperks/components/loader/GiftCardRewardShimmer.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/journey_context.dart';
+import 'package:shareperks/integrations/analytics/track_eligibility.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
@@ -32,6 +36,10 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
     try {
       _errorMessage = null;
       data = await RewardListingDataService.getCashbackDetail(widget.rewardId);
+      JourneyContext.setNames(
+        rewardName: data?.data?.basicInfo?.title,
+        brandName: data?.data?.company?.name,
+      );
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -48,6 +56,27 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
   /// resolved server-side, so both CTAs go through the same call.
   Future<void> _openTrackingLink() async {
     if (_opening) return;
+
+    final isEligible = data?.data?.eligibility?.isEligible ?? false;
+    await trackButtonClick(
+      isEligible ? 'Shop Now & Earn Cashback' : 'Verify Eligibility',
+      {
+        'reward_name': data?.data?.basicInfo?.title ?? '',
+        'is_eligible': isEligible,
+      },
+    );
+    await trackEligibility(
+      perkType: 'cashback',
+      rewardId: widget.rewardId,
+      isEligible: isEligible,
+      reason: isEligible ? 'ok' : 'not_eligible',
+      source: 'reward_detail',
+      brandId: data?.data?.company?.id,
+    );
+    trackAction(AnalyticsEvent.cashbackClaimStarted, {
+      'reward_id': widget.rewardId,
+    });
+
     setState(() => _opening = true);
     try {
       final tracking = await RewardListingDataService.getCashbackTrackingLink(
@@ -66,6 +95,9 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
       if (!launched) {
         throw StateError('Could not open the merchant page.');
       }
+      trackAction(AnalyticsEvent.cashbackClaimCompleted, {
+        'reward_id': widget.rewardId,
+      });
     } catch (e) {
       if (!mounted) return;
       Fluttertoast.cancel();
@@ -89,6 +121,16 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
   @override
   void initState() {
     super.initState();
+    if (JourneyContext.currentJourneyId == null) {
+      JourneyContext.startJourney(
+        rewardId: widget.rewardId,
+        perkType: 'cashback',
+      );
+    }
+    trackAction(AnalyticsEvent.cashbackPerkViewed, {
+      'reward_id': widget.rewardId,
+      'source': 'reward_detail',
+    });
     loadData();
   }
 

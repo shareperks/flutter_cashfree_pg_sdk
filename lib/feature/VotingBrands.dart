@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:shareperks/components/CoundownTimer.dart';
 import 'package:shareperks/components/loader/voting_brands_loader.dart';
 import 'package:shareperks/components/VotBrand.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/voting_listing_model.dart';
 import 'package:shareperks/repository/services/listing/voating.service.dart';
 import 'package:shareperks/utils/image_url.dart';
@@ -33,8 +34,18 @@ class _VotingBrandsState extends State<VotingBrands> {
     } finally {
       setState(() {
         _isLoading = false;
+        _preselectSubmittedVote();
       });
     }
+  }
+
+  void _preselectSubmittedVote() {
+    if (selectedIndex != null) return;
+    final submittedId = data?.item?.mySubmit?.id;
+    final brands = data?.item?.brands;
+    if (submittedId == null || brands == null) return;
+    final idx = brands.indexWhere((b) => b.id == submittedId);
+    if (idx >= 0) selectedIndex = idx;
   }
 
   Future<void> _showVoteSuccessDialog(String brandName) async {
@@ -130,12 +141,18 @@ class _VotingBrandsState extends State<VotingBrands> {
       return;
     }
     try {
+      setState(() => _isSubmitting = true);
       final votId = data?.item?.id ?? "";
       final brandId = data?.item?.brands?[selectedIndex!].id ?? "";
       final pickedName =
           data?.item?.brands?[selectedIndex!].name ?? 'this brand';
 
       final response = await VotingService.submitVot(votId, brandId);
+      final isRevote = data?.item?.mySubmit?.id == brandId;
+      trackAction(AnalyticsEvent.votingBrandSelected, {
+        'brand_id': brandId,
+        'is_revote': isRevote,
+      });
       final confirmedName =
           response.item?.brand?.name ??
           response.item?.brand?.ticker ??
@@ -174,6 +191,11 @@ class _VotingBrandsState extends State<VotingBrands> {
     if (_isError) {
       return SizedBox.shrink();
     }
+
+    final votingItem = data?.item;
+    final daysRemaining = votingItem?.daysRemaining ?? 0;
+    final remainingLabel = votingItem?.remainingDaysLabel ?? 'Voting open';
+
     return BorderCard(
       borderWidth: 1,
       borderRadius: 16,
@@ -222,11 +244,20 @@ class _VotingBrandsState extends State<VotingBrands> {
 
                 Column(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    CoundownTimer(seconds: data?.item?.remainSec ?? 0),
                     Text(
-                      'Voting closes in less than',
+                      '$daysRemaining',
+                      style: TextStyle(
+                        color: const Color(0xFF6400E0),
+                        fontSize: 28,
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      remainingLabel,
+                      textAlign: TextAlign.right,
                       style: TextStyle(
                         color: const Color(0xFF898989),
                         fontSize: 12,
@@ -234,56 +265,49 @@ class _VotingBrandsState extends State<VotingBrands> {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${data?.item?.remainHours ?? "0"} Hours! ',
-                          style: TextStyle(
-                            color: const Color(0xFF333333),
-                            fontSize: 12,
-                            fontFamily: SharePerksFonts.inter,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        Text(
-                          'Vote now.',
-                          style: TextStyle(
-                            color: const Color(0xFF6400E0),
-                            fontSize: 12,
-                            fontFamily: SharePerksFonts.inter,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Vote now.',
+                      style: TextStyle(
+                        color: const Color(0xFF6400E0),
+                        fontSize: 12,
+                        fontFamily: SharePerksFonts.inter,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                 spacing: 10,
                 children: [
                   SizedBox(width: 8),
                   ...List.generate(data?.item?.brands?.length ?? 0, (index) {
                     VotingListingBrand? brand = data?.item?.brands?[index];
-                    bool isSelected = index == selectedIndex;
-                    bool isVot =
+                    final isSelected = index == selectedIndex;
+                    final isPreviouslyVoted =
                         data?.item?.mySubmit?.id != null &&
-                        (data?.item?.mySubmit?.id == brand?.id);
+                        data?.item?.mySubmit?.id == brand?.id;
+
                     return VotBrandCard(
                       image: imageUrl(brand?.image ?? ""),
                       name: brand?.name ?? "--",
                       ticker: brand?.ticker ?? "--",
-                      isVot: isSelected || isVot,
+                      isSelected: isSelected,
+                      isPreviouslyVoted: isPreviouslyVoted,
                       onTap: () {
                         setState(() {
+                          if (isPreviouslyVoted) {
+                            selectedIndex = index;
+                            return;
+                          }
                           selectedIndex = isSelected ? null : index;
                         });
                       },
@@ -293,14 +317,15 @@ class _VotingBrandsState extends State<VotingBrands> {
                 ],
               ),
             ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(18.0),
             child: SizedBox(
               width: MediaQuery.of(context).size.width,
               child: ElevatedButton(
-                onPressed: submitVot,
-                child: Text("Vote now"),
+                onPressed: _isSubmitting ? null : submitVot,
+                child: Text(_isSubmitting ? 'Submitting...' : 'Vote now'),
               ),
             ),
           ),
