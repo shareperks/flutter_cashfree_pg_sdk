@@ -9,6 +9,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Apply Google Services only when google-services.json is present so local
+// builds without Firebase still compile. Place the real file at
+// android/app/google-services.json (see docs/onesignal-setup.md).
+val googleServicesFile = file("google-services.json")
+if (googleServicesFile.exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Load release-signing config from android/key.properties when present. The
 // file is git-ignored, so on dev machines / CI without keys the build
 // gracefully falls back to debug signing for `flutter run --release` smoke

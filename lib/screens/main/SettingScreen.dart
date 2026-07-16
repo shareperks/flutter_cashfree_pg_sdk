@@ -7,6 +7,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/onesignal_push.dart';
 import 'package:shareperks/repository/models/user_settings_model.dart';
 import 'package:shareperks/repository/services/actions/Settings.service.dart';
 import 'package:soui/elements/SpScafold.dart';
@@ -62,6 +63,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _notifications = s.notifications ?? false;
     _perksUpdates = s.perksUpdates ?? false;
     _walletUpdates = s.walletUpdates ?? false;
+    // Reconcile push SDK with server preference.
+    if (!_notifications && OneSignalPush.isOptedIn) {
+      OneSignalPush.setOptedIn(false);
+    }
   }
 
   Future<void> _pushSettings({
@@ -112,6 +117,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _onNotificationsChanged(bool value) async {
+    if (value) {
+      final granted =
+          await OneSignalPush.requestPermissionIfNeeded(force: true);
+      if (!granted) {
+        if (!mounted) return;
+        setState(() => _notifications = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Notification permission is required. Enable it in system settings.',
+            ),
+          ),
+        );
+        return;
+      }
+      await OneSignalPush.setOptedIn(true);
+    } else {
+      await OneSignalPush.setOptedIn(false);
+    }
+
+    if (!mounted) return;
     setState(() => _notifications = value);
     await _pushSettings(
       notifications: value,

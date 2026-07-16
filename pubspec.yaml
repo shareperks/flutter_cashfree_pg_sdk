@@ -1,6 +1,6 @@
 name: shareperks
 description: "A clone of the shareplus package."
-version: 1.0.55+48
+version: 1.0.56+49
 
 environment:
   sdk: ^3.11.4
@@ -37,6 +37,7 @@ dependencies:
   flutter_widget_from_html: ^0.17.2
   pretty_qr_code: ^3.6.0
   razorpay_flutter: ^1.4.5
+  onesignal_flutter: ^5.1.2
   soui:
     git:
       url: https://github.com/shareperks/soui.git

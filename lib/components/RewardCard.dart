@@ -217,6 +217,7 @@ void navigateRewardScreen(
   String source = 'unknown',
   int? position,
   String? brandId,
+  String? redirectKind,
 }) {
   final perkType = perkTypeFromRewardType(type);
   JourneyContext.startJourney(rewardId: rewardId, perkType: perkType);
@@ -226,6 +227,7 @@ void navigateRewardScreen(
     'source': source,
     if (position != null) 'position': position,
     if (brandId != null) 'brand_id': brandId,
+    if (redirectKind != null) 'redirect_kind': redirectKind,
   });
 
   if (type == "CREDIT") {

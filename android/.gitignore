@@ -11,3 +11,7 @@ GeneratedPluginRegistrant.java
 # See https://flutter.dev/to/reference-keystore
 **/*.keystore
 **/*.jks
+
+# Firebase / FCM config (download from Firebase Console for com.shareperks)
+google-services.json
+app/google-services.json

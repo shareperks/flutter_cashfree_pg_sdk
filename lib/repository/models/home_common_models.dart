@@ -229,6 +229,17 @@ class BrandItem {
   }
 }
 
+/// How a home carousel slide should navigate when tapped.
+enum SlideRedirectKind { reward, screen }
+
+/// Parses API `redirectKind`. Missing/unknown values default to [SlideRedirectKind.reward]
+/// for backward compatibility with legacy slides.
+SlideRedirectKind parseSlideRedirectKind(dynamic value) {
+  final raw = value?.toString().trim().toUpperCase();
+  if (raw == 'SCREEN') return SlideRedirectKind.screen;
+  return SlideRedirectKind.reward;
+}
+
 class HomeSlide {
   String? id;
   String? image;
@@ -241,6 +252,13 @@ class HomeSlide {
   String? imageUrl;
   bool? isEligible;
 
+  SlideRedirectKind redirectKind;
+  String? screenRoute;
+  int? sortOrder;
+  bool? isActive;
+  String? screenLabel;
+  String? screenPath;
+
   HomeSlide({
     this.id,
     this.image,
@@ -250,29 +268,111 @@ class HomeSlide {
     this.slideInterface,
     this.imageUrl,
     this.isEligible,
+    this.redirectKind = SlideRedirectKind.reward,
+    this.screenRoute,
+    this.sortOrder,
+    this.isActive,
+    this.screenLabel,
+    this.screenPath,
   });
 
-  HomeSlide.fromJson(Map<String, dynamic> json) {
+  HomeSlide.fromJson(Map<String, dynamic> json)
+      : redirectKind = parseSlideRedirectKind(json['redirectKind']) {
     id = json['id'] as String?;
     image = json['image'] as String?;
-    type = json['type'] as String?;
+    type = (json['rewardType'] ?? json['type']) as String?;
     rewardId = json['rewardId'] as String?;
     order = parseJsonInt(json['order']);
+    sortOrder = parseJsonInt(json['sortOrder'] ?? json['order']);
     slideInterface = json['interface'] as String?;
     imageUrl = json['imageUrl'] as String?;
     isEligible = json['isEligible'] as bool?;
+    isActive = json['isActive'] as bool?;
+    screenRoute = json['screenRoute'] as String?;
+
+    final screen = json['screen'];
+    if (screen is Map<String, dynamic>) {
+      screenLabel = screen['label'] as String?;
+      screenRoute ??= screen['routeName'] as String?;
+      screenPath = screen['path'] as String?;
+    }
+
+    // If the API omits redirectKind but sends screenRoute, treat as SCREEN.
+    final hasScreenRoute =
+        screenRoute != null && screenRoute!.trim().isNotEmpty;
+    if (json['redirectKind'] == null && hasScreenRoute) {
+      redirectKind = SlideRedirectKind.screen;
+    }
   }
+
+  /// Active slides only, sorted by [effectiveSortOrder].
+  static List<HomeSlide> visibleSlides(List<HomeSlide>? slides) {
+    final list = (slides ?? []).where((s) => s.isActive != false).toList();
+    list.sort((a, b) => a.effectiveSortOrder.compareTo(b.effectiveSortOrder));
+    return list;
+  }
+
+  /// Banner src for [imageUrl] helper — prefers CDN `image`, else storage key.
+  String get displayImageSource {
+    final raw = image?.trim() ?? '';
+    if (raw.startsWith('http')) return raw;
+    final key = imageUrl?.trim();
+    if (key != null && key.isNotEmpty) return key;
+    return raw;
+  }
+
+  /// `CREDIT` | `BENEFIT` | `OFFER` for carousel navigation.
+  String? get rewardTypeNormalized {
+    final value = type?.trim().toUpperCase();
+    if (value == 'CREDIT' || value == 'BENEFIT' || value == 'OFFER') {
+      return value;
+    }
+    return null;
+  }
+
+  int get effectiveSortOrder => sortOrder ?? order ?? 0;
+
+  bool get isRewardSlide => redirectKind == SlideRedirectKind.reward;
+
+  bool get isScreenSlide => redirectKind == SlideRedirectKind.screen;
+
+  bool get canNavigateToReward {
+    if (!isRewardSlide) return false;
+    final id = rewardId?.trim();
+    return rewardTypeNormalized != null && id != null && id.isNotEmpty;
+  }
+
+  /// Non-empty [screenRoute] on a screen slide. Allowlist is checked by
+  /// [HomeSlideNavigation.isTappable] / [navigateHomeSlide].
+  bool get canNavigateToScreen {
+    if (!isScreenSlide) return false;
+    final route = screenRoute?.trim();
+    return route != null && route.isNotEmpty;
+  }
+
+  bool get isTappable => canNavigateToReward || canNavigateToScreen;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'image': image,
       'type': type,
+      'rewardType': type,
       'rewardId': rewardId,
       'order': order,
+      'sortOrder': sortOrder,
       'interface': slideInterface,
       'imageUrl': imageUrl,
       'isEligible': isEligible,
+      'redirectKind': redirectKind == SlideRedirectKind.screen ? 'SCREEN' : 'REWARD',
+      'screenRoute': screenRoute,
+      'isActive': isActive,
+      if (screenLabel != null || screenPath != null)
+        'screen': {
+          if (screenLabel != null) 'label': screenLabel,
+          if (screenRoute != null) 'routeName': screenRoute,
+          if (screenPath != null) 'path': screenPath,
+        },
     };
   }
 }

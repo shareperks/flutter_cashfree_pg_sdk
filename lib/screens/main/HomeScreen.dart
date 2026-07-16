@@ -23,6 +23,7 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/feature/VotingBrands.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
+import 'package:shareperks/navigation/home_slide_navigation.dart';
 import 'package:shareperks/repository/models/HomeDataModel.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
@@ -171,6 +172,10 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: SharePerksColors.borderLight,
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -219,9 +224,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _homeSliverAppBar(BuildContext context) {
     return SliverAppBar(
       pinned: true,
-      floating: true,
+      floating: false,
       snap: false,
-      stretch: true,
+      stretch: false,
       primary: true,
       toolbarHeight: 48,
       expandedHeight: 108,
@@ -265,6 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final slides = HomeSlide.visibleSlides(data?.data?.slides);
     return Scaffold(
       extendBody: true,
       backgroundColor: Colors.white,
@@ -406,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    if (data?.data?.slides?.isNotEmpty ?? false)
+                    if (slides.isNotEmpty)
                       CarouselSlider(
                         options: CarouselOptions(
                           height: 230.0,
@@ -419,44 +425,52 @@ class _HomeScreenState extends State<HomeScreen> {
                           aspectRatio: 16 / 9,
                           viewportFraction: 1.0,
                         ),
-                        items: List.generate(data?.data?.slides?.length ?? 0, (
-                          index,
-                        ) {
-                          String url = data?.data?.slides?[index].image ?? "";
+                        items: List.generate(slides.length, (index) {
+                          final slide = slides[index];
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16.0,
                             ).copyWith(bottom: 10.0, top: 10.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(
-                                  SharePerksRadii.lg,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color.fromARGB(
-                                      93,
-                                      86,
-                                      92,
-                                      100,
-                                    ).withValues(alpha: 0.2),
-                                    blurRadius: 10,
-                                    offset: Offset(0, 0),
-                                  ),
-                                ],
-
-                                color: Colors.white,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => navigateHomeSlide(
+                                slide,
+                                source: 'home_carousel',
+                                position: index,
                               ),
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  return ImageBuilder(
-                                    imageUrl: imageUrl(url),
-                                    fit: BoxFit.cover,
-                                    width: constraints.maxWidth,
-                                    borderRadius: SharePerksRadii.lg,
-                                    height: 100,
-                                  );
-                                },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(
+                                    SharePerksRadii.lg,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color.fromARGB(
+                                        93,
+                                        86,
+                                        92,
+                                        100,
+                                      ).withValues(alpha: 0.2),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 0),
+                                    ),
+                                  ],
+
+                                  color: Colors.white,
+                                ),
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return ImageBuilder(
+                                      imageUrl: imageUrl(
+                                        slide.displayImageSource,
+                                      ),
+                                      fit: BoxFit.cover,
+                                      width: constraints.maxWidth,
+                                      borderRadius: SharePerksRadii.lg,
+                                      height: 100,
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           );
@@ -873,17 +887,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             SizedBox(height: 5),
                             Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0,
+                                horizontal: 10.0,
                               ),
                               child: Row(
-                                spacing: 20,
+                                spacing: 40,
                                 children: [
                                   OptionView(
                                     onTap: () => context.pushNamed(
                                       RouteNames.GIFTCARD_PERK_SCREEN,
                                     ),
                                     image: Assets.ASSETS_ICONS_GIFTCARD_PNG,
-                                    title: "Credits",
+                                    title: "Gift Cards",
                                   ),
                                   OptionView(
                                     onTap: () => context.pushNamed(
@@ -897,7 +911,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       RouteNames.CASHBACK_PERK_SCREEN,
                                     ),
                                     image: Assets.ASSETS_ICONS_CASHBACK_PNG,
-                                    title: "Benefits",
+                                    title: "Cashback",
                                   ),
                                 ],
                               ),

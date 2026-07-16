@@ -9,6 +9,7 @@ import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/integrations/analytics/consent_manager.dart';
+import 'package:shareperks/integrations/onesignal_push.dart';
 import 'package:shareperks/integrations/razorpay_payment.dart';
 import 'package:shareperks/integrations/smallcase_gateway.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalStorage.init();
   RazorpayPayment.init();
+  await OneSignalPush.init();
 
   await AnalyticsService.instance.init(
     trackingApiBaseUrl: Host.listingUrl,

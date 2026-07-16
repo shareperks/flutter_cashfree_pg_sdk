@@ -48,11 +48,63 @@ PODS:
   - local_auth_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
+  - onesignal_flutter (5.6.4):
+    - Flutter
+    - OneSignalXCFramework (= 5.5.4)
+  - OneSignalXCFramework (5.5.4):
+    - OneSignalXCFramework/OneSignalComplete (= 5.5.4)
+  - OneSignalXCFramework/OneSignal (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalLiveActivities
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalComplete (5.5.4):
+    - OneSignalXCFramework/OneSignal
+    - OneSignalXCFramework/OneSignalInAppMessages
+    - OneSignalXCFramework/OneSignalLocation
+  - OneSignalXCFramework/OneSignalCore (5.5.4)
+  - OneSignalXCFramework/OneSignalExtension (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OneSignalXCFramework/OneSignalInAppMessages (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalLiveActivities (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalLocation (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalNotifications (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OneSignalXCFramework/OneSignalOSCore (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+  - OneSignalXCFramework/OneSignalOutcomes (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
+  - OneSignalXCFramework/OneSignalUser (5.5.4):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
   - package_info_plus (0.4.5):
     - Flutter
-  - razorpay-core-pod (1.0.6)
-  - razorpay-pod (1.5.3):
-    - razorpay-core-pod (= 1.0.6)
+  - razorpay-core-pod (1.0.7)
+  - razorpay-pod (1.5.5):
+    - razorpay-core-pod (= 1.0.7)
   - razorpay_flutter (1.1.10):
     - Flutter
     - razorpay-pod
@@ -90,6 +142,7 @@ DEPENDENCIES:
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - just_audio (from `.symlinks/plugins/just_audio/darwin`)
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
+  - onesignal_flutter (from `.symlinks/plugins/onesignal_flutter/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - razorpay_flutter (from `.symlinks/plugins/razorpay_flutter/ios`)
   - scgateway_flutter_plugin (from `.symlinks/plugins/scgateway_flutter_plugin/ios`)
@@ -104,6 +157,7 @@ SPEC REPOS:
   trunk:
     - DKImagePickerController
     - DKPhotoGallery
+    - OneSignalXCFramework
     - razorpay-core-pod
     - razorpay-pod
     - SCGateway
@@ -127,6 +181,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/just_audio/darwin"
   local_auth_darwin:
     :path: ".symlinks/plugins/local_auth_darwin/darwin"
+  onesignal_flutter:
+    :path: ".symlinks/plugins/onesignal_flutter/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   razorpay_flutter:
@@ -157,9 +213,11 @@ SPEC CHECKSUMS:
   fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
   just_audio: 4e391f57b79cad2b0674030a00453ca5ce817eed
   local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
+  onesignal_flutter: ba341afcf0e10a8f5dba46273f5c92096d0ba129
+  OneSignalXCFramework: 5666b415b2cedb51b18643c05a65b4349ef015dc
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  razorpay-core-pod: 6da5fb4ed280279d665507fdb50e213d793a5fe2
-  razorpay-pod: 4385cf844aa29389313b741e20c72fe668970d49
+  razorpay-core-pod: c7f3ac3d214c1a7fac4e9a59c1de7eac02130573
+  razorpay-pod: 62c4e6efcf77674e93a6a82dac0f3e24f69c7515
   razorpay_flutter: 0e98e4fcaae27ad50e011d85f66d85e0a008754a
   SCGateway: 5ccaf560b1bdf0caabe8d345da1508424e59a32d
   scgateway_flutter_plugin: a464bd48d282cd79d60a4f9d84b76579deef045b
@@ -172,6 +230,6 @@ SPEC CHECKSUMS:
   wakelock_plus: e29112ab3ef0b318e58cfa5c32326458be66b556
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
-PODFILE CHECKSUM: 25e47246c825f522ba439cdfaaccc68846902c88
+PODFILE CHECKSUM: d494dcdfd367b8e7774dfcff03a72fdf0c72b07d
 
 COCOAPODS: 1.16.2

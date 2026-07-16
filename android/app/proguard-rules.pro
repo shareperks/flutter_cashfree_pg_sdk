@@ -16,6 +16,11 @@
   public void onPayment*(...);
 }
 
+# OneSignal
+-dontwarn com.onesignal.**
+-keep class com.onesignal.** { *; }
+-keep interface com.onesignal.** { *; }
+
 -ignorewarnings
 -keep class * {
     public private *;
