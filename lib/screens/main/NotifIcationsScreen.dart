@@ -3,7 +3,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
-import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/components/loader/NotificationListShimmer.dart';
+import 'package:shareperks/components/notification/NotificationCard.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
@@ -11,8 +12,6 @@ import 'package:shareperks/repository/models/notification_model.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/services/notification/notification.service.dart';
-import 'package:shareperks/utils/image_url.dart';
-import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/tab_buttons.dart';
 
@@ -65,6 +64,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     RouteNames.HELP_AND_SUPPORT_SCREEN,
     RouteNames.FAQS_SCREEN,
     RouteNames.SETTINGS_SCREEN,
+    RouteNames.UNLOCKED_PERKS_SCREEN,
+    RouteNames.GIFTCARD_PERK_SCREEN,
+    RouteNames.PROMOOCODE_PERK_SCREEN,
+    RouteNames.CASHBACK_PERK_SCREEN,
+    RouteNames.TOP_PERKS_SCREEN,
+    RouteNames.TOP_BRANDS_SCREEN,
   };
 
   final ScrollController _scrollController = ScrollController();
@@ -288,30 +293,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  Future<bool> _confirmDelete(AppNotification n) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Delete notification'),
-            content: const Text('Remove this notification from your inbox?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFEB3939),
-                ),
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-  }
-
   Future<void> _deleteOne(AppNotification n) async {
     // Optimistic removal — restore on failure.
     final removedIndex = _items.indexWhere((e) => e.id == n.id);
@@ -361,10 +342,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final canClearAll = _items.isNotEmpty && !_clearingAll;
     final busy = _markingAllRead || _clearingAll;
     return SpScafold(
+      backgroundColor: SharePerksColors.surfaceLight,
       appBar: AppBar(
         leading: AppBackButton(),
-        title: const Text('Notifications'),
-        toolbarHeight: 40,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Notifications'),
+            if (_unreadCount > 0 && !_initialLoading)
+              Text(
+                '$_unreadCount unread',
+                style: TextStyle(
+                  color: SharePerksColors.textSecondaryLight,
+                  fontSize: 11,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+          ],
+        ),
+        toolbarHeight: _unreadCount > 0 && !_initialLoading ? 48 : 40,
         actions: [
           if (busy)
             const Padding(
@@ -380,7 +377,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           else
             PopupMenuButton<_NotificationMenuAction>(
               tooltip: 'Notification options',
-              icon: const Icon(Icons.more_vert, color: Color(0xFF333333)),
+              icon: const Icon(Icons.more_vert, color: Colors.white),
               onSelected: (action) {
                 switch (action) {
                   case _NotificationMenuAction.markAllRead:
@@ -409,8 +406,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
               ],
             ),
-          Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 17),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(
@@ -421,25 +417,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 14,
-                ),
-                // `layoutWidthInset` must cover both the outer Padding
-                // (18 + 18 = 36) and `TabButtons`'s own outer-container
-                // margins (2 + 4 = 6 of `outerContainerMargin: 4`, totaling
-                // 24 px). Without the extra 24 the inner `Row` overflows
-                // by 8 px on tighter screens — see
-                // soui/lib/elements/tab_buttons.dart `outerW` formula.
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TabButtons(
                   selectedIndex: _tabIndex,
-                  layoutWidthInset: 60,
+                  layoutWidthInset: 56,
                   buttonTextFontSize: 11,
                   items: <String>[for (final t in _tabs) t.label],
                   onTap: _onTabSelected,
                 ),
               ),
             ),
+            if (_unreadCount > 0 && !_initialLoading && !_isError)
+              SliverToBoxAdapter(
+                child: _UnreadBanner(
+                  unreadCount: _unreadCount,
+                  markingAllRead: _markingAllRead,
+                  onMarkAllRead: _markAllRead,
+                ),
+              ),
             ..._buildBodySlivers(),
           ],
         ),
@@ -449,12 +444,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   List<Widget> _buildBodySlivers() {
     if (_initialLoading) {
-      return const [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ];
+      return const [NotificationListShimmer()];
     }
 
     if (_isError && _items.isEmpty) {
@@ -468,58 +458,68 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     if (_items.isEmpty) {
       return const [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: _EmptyState(),
-        ),
+        SliverFillRemaining(hasScrollBody: false, child: _EmptyState()),
       ];
     }
 
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
         sliver: SliverList.builder(
           itemCount: _items.length + 1,
           itemBuilder: (context, index) {
             if (index >= _items.length) {
               if (_nextCursor == null || _nextCursor!.isEmpty) {
-                return const SizedBox(height: 20);
+                return const SizedBox(height: 8);
               }
               return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 18),
+                padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(
                   child: SizedBox(
-                    width: 18,
-                    height: 18,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
               );
             }
             final n = _items[index];
+            final isActionable =
+                n.screen != null &&
+                n.screen!.trim().isNotEmpty &&
+                _knownRoutes.contains(n.screen);
             return Dismissible(
               key: ValueKey<String>(n.id),
               direction: DismissDirection.endToStart,
               background: Container(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 alignment: Alignment.centerRight,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEB3939),
-                  borderRadius: BorderRadius.circular(12),
+                  color: SharePerksColors.error,
+                  borderRadius: BorderRadius.circular(SharePerksRadii.lg),
                 ),
-                child: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.delete_outline, color: Colors.white, size: 20),
+                    SizedBox(width: 6),
+                    Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              confirmDismiss: (_) => _confirmDelete(n),
               onDismissed: (_) => _deleteOne(n),
-              child: _NotificationCard(
+              child: NotificationCard(
                 notification: n,
-                onTap: _knownRoutes.contains(n.screen)
-                    ? () => _onNotificationTap(n)
-                    : null,
+                isActionable: isActionable,
+                onTap: isActionable ? () => _onNotificationTap(n) : null,
               ),
             );
           },
@@ -529,126 +529,76 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 }
 
-class _NotificationCard extends StatelessWidget {
-  const _NotificationCard({required this.notification, this.onTap});
+class _UnreadBanner extends StatelessWidget {
+  const _UnreadBanner({
+    required this.unreadCount,
+    required this.markingAllRead,
+    required this.onMarkAllRead,
+  });
 
-  final AppNotification notification;
-  final VoidCallback? onTap;
+  final int unreadCount;
+  final bool markingAllRead;
+  final VoidCallback onMarkAllRead;
 
   @override
   Widget build(BuildContext context) {
-    final n = notification;
-    final hasImage = n.image.trim().isNotEmpty;
-    final timestamp = n.displayTimestamp;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: n.isRead
-              ? Colors.white
-              : SharePerksColors.primary.withAlpha(14),
-          borderRadius: BorderRadius.circular(12),
+          color: SharePerksColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(SharePerksRadii.lg),
           border: Border.all(
-            color: n.isRead
-                ? const Color(0xFFEFEFEF)
-                : SharePerksColors.primary.withAlpha(40),
+            color: SharePerksColors.primary.withValues(alpha: 0.16),
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 44,
-              height: 44,
-              child: hasImage
-                  ? ImageBuilder(
-                      imageUrl: imageUrl(n.image),
-                      width: 44,
-                      height: 44,
-                      borderRadius: 8,
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        color: SharePerksColors.primary.withAlpha(20),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        HugeIconsSolid.notification01,
-                        color: SharePerksColors.primary,
-                        size: 22,
-                      ),
-                    ),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: SharePerksColors.primary.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                HugeIconsSolid.notification01,
+                size: 18,
+                color: SharePerksColors.primary,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          n.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: const Color(0xFF333333),
-                            fontSize: 13,
-                            fontFamily: SharePerksFonts.inter,
-                            fontWeight: n.isRead
-                                ? FontWeight.w500
-                                : FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      if (!n.isRead)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8, top: 4),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: SharePerksColors.accent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (n.description.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      n.description,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: const Color(0xFF6B6B6B),
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                  if (timestamp.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      timestamp,
-                      style: TextStyle(
-                        color: const Color(0xFF898989),
-                        fontSize: 10,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                unreadCount == 1
+                    ? 'You have 1 unread notification'
+                    : 'You have $unreadCount unread notifications',
+                style: TextStyle(
+                  color: SharePerksColors.textPrimaryLight,
+                  fontSize: 13,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
+            if (markingAllRead)
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              TextButton(
+                onPressed: onMarkAllRead,
+                style: TextButton.styleFrom(
+                  foregroundColor: SharePerksColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Mark all read'),
+              ),
           ],
         ),
       ),
@@ -662,37 +612,57 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            HugeIconsSolid.notification01,
-            size: 56,
-            color: SharePerksColors.primary.withAlpha(80),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+            border: Border.all(color: SharePerksColors.borderLight),
           ),
-          const SizedBox(height: 12),
-          Text(
-            "You're all caught up",
-            style: TextStyle(
-              color: const Color(0xFF333333),
-              fontSize: 15,
-              fontFamily: SharePerksFonts.albertSans,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: SharePerksColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  HugeIconsSolid.notification01,
+                  size: 30,
+                  color: SharePerksColors.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "You're all caught up",
+                style: TextStyle(
+                  color: SharePerksColors.textPrimaryLight,
+                  fontSize: 16,
+                  fontFamily: SharePerksFonts.albertSans,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'New perks, benefits, and updates will appear here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: SharePerksColors.textSecondaryLight,
+                  fontSize: 13,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w400,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'New activity will show up here.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: const Color(0xFF898989),
-              fontSize: 12,
-              fontFamily: SharePerksFonts.inter,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -708,23 +678,50 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Could not load notifications.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: const Color(0xFF333333),
-              fontSize: 14,
-              fontFamily: SharePerksFonts.albertSans,
-              fontWeight: FontWeight.w600,
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+            border: Border.all(color: SharePerksColors.borderLight),
           ),
-          const SizedBox(height: 8),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                HugeIconsSolid.alertCircle,
+                size: 40,
+                color: SharePerksColors.error,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Could not load notifications',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: SharePerksColors.textPrimaryLight,
+                  fontSize: 15,
+                  fontFamily: SharePerksFonts.albertSans,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Check your connection and try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: SharePerksColors.textSecondaryLight,
+                  fontSize: 13,
+                  fontFamily: SharePerksFonts.inter,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
+        ),
       ),
     );
   }

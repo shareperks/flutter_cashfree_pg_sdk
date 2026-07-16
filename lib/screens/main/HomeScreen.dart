@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dio/dio.dart';
@@ -172,10 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: SharePerksColors.borderLight,
-            width: 1,
-          ),
+          border: Border.all(color: SharePerksColors.borderLight, width: 1),
         ),
         child: Row(
           children: [
