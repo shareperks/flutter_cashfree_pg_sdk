@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dio/dio.dart';
@@ -405,7 +404,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               activePerks:
                                   (data?.data?.unlockedRewards?.total ?? "0")
                                       .toString(),
-                              newRewards: "0",
+                              newRewards:
+                                  data?.data?.newRewards?.toString() ?? "0",
                             ),
                         ],
                       ),

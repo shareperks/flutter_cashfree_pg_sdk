@@ -18,14 +18,13 @@ class HomeDataModel {
 
   HomeDataModel.fromJson(Map<String, dynamic> json) {
     success = json['success'] as bool?;
-    data = json['data'] != null ? Data.fromJson(json['data'] as Map<String, dynamic>) : null;
+    data = json['data'] != null
+        ? Data.fromJson(json['data'] as Map<String, dynamic>)
+        : null;
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      if (data != null) 'data': data!.toJson(),
-    };
+    return {'success': success, if (data != null) 'data': data!.toJson()};
   }
 }
 
@@ -36,6 +35,7 @@ class Data {
   List<RewardItem>? topRewards;
   List<BrandItem>? topBrands;
   List<HomeCategory>? categories;
+  int? newRewards;
 
   Data({
     this.user,
@@ -44,12 +44,17 @@ class Data {
     this.topRewards,
     this.topBrands,
     this.categories,
+    this.newRewards,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
-    user = json['user'] != null ? User.fromJson(json['user'] as Map<String, dynamic>) : null;
+    user = json['user'] != null
+        ? User.fromJson(json['user'] as Map<String, dynamic>)
+        : null;
     unlockedRewards = json['unlockedRewards'] != null
-        ? UnlockedRewards.fromJson(json['unlockedRewards'] as Map<String, dynamic>)
+        ? UnlockedRewards.fromJson(
+            json['unlockedRewards'] as Map<String, dynamic>,
+          )
         : null;
     if (json['slides'] != null) {
       slides = <HomeSlide>[];
@@ -75,6 +80,7 @@ class Data {
         categories!.add(HomeCategory.fromJson(v as Map<String, dynamic>));
       }
     }
+    newRewards = parseJsonInt(json['newRewards']);
   }
 
   Map<String, dynamic> toJson() {
@@ -82,9 +88,13 @@ class Data {
       if (user != null) 'user': user!.toJson(),
       if (unlockedRewards != null) 'unlockedRewards': unlockedRewards!.toJson(),
       if (slides != null) 'slides': slides!.map((v) => v.toJson()).toList(),
-      if (topRewards != null) 'topRewards': topRewards!.map((v) => v.toJson()).toList(),
-      if (topBrands != null) 'topBrands': topBrands!.map((v) => v.toJson()).toList(),
-      if (categories != null) 'categories': categories!.map((v) => v.toJson()).toList(),
+      if (topRewards != null)
+        'topRewards': topRewards!.map((v) => v.toJson()).toList(),
+      if (topBrands != null)
+        'topBrands': topBrands!.map((v) => v.toJson()).toList(),
+      if (categories != null)
+        'categories': categories!.map((v) => v.toJson()).toList(),
+      'newRewards': newRewards,
     };
   }
 }

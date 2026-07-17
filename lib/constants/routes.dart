@@ -524,7 +524,7 @@ final GoRouter router = GoRouter(
       unawaited(
         AnalyticsService.instance.track(AnalyticsEvent.routeBlocked, {
           'reason': 'no_internet',
-          if (name != null) 'target': name,
+          'target': ?name,
         }),
       );
       return Block.then(() => goRouter.goNamed(RouteNames.NO_INTERNET));

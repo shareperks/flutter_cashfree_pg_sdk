@@ -73,7 +73,7 @@ class BrandViewLoader extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: 2,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           return RewardShimmerCard(width: cardWidth);
                         },

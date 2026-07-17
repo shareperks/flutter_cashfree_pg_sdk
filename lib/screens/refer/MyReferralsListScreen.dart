@@ -18,7 +18,7 @@ import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/tab_buttons.dart';
 
 class MyReferralListScreen extends StatefulWidget {
-  MyReferralListScreen({super.key});
+  const MyReferralListScreen({super.key});
 
   @override
   State<MyReferralListScreen> createState() => _MyReferralListScreenState();
@@ -191,7 +191,7 @@ bool _referralLooksSettled(ReferralListEntry e) {
 
 class _ReferralsListContent extends StatefulWidget {
   final List<ReferralListEntry> data;
-  _ReferralsListContent({required this.data});
+  const _ReferralsListContent({required this.data});
 
   @override
   State<_ReferralsListContent> createState() => _ReferralsListContentState();

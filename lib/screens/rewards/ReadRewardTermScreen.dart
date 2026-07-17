@@ -66,7 +66,7 @@ class _ReadRewardTermScreenState extends State<ReadRewardTermScreen> {
     );
   }
 
-  Widget _buildBody(String _html) {
+  Widget _buildBody(String html) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -98,7 +98,7 @@ class _ReadRewardTermScreenState extends State<ReadRewardTermScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       child: HtmlWidget(
-        _html,
+        html,
         textStyle: const TextStyle(
           color: Color(0xFF333333),
           fontSize: 14,

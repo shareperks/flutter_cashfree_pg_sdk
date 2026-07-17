@@ -395,7 +395,7 @@ void showClaimedPromoCodeSheet(
   Function()? onUpdateRedeemed,
 }) {
   final restoreScreen = trackBottomSheet('promocode_claimed_sheet', {
-    if (name != null) 'reward_name': name,
+    'reward_name': ?name,
   });
   showModalBottomSheet(
     context: context,

@@ -54,7 +54,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
   }
 
-  loadRewards(String categoryId) async {
+  Future<void> loadRewards(String categoryId) async {
     setState(() {
       isError = false;
       dataLoading = true;

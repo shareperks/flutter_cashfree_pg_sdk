@@ -34,11 +34,18 @@ class ServerSink implements AnalyticsSink {
     Duration periodicFlush = const Duration(seconds: 15),
     int queueCap = 500,
     int batchSize = 50,
-  })  : _dio = dio ?? Dio(BaseOptions(connectTimeout: const Duration(seconds: 8), receiveTimeout: const Duration(seconds: 8))),
-        _flushThreshold = flushThreshold,
-        _periodicFlush = periodicFlush,
-        _queueCap = queueCap,
-        _batchSize = batchSize;
+  }) : _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               connectTimeout: const Duration(seconds: 8),
+               receiveTimeout: const Duration(seconds: 8),
+             ),
+           ),
+       _flushThreshold = flushThreshold,
+       _periodicFlush = periodicFlush,
+       _queueCap = queueCap,
+       _batchSize = batchSize;
 
   /// Tracking API origin (no trailing slash), e.g. `https://listing.shareperks.in`.
   final String baseUrl;
@@ -91,7 +98,11 @@ class ServerSink implements AnalyticsSink {
     // Server-side identity comes from the JWT on the next flush. We still
     // emit a typed `identify` event so the warehouse has an audit trail.
     await track(
-      AnalyticsEvent.custom('identify', category: 'auth', requiresConsent: false),
+      AnalyticsEvent.custom(
+        'identify',
+        category: 'auth',
+        requiresConsent: false,
+      ),
       {'user_id': userId, ...props},
       const {},
     );
@@ -100,7 +111,11 @@ class ServerSink implements AnalyticsSink {
   @override
   Future<void> setUserProperty(String key, Object? value) async {
     await track(
-      AnalyticsEvent.custom('user_property_set', category: 'auth', requiresConsent: false),
+      AnalyticsEvent.custom(
+        'user_property_set',
+        category: 'auth',
+        requiresConsent: false,
+      ),
       {'key': key, 'value': value},
       const {},
     );
@@ -133,7 +148,10 @@ class ServerSink implements AnalyticsSink {
     Map<String, Object?> props,
     Map<String, Object?> ctx,
   ) async {
-    await track(AnalyticsEvent.screenView, {'screen_name': screenName, ...props}, ctx);
+    await track(AnalyticsEvent.screenView, {
+      'screen_name': screenName,
+      ...props,
+    }, ctx);
   }
 
   @override
@@ -174,7 +192,8 @@ class ServerSink implements AnalyticsSink {
   Future<void> _flush() async {
     if (_flushing) return;
     if (_queue.isEmpty) return;
-    if (_backoffUntil != null && DateTime.now().isBefore(_backoffUntil!)) return;
+    if (_backoffUntil != null && DateTime.now().isBefore(_backoffUntil!))
+      return;
 
     _flushing = true;
     try {
@@ -187,7 +206,7 @@ class ServerSink implements AnalyticsSink {
       final token = await _safeGetToken();
       final headers = <String, String>{
         'Content-Type': 'application/json',
-        if (_anonIdHeader != null) 'X-Anon-Id': _anonIdHeader!,
+        'X-Anon-Id': ?_anonIdHeader,
         if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
@@ -226,8 +245,10 @@ class ServerSink implements AnalyticsSink {
 
       if (status == 400) {
         // Schema bug — log and drop, retrying will keep failing
-        debugPrint('[analytics] /track/batch 400 — dropped ${batch.length} events. '
-            'Body: ${response.data}');
+        debugPrint(
+          '[analytics] /track/batch 400 — dropped ${batch.length} events. '
+          'Body: ${response.data}',
+        );
         await _persistQueue();
         return;
       }

@@ -3,7 +3,7 @@ import 'package:soui/elements/ShimmerBuilder.dart';
 
 /// Shimmer placeholder matching the holdings layout (card, actions, list).
 class HoldingsPageShimmer extends StatelessWidget {
-  const HoldingsPageShimmer();
+  const HoldingsPageShimmer({super.key});
 
   @override
   Widget build(BuildContext context) {

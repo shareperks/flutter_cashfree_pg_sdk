@@ -57,7 +57,7 @@ class HomePageLoader extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 22),
               scrollDirection: Axis.horizontal,
               itemCount: 4,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 return Container(
                   width: 96,
@@ -103,7 +103,7 @@ class HomePageLoader extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
               itemCount: 3,
-              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              separatorBuilder: (_, _) => const SizedBox(width: 16),
               itemBuilder: (context, index) {
                 return const _OptionChipSkeleton();
               },
@@ -175,7 +175,7 @@ class _SectionSkeleton extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: itemCount,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               return Container(
                 width: itemWidth,

@@ -19,9 +19,7 @@ class _LinkDematInfoScreenState extends State<LinkDematInfoScreen> {
   @override
   void initState() {
     super.initState();
-    trackAction(AnalyticsEvent.linkDematStarted, {
-      'source': 'ineligible_perk',
-    });
+    trackAction(AnalyticsEvent.linkDematStarted, {'source': 'ineligible_perk'});
   }
 
   @override
@@ -142,10 +140,10 @@ class _LinkDematInfoScreenState extends State<LinkDematInfoScreen> {
               onPressed: () {
                 context.pushNamed(RouteNames.LIST_BROKER_VIEW_SCREEN);
               },
-              child: Text('Link Account'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SharePerksColors.primary,
               ),
+              child: Text('Link Account'),
             ),
             Text(
               'Read-only access. We can’t trade or move funds.',

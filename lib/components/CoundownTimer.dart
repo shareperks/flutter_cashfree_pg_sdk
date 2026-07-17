@@ -82,7 +82,7 @@ class _CoundownTimerState extends State<CoundownTimer> {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('$hh', style: _style),
+        Text(hh, style: _style),
         const Text(':', style: _style),
         Text(mm, style: _style),
         const Text(':', style: _style),

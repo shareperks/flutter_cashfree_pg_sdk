@@ -35,7 +35,7 @@ class _TopPerksScreenState extends State<TopPerksScreen> {
   Timer? _filterTimer;
   String _sortBy = 'a-z';
 
-  isEmpty() {
+  bool isEmpty() {
     return rewardItems.isEmpty;
   }
 

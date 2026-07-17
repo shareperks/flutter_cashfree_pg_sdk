@@ -49,21 +49,21 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['email'] = this.email;
-    data['name'] = this.name;
-    data['mobile'] = this.mobile;
-    data['isActive'] = this.isActive;
-    data['referCode'] = this.referCode;
-    data['dob'] = this.dob;
-    data['image'] = this.image;
-    data['createAt'] = this.createAt;
-    data['updateAt'] = this.updateAt;
-    data['walletId'] = this.walletId;
-    data['holdingImportsId'] = this.holdingImportsId;
-    data['allowedSettingsId'] = this.allowedSettingsId;
-    data['notificationId'] = this.notificationId;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['email'] = email;
+    data['name'] = name;
+    data['mobile'] = mobile;
+    data['isActive'] = isActive;
+    data['referCode'] = referCode;
+    data['dob'] = dob;
+    data['image'] = image;
+    data['createAt'] = createAt;
+    data['updateAt'] = updateAt;
+    data['walletId'] = walletId;
+    data['holdingImportsId'] = holdingImportsId;
+    data['allowedSettingsId'] = allowedSettingsId;
+    data['notificationId'] = notificationId;
     return data;
   }
 }

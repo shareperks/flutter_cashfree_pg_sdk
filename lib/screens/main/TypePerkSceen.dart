@@ -39,7 +39,7 @@ class _TypePerkScreenState extends State<TypePerkScreen> {
   Timer? _filterTimer;
   String _sortBy = 'a-z';
 
-  isEmpty() {
+  bool isEmpty() {
     return rewardItems.isEmpty;
   }
 

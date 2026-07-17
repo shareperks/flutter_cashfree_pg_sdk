@@ -32,7 +32,7 @@ class _CompanyViewScreenState extends State<CompanyViewScreen> {
   bool _error = false;
   RewardsByCompanyResponse? _data;
 
-  loadCompanyInfo() async {
+  Future<void> loadCompanyInfo() async {
     if (mounted) {
       setState(() {
         _loading = true;

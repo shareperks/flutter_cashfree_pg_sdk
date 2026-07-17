@@ -26,9 +26,7 @@ class ImportProgressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = progress == null
-        ? null
-        : progress!.clamp(0.0, 1.0).toDouble();
+    final value = progress?.clamp(0.0, 1.0).toDouble();
 
     return Container(
       padding: const EdgeInsets.all(14),

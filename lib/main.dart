@@ -131,7 +131,7 @@ class _SharePerksAppState extends State<SharePerksApp>
         _pausedAt = null;
         unawaited(
           AnalyticsService.instance.track(AnalyticsEvent.appForegrounded, {
-            if (pausedFor != null) 'paused_for_ms': pausedFor,
+            'paused_for_ms': ?pausedFor,
           }),
         );
         break;

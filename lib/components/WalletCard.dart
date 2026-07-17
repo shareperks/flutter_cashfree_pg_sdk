@@ -95,7 +95,7 @@ class TransactionData {
     required this.time,
     required this.type,
     this.label,
-  }) {}
+  });
 }
 
 class TransactionCard extends StatelessWidget {
@@ -163,7 +163,7 @@ class TransactionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${data.time}',
+                data.time,
                 style: TextStyle(
                   color: const Color(0xFF898989),
                   fontSize: 12,

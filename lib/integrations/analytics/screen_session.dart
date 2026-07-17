@@ -18,11 +18,11 @@ class ScreenClick {
       (detail == null || detail!.isEmpty) ? label : '$label ($detail)';
 
   Map<String, Object?> toJson() => {
-        'label': label,
-        if (detail != null && detail!.isNotEmpty) 'detail': detail,
-        'at': at.toIso8601String(),
-        'at_label': ScreenSession.formatTime(at),
-      };
+    'label': label,
+    if (detail != null && detail!.isNotEmpty) 'detail': detail,
+    'at': at.toIso8601String(),
+    'at_label': ScreenSession.formatTime(at),
+  };
 }
 
 class _Session {
@@ -80,11 +80,10 @@ class ScreenSession {
     unawaited(
       AnalyticsService.instance.track(AnalyticsEvent.screenSession, {
         'screen_name': s.screenName,
-        if (entityName != null) 'name': entityName,
+        'name': ?entityName,
         'started_at': s.startedAt.toIso8601String(),
         'ended_at': endedAt.toIso8601String(),
-        'time_label':
-            '${formatTime(s.startedAt)} - ${formatTime(endedAt)}',
+        'time_label': '${formatTime(s.startedAt)} - ${formatTime(endedAt)}',
         'duration_ms': endedAt.difference(s.startedAt).inMilliseconds,
         'clicks': s.clicks.map((c) => c.toJson()).toList(),
         'clicks_summary': s.clicks.map((c) => c.display).toList(),

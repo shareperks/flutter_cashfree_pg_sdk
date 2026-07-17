@@ -22,7 +22,7 @@ class CategoryPageLoader extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: 4,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   return Container(
                     padding: const EdgeInsets.all(10),

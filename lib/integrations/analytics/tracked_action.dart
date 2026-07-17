@@ -43,7 +43,7 @@ Future<void> trackButtonClick(
   final detail = _clickDetail(props);
   await trackAction(AnalyticsEvent.buttonClicked, {
     'label': label,
-    if (detail != null) 'detail': detail,
+    'detail': ?detail,
     ...props,
   });
 }
@@ -102,7 +102,7 @@ void Function() trackBottomSheet(
     trackAction(AnalyticsEvent.screenView, {
       'screen_name': sheetName,
       'surface': 'bottom_sheet',
-      if (previousScreen != null) 'previous_screen': previousScreen,
+      'previous_screen': ?previousScreen,
       ...props,
     }),
   );

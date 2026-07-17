@@ -56,12 +56,12 @@ class JourneyContext {
 
   /// Props merged into every funnel / screen event.
   static Map<String, Object?> baseProps() => {
-        if (currentJourneyId != null) 'journey_id': currentJourneyId!,
-        if (currentRewardId != null) 'reward_id': currentRewardId!,
-        if (currentPerkType != null) 'perk_type': currentPerkType!,
-        if (currentRewardName != null) 'reward_name': currentRewardName!,
-        if (currentBrandName != null) 'brand_name': currentBrandName!,
-      };
+    'journey_id': ?currentJourneyId,
+    'reward_id': ?currentRewardId,
+    'perk_type': ?currentPerkType,
+    'reward_name': ?currentRewardName,
+    'brand_name': ?currentBrandName,
+  };
 
   static String _uuidV4() {
     final rng = Random.secure();

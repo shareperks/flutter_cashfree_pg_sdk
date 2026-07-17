@@ -11,7 +11,7 @@ import 'package:shareperks/repository/services/holding/holding_model.dart';
 class SmallcaseGateway {
   static const String gatewayName = 'shareperks';
 
-  static _configure(HoldingBroker? broker) async {
+  static Future<void> _configure(HoldingBroker? broker) async {
     await ScgatewayFlutterPlugin.setConfigEnvironment(
       GatewayEnvironment.PRODUCTION,
       gatewayName,
@@ -21,7 +21,7 @@ class SmallcaseGateway {
     );
   }
 
-  static importHolding(
+  static Future<void> importHolding(
     HoldingBroker broker,
     Function(bool) inProgress,
     Function(bool) isSuccess,

@@ -45,10 +45,10 @@ class _LandingScreenState extends State<LandingScreen> {
                 onPressed: () {
                   context.goNamed(RouteNames.LOGIN_SCREEN);
                 },
-                child: Text("Get Started"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: SharePerksColors.accent,
                 ),
+                child: Text("Get Started"),
               ),
               Text.rich(
                 TextSpan(

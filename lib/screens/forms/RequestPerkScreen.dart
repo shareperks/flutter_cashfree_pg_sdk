@@ -98,8 +98,9 @@ class _RequestPerkScreenState extends State<RequestPerkScreen> {
         ),
       );
       if (!mounted) return;
-      if (context.canPop())
+      if (context.canPop()) {
         context.replaceNamed(RouteNames.EMAIL_SUCCESS_SCREEN);
+      }
     } on DioException catch (e) {
       final msg = e.response?.data is Map
           ? (e.response!.data as Map)['message']?.toString()

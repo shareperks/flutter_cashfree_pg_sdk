@@ -140,14 +140,14 @@ class VersionModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['success'] = this.success;
-    data['version'] = this.version;
-    data['latestVersion'] = this.latestVersion;
-    data['isUpdateAvailable'] = this.isUpdateAvailable;
-    data['isForceUpdate'] = this.isForceUpdate;
-    data['title'] = this.title;
-    data['message'] = this.message;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['success'] = success;
+    data['version'] = version;
+    data['latestVersion'] = latestVersion;
+    data['isUpdateAvailable'] = isUpdateAvailable;
+    data['isForceUpdate'] = isForceUpdate;
+    data['title'] = title;
+    data['message'] = message;
     return data;
   }
 }

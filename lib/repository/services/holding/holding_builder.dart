@@ -32,7 +32,7 @@ class HoldingSelectBuilder {
       for (final h in holdings)
         HoldingSelectItem(
           id: h.id,
-          label: '${_brokerFor(h.brokerCode).name}',
+          label: _brokerFor(h.brokerCode).name,
           leading: ClipRRect(
             borderRadius: BorderRadiusGeometry.circular(100),
             child: Image.asset(

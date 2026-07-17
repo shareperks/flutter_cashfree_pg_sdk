@@ -56,12 +56,14 @@ class CashbackDetailData {
     if (br is Map<String, dynamic>) brand = CashbackBrandRef.fromJson(br);
 
     final cat = json['category'];
-    if (cat is Map<String, dynamic>)
+    if (cat is Map<String, dynamic>) {
       category = CashbackCategoryRef.fromJson(cat);
+    }
 
     final el = json['eligibility'];
-    if (el is Map<String, dynamic>)
+    if (el is Map<String, dynamic>) {
       eligibility = CashbackEligibility.fromJson(el);
+    }
 
     final ct = json['content'];
     if (ct is Map<String, dynamic>) content = CashbackLegalContent.fromJson(ct);

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shareperks/constants/theme_data.dart';
 import 'package:soui/elements/ShimmerBuilder.dart';
 
 /// Skeleton for [GiftCardCodeViewScreen]: banner card, meta rows, voucher block, footer cards.

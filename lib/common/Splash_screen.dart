@@ -10,7 +10,6 @@ import 'package:shareperks/function/initCheck.dart';
 import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
-import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {

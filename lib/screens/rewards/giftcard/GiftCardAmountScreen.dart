@@ -91,7 +91,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     trackButtonClick('Proceed to Claim Credit', {
       'gift_card_name': data?.data?.basicInfo?.title ?? '',
       'is_eligible': widget.isEligible,
-      if (amount != null) 'selected_amount': amount!,
+      'selected_amount': ?amount,
     });
     _onProceedToPay();
   }
@@ -103,7 +103,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         'abandon_stage': 'amount_screen',
         'gift_card_name': data?.data?.basicInfo?.title ?? '',
         'is_eligible': widget.isEligible,
-        if (amount != null) 'selected_amount': amount!,
+        'selected_amount': ?amount,
       });
     }
     _paymentCheckGeneration++;

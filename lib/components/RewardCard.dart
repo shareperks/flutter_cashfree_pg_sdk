@@ -156,11 +156,7 @@ class RewardCard extends StatelessWidget {
                 onTap:
                     onTap ??
                     () {
-                      navigateRewardScreen(
-                        type,
-                        rewardId,
-                        source: 'home',
-                      );
+                      navigateRewardScreen(type, rewardId, source: 'home');
                     },
                 child: Container(
                   width: width - 16,
@@ -225,9 +221,9 @@ void navigateRewardScreen(
     'reward_id': rewardId,
     'perk_type': perkType,
     'source': source,
-    if (position != null) 'position': position,
-    if (brandId != null) 'brand_id': brandId,
-    if (redirectKind != null) 'redirect_kind': redirectKind,
+    'position': ?position,
+    'brand_id': ?brandId,
+    'redirect_kind': ?redirectKind,
   });
 
   if (type == "CREDIT") {

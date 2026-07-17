@@ -9,7 +9,6 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
-import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/theme.dart';
 

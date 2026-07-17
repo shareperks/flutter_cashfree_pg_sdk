@@ -35,8 +35,8 @@ Future<void> trackEligibility({
     'reward_id': rewardId,
     'perk_type': perkType,
     'is_eligible': isEligible,
-    if (reason != null) 'eligibility_reason': reason,
+    'eligibility_reason': ?reason,
     'source': source,
-    if (brandId != null) 'brand_id': brandId,
+    'brand_id': ?brandId,
   });
 }

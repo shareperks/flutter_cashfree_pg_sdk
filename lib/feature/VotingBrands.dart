@@ -25,7 +25,7 @@ class _VotingBrandsState extends State<VotingBrands> {
   bool _isSubmitting = false;
   int? selectedIndex;
 
-  loadData() async {
+  Future<void> loadData() async {
     try {
       _isError = false;
       data = await VotingService.fetchVotingListing();
@@ -135,7 +135,7 @@ class _VotingBrandsState extends State<VotingBrands> {
     );
   }
 
-  submitVot() async {
+  Future<void> submitVot() async {
     if (selectedIndex == null) {
       Fluttertoast.showToast(msg: "Please select a brand");
       return;
@@ -286,37 +286,37 @@ class _VotingBrandsState extends State<VotingBrands> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                spacing: 10,
-                children: [
-                  SizedBox(width: 8),
-                  ...List.generate(data?.item?.brands?.length ?? 0, (index) {
-                    VotingListingBrand? brand = data?.item?.brands?[index];
-                    final isSelected = index == selectedIndex;
-                    final isPreviouslyVoted =
-                        data?.item?.mySubmit?.id != null &&
-                        data?.item?.mySubmit?.id == brand?.id;
+                  spacing: 10,
+                  children: [
+                    SizedBox(width: 8),
+                    ...List.generate(data?.item?.brands?.length ?? 0, (index) {
+                      VotingListingBrand? brand = data?.item?.brands?[index];
+                      final isSelected = index == selectedIndex;
+                      final isPreviouslyVoted =
+                          data?.item?.mySubmit?.id != null &&
+                          data?.item?.mySubmit?.id == brand?.id;
 
-                    return VotBrandCard(
-                      image: imageUrl(brand?.image ?? ""),
-                      name: brand?.name ?? "--",
-                      ticker: brand?.ticker ?? "--",
-                      isSelected: isSelected,
-                      isPreviouslyVoted: isPreviouslyVoted,
-                      onTap: () {
-                        setState(() {
-                          if (isPreviouslyVoted) {
-                            selectedIndex = index;
-                            return;
-                          }
-                          selectedIndex = isSelected ? null : index;
-                        });
-                      },
-                    );
-                  }),
-                  SizedBox(width: 8),
-                ],
+                      return VotBrandCard(
+                        image: imageUrl(brand?.image ?? ""),
+                        name: brand?.name ?? "--",
+                        ticker: brand?.ticker ?? "--",
+                        isSelected: isSelected,
+                        isPreviouslyVoted: isPreviouslyVoted,
+                        onTap: () {
+                          setState(() {
+                            if (isPreviouslyVoted) {
+                              selectedIndex = index;
+                              return;
+                            }
+                            selectedIndex = isSelected ? null : index;
+                          });
+                        },
+                      );
+                    }),
+                    SizedBox(width: 8),
+                  ],
+                ),
               ),
-            ),
             ),
           ),
           Padding(

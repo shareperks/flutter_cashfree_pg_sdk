@@ -14,7 +14,7 @@ class NotificationListShimmer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList.builder(
         itemCount: itemCount,
-        itemBuilder: (_, __) => const Padding(
+        itemBuilder: (_, _) => const Padding(
           padding: EdgeInsets.only(bottom: 12),
           child: _NotificationShimmerCard(),
         ),

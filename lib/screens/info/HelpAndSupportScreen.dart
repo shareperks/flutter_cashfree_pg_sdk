@@ -124,7 +124,6 @@ class HelpAndSupportScreen extends StatelessWidget {
                         trailing: Container(
                           width: 40,
                           height: 40,
-                          child: Icon(HugeIconsSolid.mail02, size: 20),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(
@@ -133,6 +132,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          child: Icon(HugeIconsSolid.mail02, size: 20),
                         ),
                       ),
                       ListTile(
@@ -160,7 +160,6 @@ class HelpAndSupportScreen extends StatelessWidget {
                         trailing: Container(
                           width: 40,
                           height: 40,
-                          child: Icon(HugeIconsSolid.call02, size: 20),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(
@@ -169,6 +168,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          child: Icon(HugeIconsSolid.call02, size: 20),
                         ),
                       ),
                     ],

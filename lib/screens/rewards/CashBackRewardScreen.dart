@@ -14,7 +14,6 @@ import 'package:shareperks/integrations/analytics/track_eligibility.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
-import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:url_launcher/url_launcher.dart';
 

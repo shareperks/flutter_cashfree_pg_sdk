@@ -33,7 +33,7 @@ class _BrandViewScreenState extends State<BrandViewScreen> {
   bool _error = false;
   RewardsByBrandResponse? _data;
 
-  loadBrandInfo() async {
+  Future<void> loadBrandInfo() async {
     if (mounted) {
       setState(() {
         _loading = true;
