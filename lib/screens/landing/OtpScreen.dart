@@ -12,7 +12,6 @@ import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
-import 'package:shareperks/repository/network.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/auth/auth_model.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
@@ -109,7 +108,25 @@ class _OtpScreenState extends State<OtpScreen> {
         );
         return;
       }
-      await TokenManager.setToken(response.token!);
+      if (response.mfaRequired == true && response.mfaToken != null) {
+        if (!mounted) return;
+        context.pushNamed(
+          RouteNames.LOGIN_MFA_SCREEN,
+          extra: {'mfaToken': response.mfaToken},
+        );
+        return;
+      }
+      if (response.token == null) {
+        Fluttertoast.showToast(
+          msg: response.message.isNotEmpty
+              ? response.message
+              : 'Failed to verify OTP.',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
+      // Session token already saved by AuthService.verifyOtp.
       trackAction(AnalyticsEvent.otpVerified, {
         'label': 'Verify OTP',
         'detail': 'verified',
@@ -123,10 +140,12 @@ class _OtpScreenState extends State<OtpScreen> {
             if (user.user!.mobile != null) 'mobile': user.user!.mobile,
           });
         }
+        if (!mounted) return;
         context.read<UserProvider>().setUser(user.user!);
         context.goNamed(RouteNames.HOME_SCREEN);
         return;
       } else {
+        if (!mounted) return;
         context.pushNamed(RouteNames.SETUP_SCREEN);
         return;
       }

@@ -51,19 +51,137 @@ class VerifyOtpMobileResponse {
   final bool success;
   final String? token;
   final bool? isProfileComplete;
+  final bool? mfaRequired;
+  final String? mfaToken;
+
   VerifyOtpMobileResponse({
+    required this.message,
+    required this.success,
+    this.token,
+    this.isProfileComplete,
+    this.mfaRequired,
+    this.mfaToken,
+  });
+
+  factory VerifyOtpMobileResponse.fromJson(Map<String, dynamic> json) {
+    return VerifyOtpMobileResponse(
+      message: json['message'] as String? ?? '',
+      success: json['success'] as bool? ?? false,
+      token: json['token'] as String?,
+      isProfileComplete: json['isProfileComplete'] as bool?,
+      mfaRequired: json['mfaRequired'] as bool?,
+      mfaToken: json['mfaToken'] as String?,
+    );
+  }
+}
+
+// {{baseUrl}}/api/login/verify-mfa
+class VerifyMfaPayload {
+  final String mfaToken;
+  final String code;
+
+  VerifyMfaPayload({required this.mfaToken, required this.code});
+
+  Map<String, dynamic> toJson() => {'mfaToken': mfaToken, 'code': code};
+}
+
+class VerifyMfaResponse {
+  final String message;
+  final bool success;
+  final String? token;
+  final bool? isProfileComplete;
+
+  VerifyMfaResponse({
     required this.message,
     required this.success,
     this.token,
     this.isProfileComplete,
   });
 
-  factory VerifyOtpMobileResponse.fromJson(Map<String, dynamic> json) {
-    return VerifyOtpMobileResponse(
-      message: json['message'],
-      success: json['success'],
-      token: json['token'],
-      isProfileComplete: json['isProfileComplete'],
+  factory VerifyMfaResponse.fromJson(Map<String, dynamic> json) {
+    return VerifyMfaResponse(
+      message: json['message'] as String? ?? '',
+      success: json['success'] as bool? ?? false,
+      token: json['token'] as String?,
+      isProfileComplete: json['isProfileComplete'] as bool?,
+    );
+  }
+}
+
+// {{baseUrl}}/api/mfa/setup
+class MfaSetupResponse {
+  final bool success;
+  final String? message;
+  final String? qrCode;
+  final String? otpauthUrl;
+  final String? secret;
+  final bool? mfaEnabled;
+
+  MfaSetupResponse({
+    required this.success,
+    this.message,
+    this.qrCode,
+    this.otpauthUrl,
+    this.secret,
+    this.mfaEnabled,
+  });
+
+  factory MfaSetupResponse.fromJson(Map<String, dynamic> json) {
+    return MfaSetupResponse(
+      success: json['success'] as bool? ?? false,
+      message: json['message'] as String?,
+      qrCode: json['qrCode'] as String?,
+      otpauthUrl: json['otpauthUrl'] as String?,
+      secret: json['secret'] as String?,
+      mfaEnabled: json['mfaEnabled'] as bool?,
+    );
+  }
+}
+
+// {{baseUrl}}/api/mfa/enable
+class MfaEnableResponse {
+  final bool success;
+  final String message;
+  final bool? mfaEnabled;
+  final List<String> backupCodes;
+
+  MfaEnableResponse({
+    required this.success,
+    required this.message,
+    this.mfaEnabled,
+    this.backupCodes = const [],
+  });
+
+  factory MfaEnableResponse.fromJson(Map<String, dynamic> json) {
+    final rawCodes = json['backupCodes'];
+    return MfaEnableResponse(
+      success: json['success'] as bool? ?? false,
+      message: json['message'] as String? ?? '',
+      mfaEnabled: json['mfaEnabled'] as bool?,
+      backupCodes: rawCodes is List
+          ? rawCodes.map((e) => e.toString()).toList()
+          : const [],
+    );
+  }
+}
+
+// {{baseUrl}}/api/mfa/disable
+class MfaDisableResponse {
+  final bool success;
+  final String message;
+  final bool? mfaEnabled;
+
+  MfaDisableResponse({
+    required this.success,
+    required this.message,
+    this.mfaEnabled,
+  });
+
+  factory MfaDisableResponse.fromJson(Map<String, dynamic> json) {
+    return MfaDisableResponse(
+      success: json['success'] as bool? ?? false,
+      message: json['message'] as String? ?? '',
+      mfaEnabled: json['mfaEnabled'] as bool?,
     );
   }
 }

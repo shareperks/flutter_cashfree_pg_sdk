@@ -5,6 +5,7 @@ class UserSettings {
     this.notifications,
     this.perksUpdates,
     this.walletUpdates,
+    this.mfaEnabled,
     this.createAt,
     this.updateAt,
   });
@@ -13,6 +14,7 @@ class UserSettings {
   final bool? notifications;
   final bool? perksUpdates;
   final bool? walletUpdates;
+  final bool? mfaEnabled;
 
   /// Present on PUT responses.
   final String? createAt;
@@ -26,6 +28,7 @@ class UserSettings {
       notifications: json['notifications'] as bool?,
       perksUpdates: json['perksUpdates'] as bool?,
       walletUpdates: json['walletUpdates'] as bool?,
+      mfaEnabled: json['mfaEnabled'] as bool?,
       createAt: json['createAt'] as String?,
       updateAt: json['updateAt'] as String?,
     );
@@ -36,6 +39,7 @@ class UserSettings {
         if (notifications != null) 'notifications': notifications,
         if (perksUpdates != null) 'perksUpdates': perksUpdates,
         if (walletUpdates != null) 'walletUpdates': walletUpdates,
+        if (mfaEnabled != null) 'mfaEnabled': mfaEnabled,
         if (createAt != null) 'createAt': createAt,
         if (updateAt != null) 'updateAt': updateAt,
       };

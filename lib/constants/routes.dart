@@ -23,6 +23,7 @@ import 'package:shareperks/screens/info/HowShowPerkScreen.dart';
 import 'package:shareperks/screens/info/InfoSlideScreen.dart';
 import 'package:shareperks/screens/info/LinkDematInfoScreen.dart';
 import 'package:shareperks/screens/landing/LandingScreen.dart';
+import 'package:shareperks/screens/landing/LoginMfaScreen.dart';
 import 'package:shareperks/screens/landing/LoginScreen.dart';
 import 'package:shareperks/screens/landing/OtpScreen.dart';
 import 'package:shareperks/screens/landing/ProfileSuccessScreen.dart';
@@ -32,6 +33,8 @@ import 'package:shareperks/screens/main/CategotyScreen.dart';
 import 'package:shareperks/screens/main/CompanyViewScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
 import 'package:shareperks/screens/main/MenuListScreen.dart';
+import 'package:shareperks/screens/main/MfaBackupCodesScreen.dart';
+import 'package:shareperks/screens/main/MfaSetupScreen.dart';
 import 'package:shareperks/screens/main/NotifIcationsScreen.dart';
 import 'package:shareperks/screens/main/SettingScreen.dart';
 import 'package:shareperks/screens/main/TopBrandsScreen.dart';
@@ -64,7 +67,10 @@ class RouteNames {
   static const String NEW_UPDATE = 'NewUpdateScreen';
   static const String LOGIN_SCREEN = 'LoginScreen';
   static const String OTP_SCREEN = 'OtpScreen';
+  static const String LOGIN_MFA_SCREEN = 'LoginMfaScreen';
   static const String SETUP_SCREEN = 'SetupScreen';
+  static const String MFA_SETUP_SCREEN = 'MfaSetupScreen';
+  static const String MFA_BACKUP_CODES_SCREEN = 'MfaBackupCodesScreen';
   static const String PROFILE_SUCCESS_SCREEN = 'ProfileSuccessScreen';
   static const String HOW_SHOW_PERK_SCREEN = 'HowShowPerkScreen';
   static const String LINK_DEMAT_INFO_SCREEN = 'LinkDematInfoScreen';
@@ -141,9 +147,35 @@ final List<GoRoute> routes = [
     },
   ),
   GoRoute(
+    name: RouteNames.LOGIN_MFA_SCREEN,
+    path: RouteNames.path(RouteNames.LOGIN_MFA_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra as Map<String, dynamic>;
+      return LoginMfaScreen(mfaToken: extra['mfaToken'] as String);
+    },
+  ),
+  GoRoute(
     name: RouteNames.SETUP_SCREEN,
     path: RouteNames.path(RouteNames.SETUP_SCREEN),
     builder: (BuildContext context, GoRouterState state) => SetupScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.MFA_SETUP_SCREEN,
+    path: RouteNames.path(RouteNames.MFA_SETUP_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        const MfaSetupScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.MFA_BACKUP_CODES_SCREEN,
+    path: RouteNames.path(RouteNames.MFA_BACKUP_CODES_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra as Map<String, dynamic>;
+      final raw = extra['backupCodes'];
+      final codes = raw is List
+          ? raw.map((e) => e.toString()).toList()
+          : <String>[];
+      return MfaBackupCodesScreen(backupCodes: codes);
+    },
   ),
   GoRoute(
     name: RouteNames.PROFILE_SUCCESS_SCREEN,

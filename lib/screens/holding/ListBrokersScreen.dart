@@ -60,57 +60,59 @@ class _ListBrokerScreenState extends State<ListBrokerScreen> {
                     trackAction(AnalyticsEvent.brokerSelected, {
                       'broker_id': broker.brokerKey,
                     });
-                    if (broker.supportsSmallcase) {
-                      await SmallcaseGateway.importHolding(
-                        broker,
-                        (status) {
-                          if (status) {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  backgroundColor: Colors.transparent,
-                                  elevation: 0,
-                                  content: Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      spacing: 10,
-                                      children: [
-                                        SizedBox(height: 20),
-                                        SouiIcon.logo(
-                                          color: AppColors.white,
-                                          size: 75,
-                                        ),
-                                        SizedBox(
-                                          width: 15,
-                                          height: 15,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          } else {
-                            context.pop();
-                          }
-                        },
-                        (complete) {
-                          Timer(Duration(seconds: 1), () {
-                            context.pushNamed(
-                              RouteNames.MY_HOLDING_VIEW_SCREEN,
-                            );
-                          });
-                        },
-                      );
+                    if (!broker.supportsSmallcase) {
+                      context.pushNamed(RouteNames.UPLOAD_HOLDING_SCREEN);
+                      return;
                     }
+                    await SmallcaseGateway.importHolding(
+                      broker,
+                      (status) {
+                        if (status) {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                content: Center(
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    spacing: 10,
+                                    children: [
+                                      SizedBox(height: 20),
+                                      SouiIcon.logo(
+                                        color: AppColors.white,
+                                        size: 75,
+                                      ),
+                                      SizedBox(
+                                        width: 15,
+                                        height: 15,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        } else {
+                          context.pop();
+                        }
+                      },
+                      (complete) {
+                        Timer(Duration(seconds: 1), () {
+                          context.pushNamed(
+                            RouteNames.MY_HOLDING_VIEW_SCREEN,
+                          );
+                        });
+                      },
+                    );
                   },
                   child: Container(
                     decoration: BoxDecoration(

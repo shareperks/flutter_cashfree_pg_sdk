@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
+import 'package:shareperks/components/EligibleRewardCard.dart';
 import 'package:shareperks/components/PerkBasicInfo.dart';
 import 'package:shareperks/components/loader/GiftCardRewardShimmer.dart';
 import 'package:shareperks/constants/assets.dart';
@@ -501,14 +502,11 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                 child: Column(
                   children: [
                     if (widget.isEligible)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18.0,
-                        ).copyWith(top: 18),
-                        child: Image.asset(
-                          Assets.ASSETS_CARDS_LOYELSHAREHOLDER_PNG,
-                          width: MediaQuery.of(context).size.width,
-                        ),
+                      EligibleRewardCard(
+                        rewardRatePercent:
+                            data?.data?.eligibility?.withHolderRewardRate,
+                        rewardType: data?.data?.eligibility?.rewardType ??
+                            data?.data?.basicInfo?.type,
                       ),
                     Padding(
                       padding: const EdgeInsets.all(14),
@@ -533,6 +531,15 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                               perkIdValue: data?.data?.basicInfo?.perkId ?? '',
                               detailsBody: null,
                             ),
+                          ),
+                          RewardRatesSection(
+                            shareholderRate:
+                                data?.data?.eligibility?.withHolderRewardRate,
+                            nonShareholderRate:
+                                data?.data?.eligibility?.nonHolderRewardRate,
+                            isEligible: widget.isEligible,
+                            rewardType: data?.data?.eligibility?.rewardType ??
+                                data?.data?.basicInfo?.type,
                           ),
                           BorderCard(
                             padding: EdgeInsets.all(18),

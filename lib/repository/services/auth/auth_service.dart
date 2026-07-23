@@ -62,8 +62,15 @@ class AuthService {
         data: payload.toJson(),
       );
       final verifyOtpResponse = VerifyOtpMobileResponse.fromJson(response.data);
-      if (verifyOtpResponse.token == null ||
-          verifyOtpResponse.success != true) {
+      if (verifyOtpResponse.success != true) {
+        throw Exception(verifyOtpResponse.message);
+      }
+      // MFA branch: hold mfaToken in memory; do not treat as session.
+      if (verifyOtpResponse.mfaRequired == true &&
+          verifyOtpResponse.mfaToken != null) {
+        return verifyOtpResponse;
+      }
+      if (verifyOtpResponse.token == null) {
         throw Exception(verifyOtpResponse.message);
       }
       await TokenManager.setToken(verifyOtpResponse.token!);
@@ -72,6 +79,34 @@ class AuthService {
       if (e is DioException) {
         if (e.response?.statusCode == 400) {
           return VerifyOtpMobileResponse.fromJson(e.response?.data);
+        }
+      }
+      rethrow;
+    }
+  }
+
+  // api/login/verify-mfa
+  static Future<VerifyMfaResponse> verifyMfa(VerifyMfaPayload payload) async {
+    try {
+      final response = await _dio.post(
+        '/api/login/verify-mfa',
+        data: payload.toJson(),
+      );
+      final verifyMfaResponse = VerifyMfaResponse.fromJson(response.data);
+      if (verifyMfaResponse.success != true ||
+          verifyMfaResponse.token == null) {
+        throw Exception(verifyMfaResponse.message);
+      }
+      await TokenManager.setToken(verifyMfaResponse.token!);
+      return verifyMfaResponse;
+    } catch (e) {
+      if (e is DioException) {
+        if (e.response?.statusCode == 400) {
+          return VerifyMfaResponse.fromJson(
+            e.response?.data is Map<String, dynamic>
+                ? e.response!.data as Map<String, dynamic>
+                : {'success': false, 'message': e.message ?? 'Request failed'},
+          );
         }
       }
       rethrow;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
@@ -10,6 +11,7 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/integrations/onesignal_push.dart';
 import 'package:shareperks/repository/models/user_settings_model.dart';
 import 'package:shareperks/repository/services/actions/Settings.service.dart';
+import 'package:shareperks/repository/services/auth/mfa_service.dart';
 import 'package:soui/elements/SpScafold.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifications = false;
   bool _perksUpdates = false;
   bool _walletUpdates = false;
+  bool _mfaEnabled = false;
 
   Future<void> _fetchSettings() async {
     setState(() {
@@ -63,9 +66,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _notifications = s.notifications ?? false;
     _perksUpdates = s.perksUpdates ?? false;
     _walletUpdates = s.walletUpdates ?? false;
+    _mfaEnabled = s.mfaEnabled ?? false;
     // Reconcile push SDK with server preference.
     if (!_notifications && OneSignalPush.isOptedIn) {
       OneSignalPush.setOptedIn(false);
+    }
+  }
+
+  Future<void> _openMfaSetup() async {
+    await context.pushNamed(RouteNames.MFA_SETUP_SCREEN);
+    if (!mounted) return;
+    await _fetchSettings();
+  }
+
+  Future<void> _showDisableMfaDialog() async {
+    final disabled = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const _DisableMfaDialog(),
+    );
+
+    if (disabled == true && mounted) {
+      Fluttertoast.showToast(
+        msg: '2FA disabled',
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+      await _fetchSettings();
     }
   }
 
@@ -269,6 +296,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SizedBox(height: 25),
                   Text(
+                    'Security',
+                    style: TextStyle(
+                      color: const Color(0xFF6400E0),
+                      fontSize: 18,
+                      fontFamily: SharePerksFonts.albertSans,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          width: 1,
+                          color: SharePerksColors.borderLight,
+                        ),
+                      ),
+                    ),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.all(0),
+                      title: Text(
+                        'Two-factor authentication',
+                        style: TextStyle(
+                          color: const Color(0xFF333333),
+                          fontSize: 14,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _mfaEnabled
+                            ? 'On — Google Authenticator'
+                            : 'Off — protect your account with an authenticator app',
+                        style: TextStyle(
+                          color: SharePerksColors.textSecondaryLight,
+                          fontSize: 12,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      trailing: TextButton(
+                        onPressed: _mfaEnabled
+                            ? _showDisableMfaDialog
+                            : _openMfaSetup,
+                        child: Text(_mfaEnabled ? 'Disable' : 'Enable'),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 25),
+                  Text(
                     'App Permissions',
                     style: TextStyle(
                       color: const Color(0xFF6400E0),
@@ -339,3 +416,111 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+
+class _DisableMfaDialog extends StatefulWidget {
+  const _DisableMfaDialog();
+
+  @override
+  State<_DisableMfaDialog> createState() => _DisableMfaDialogState();
+}
+
+class _DisableMfaDialogState extends State<_DisableMfaDialog> {
+  final TextEditingController _codeController = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final code = _codeController.text.trim();
+    if (code.length < 6) {
+      Fluttertoast.showToast(
+        msg: 'Enter a valid code.',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      final res = await MfaService.disable(code);
+      if (!mounted) return;
+      if (!res.success) {
+        Fluttertoast.showToast(
+          msg: res.message.isNotEmpty ? res.message : 'Invalid code',
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        _codeController.clear();
+        setState(() => _submitting = false);
+        return;
+      }
+      Navigator.pop(context, true);
+    } catch (_) {
+      Fluttertoast.showToast(
+        msg: 'Could not disable 2FA. Try again.',
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        'Disable 2FA',
+        style: TextStyle(
+          fontFamily: SharePerksFonts.albertSans,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Enter your authenticator code or a backup code to disable 2FA.',
+            style: TextStyle(
+              fontSize: 13,
+              fontFamily: SharePerksFonts.inter,
+              color: SharePerksColors.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _codeController,
+            autofocus: true,
+            maxLength: 16,
+            onSubmitted: (_) => _submitting ? null : _submit(),
+            decoration: const InputDecoration(
+              counterText: '',
+              hintText: 'Code',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _submitting ? null : _submit,
+          child: _submitting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Disable'),
+        ),
+      ],
+    );
+  }
+}
+

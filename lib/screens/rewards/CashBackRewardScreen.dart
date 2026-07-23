@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shareperks/components/BackButton.dart';
+import 'package:shareperks/components/EligibleRewardCard.dart';
 import 'package:shareperks/components/EligibilityCards.dart';
 import 'package:shareperks/components/PerkBasicInfo.dart';
 import 'package:shareperks/components/ReletedPerksCard.dart';
@@ -159,14 +160,11 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                 child: Column(
                   children: [
                     if (data?.data?.eligibility?.isEligible ?? false)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18.0,
-                        ).copyWith(top: 18),
-                        child: Image.asset(
-                          Assets.ASSETS_CARDS_LOYELSHAREHOLDER_PNG,
-                          width: MediaQuery.of(context).size.width,
-                        ),
+                      EligibleRewardCard(
+                        rewardRatePercent:
+                            data?.data?.eligibility?.withHolderRewardRate,
+                        rewardType: data?.data?.eligibility?.rewardType ??
+                            data?.data?.basicInfo?.type,
                       ),
 
                     Padding(
@@ -201,6 +199,16 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                                 renewEveryDays: 0,
                               ),
                             ),
+                          ),
+                          RewardRatesSection(
+                            shareholderRate:
+                                data?.data?.eligibility?.withHolderRewardRate,
+                            nonShareholderRate:
+                                data?.data?.eligibility?.nonHolderRewardRate,
+                            isEligible:
+                                data?.data?.eligibility?.isEligible ?? false,
+                            rewardType: data?.data?.eligibility?.rewardType ??
+                                data?.data?.basicInfo?.type,
                           ),
                           Center(
                             child: ElevatedButton(

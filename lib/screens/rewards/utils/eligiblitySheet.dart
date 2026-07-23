@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shareperks/components/EligibleRewardCard.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
@@ -7,7 +8,14 @@ import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
 
 /// Bottom sheet after verifying perk eligibility.
-void eligibilitySheet(BuildContext context, bool isEligible, String rewardId) {
+void eligibilitySheet(
+  BuildContext context, {
+  required bool isEligible,
+  required String rewardId,
+  num? shareholderRate,
+  num? nonShareholderRate,
+  String? rewardType,
+}) {
   final restoreScreen = trackBottomSheet('eligibility_result_sheet', {
     'is_eligible': isEligible,
   });
@@ -21,53 +29,63 @@ void eligibilitySheet(BuildContext context, bool isEligible, String rewardId) {
     ),
     builder: (sheetContext) {
       final bottom = MediaQuery.viewInsetsOf(sheetContext).bottom;
+      final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.85;
       final imageAsset = isEligible
           ? Assets.ASSETS_CARDS_ELIGIBLEREWARD_PNG
           : Assets.ASSETS_CARDS_NOTELIGIBLEREWARD_PNG;
 
-      return Padding(
-        padding: EdgeInsets.fromLTRB(18, 0, 18, 16 + bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Image.asset(
-              imageAsset,
-              width: double.infinity,
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  Navigator.pop(sheetContext);
-                  context.pushNamed(
-                    RouteNames.GIFTCARD_AMOUNT_SCREEN,
-                    extra: {
-                      "rewardId": rewardId,
-                      "isEligible": isEligible.toString(),
-                    },
-                  );
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: isEligible
-                      ? SharePerksColors.accent
-                      : SharePerksColors.primary,
-                ),
-                child: Text(
-                  isEligible ? 'Proceed' : 'Claim Non-Shareholder Perk',
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(18, 0, 18, 16 + bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Image.asset(
+                imageAsset,
+                width: double.infinity,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 20),
+              RewardRatesSection(
+                shareholderRate: shareholderRate,
+                nonShareholderRate: nonShareholderRate,
+                isEligible: isEligible,
+                rewardType: rewardType,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    context.pushNamed(
+                      RouteNames.GIFTCARD_AMOUNT_SCREEN,
+                      extra: {
+                        "rewardId": rewardId,
+                        "isEligible": isEligible.toString(),
+                      },
+                    );
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isEligible
+                        ? SharePerksColors.accent
+                        : SharePerksColors.primary,
+                  ),
+                  child: Text(
+                    isEligible ? 'Proceed' : 'Claim Non-Shareholder Perk',
+                  ),
                 ),
               ),
-            ),
-            Center(
-              child: TextButton(
-                onPressed: () => Navigator.pop(sheetContext),
-                child: const Text('Close'),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: const Text('Close'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     },
