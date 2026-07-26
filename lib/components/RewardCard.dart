@@ -50,7 +50,7 @@ class RewardCard extends StatelessWidget {
     final borderColor = isEligible
         ? SharePerksColors.accent.withValues(alpha: 0.3)
         : isBrokerageEligible
-        ? SharePerksColors.primary.withValues(alpha: 0.35)
+        ? SharePerksColors.success.withValues(alpha: 0.35)
         : SharePerksColors.borderLight;
     final ctaFilled = isEligible || isBrokerageEligible;
 
@@ -91,26 +91,10 @@ class RewardCard extends StatelessWidget {
                   )
                 else if (isBrokerageEligible)
                   Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: SharePerksColors.primary,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        'Member',
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: SharePerksColors.backgroundLight,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 10,
-                            ),
-                      ),
+                    top: 0,
+                    left: 0,
+                    child: SvgPicture.asset(
+                      Assets.ASSETS_ICONS_MEMBERREWARD_SVG,
                     ),
                   ),
                 if (isNew)
@@ -195,14 +179,14 @@ class RewardCard extends StatelessWidget {
                     color: isEligible
                         ? SharePerksColors.accent
                         : isBrokerageEligible
-                        ? SharePerksColors.primary
+                        ? SharePerksColors.success
                         : SharePerksColors.borderLight.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isEligible
                           ? SharePerksColors.accent
                           : isBrokerageEligible
-                          ? SharePerksColors.primary
+                          ? SharePerksColors.success
                           : SharePerksColors.borderLight,
                     ),
                   ),

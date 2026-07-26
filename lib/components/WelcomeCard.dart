@@ -67,84 +67,81 @@ class RewardCountCard extends StatelessWidget {
                 ],
               ),
               if (memberUnlocked > 0)
-                _UnlockedCountChip(
-                  label: 'Shareholder',
-                  count: memberUnlocked,
-                  color: SharePerksColors.primary,
+                GestureDetector(
+                  onTap: () {
+                    context.pushNamed(
+                      RouteNames.UNLOCKED_PERKS_SCREEN,
+                      extra: {'tier': 'shareholder'},
+                    );
+                  },
+                  child: _UnlockedCountChip(
+                    label: 'Shareholder',
+                    count: memberUnlocked,
+                    color: SharePerksColors.accent,
+                  ),
                 ),
-              Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '$newRewards new reward',
-                      style: TextStyle(
-                        color: const Color(0xFF6400E0),
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                        height: 1.33,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' ',
-                      style: TextStyle(
-                        color: const Color(0xFF333333),
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                        height: 1.33,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'unlocked this week',
-                      style: TextStyle(
-                        color: const Color(0xFF898989),
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                        height: 1.33,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
           Positioned(
             right: -12,
             top: -12,
-            child: Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: () {
-                    if (activePerks == "0") {
-                      context.pushNamed(RouteNames.REQUEST_PERK_SCREEN);
-                      return;
-                    }
-                    context.pushNamed(RouteNames.UNLOCKED_PERKS_SCREEN);
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    spacing: 4,
-                    children: [
-                      Text(
-                        activePerks == "0" ? 'Request a perk' : 'View all',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.brand,
-                        ),
-                      ),
-                      Icon(
-                        HugeIconsSolid.arrowRight02,
-                        size: 15,
-                        color: AppColors.brand,
-                      ),
-                    ],
-                  ),
-                );
+            child: TextButton(
+              onPressed: () {
+                if (activePerks == "0") {
+                  context.pushNamed(RouteNames.REQUEST_PERK_SCREEN);
+                  return;
+                }
+                context.pushNamed(RouteNames.UNLOCKED_PERKS_SCREEN);
               },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 4,
+                children: [
+                  Text(
+                    activePerks == "0" ? 'Request a perk' : 'View all',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.brand,
+                    ),
+                  ),
+                  Icon(
+                    HugeIconsSolid.arrowRight02,
+                    size: 15,
+                    color: AppColors.brand,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: () {
+                context.pushNamed(RouteNames.REWARD_TIERS_INFO_SCREEN);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 24,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: SharePerksColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '?',
+                  style: TextStyle(
+                    color: SharePerksColors.primary,
+                    fontSize: 13,
+                    fontFamily: SharePerksFonts.inter,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -167,18 +164,18 @@ class _UnlockedCountChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         '$count $label Perks',
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: 14,
           fontFamily: SharePerksFonts.inter,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

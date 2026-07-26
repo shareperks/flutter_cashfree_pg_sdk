@@ -36,8 +36,7 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
       data?.data?.eligibility?.isBrokerageEligible ?? false;
   bool get _reqReimport =>
       data?.data?.eligibility?.isBrokerConnected?.reqReimport == true;
-  bool get _listedOnExchange =>
-      data?.data?.company?.listedOnExchange ?? true;
+  bool get _listedOnExchange => data?.data?.company?.listedOnExchange ?? true;
 
   RewardEligibilityTier get _tier => resolveRewardTier(
     isEligible: _isEligible,
@@ -214,11 +213,11 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                                   'is_brokerage_eligible': _isBrokerageEligible,
                                 });
                                 if (!(data
-                                        ?.data
-                                        ?.eligibility
-                                        ?.isBrokerConnected
-                                        ?.connected ??
-                                    false) ||
+                                            ?.data
+                                            ?.eligibility
+                                            ?.isBrokerConnected
+                                            ?.connected ??
+                                        false) ||
                                     _reqReimport) {
                                   noDematAccountConnectSheet(context);
                                   return;
@@ -261,18 +260,16 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                                       data?.data?.basicInfo?.type,
                                 );
                               },
-                              child: Text(
-                                switch (_tier) {
-                                  RewardEligibilityTier.fullyEligible =>
-                                    _listedOnExchange
-                                        ? 'Claim Shareholder Perk'
-                                        : 'Claim Member Perk',
-                                  RewardEligibilityTier.brokerageEligible =>
-                                    'Claim Member Perk',
-                                  RewardEligibilityTier.nonHolder =>
-                                    'Verify Eligibility',
-                                },
-                              ),
+                              child: Text(switch (_tier) {
+                                RewardEligibilityTier.fullyEligible =>
+                                  _listedOnExchange
+                                      ? 'Claim Shareholder Perk'
+                                      : 'Claim Brokerage Perk',
+                                RewardEligibilityTier.brokerageEligible =>
+                                  'Claim Brokerage Perk',
+                                RewardEligibilityTier.nonHolder =>
+                                  'Verify Eligibility',
+                              }),
                             ),
                           ),
                           if (_tier != RewardEligibilityTier.fullyEligible)
@@ -308,9 +305,7 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                               onViewAll: () {
                                 context.pushNamed(
                                   RouteNames.REWARD_TERM_VIEW_SCREEN,
-                                  extra: {
-                                    "contentId": data?.data?.content?.id,
-                                  },
+                                  extra: {"contentId": data?.data?.content?.id},
                                 );
                               },
                               termsAndConditions:

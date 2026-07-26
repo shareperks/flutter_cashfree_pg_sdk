@@ -30,6 +30,7 @@ import 'package:shareperks/repository/providers/user.provider.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
 import 'package:shareperks/repository/services/notification/notification.service.dart';
 import 'package:shareperks/repository/services/holding/holding.service.dart';
+import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/border_card.dart';
@@ -356,10 +357,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: 10),
                           if (data?.data?.unlockedRewards?.isBrokeConnected ==
                               false)
-                            Image.asset(
-                              Assets.ASSETS_CARDS_LINK_LIGHT_PNG,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
+                            GestureDetector(
+                              onTap: () {
+                                context.pushNamed(
+                                  RouteNames.LIST_BROKER_VIEW_SCREEN,
+                                );
+                              },
+                              child: Image.asset(
+                                Assets.ASSETS_CARDS_LINK_LIGHT_PNG,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
                             ),
 
                           if (data?.data?.unlockedRewards?.remainderReimport ??
@@ -534,6 +542,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
+                          SizedBox(height: 5),
                           SizedBox(
                             width: MediaQuery.of(context).size.width,
 
@@ -577,7 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 30),
                     Column(
                       children: [
                         Padding(
@@ -611,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 10),
+                        SizedBox(height: 14),
                         SizedBox(
                           width: MediaQuery.of(context).size.width,
                           child: SingleChildScrollView(
@@ -648,7 +657,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 30),
+                    SizedBox(height: 20),
                     if ((data?.data?.unlockedRewards?.rewards?.length ?? 0) !=
                         0)
                       BorderCard(
@@ -755,7 +764,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     SizedBox(height: 16),
 
-                    Image.asset(Assets.ASSETS_CARDS_DATA_SAFETY_PNG),
+                    GestureDetector(
+                      onTap: () {
+                        context.pushNamed(RouteNames.DATA_SECURITY_INFO_SCREEN);
+                      },
+                      child: Image.asset(Assets.ASSETS_CARDS_DATA_SAFETY_PNG),
+                    ),
                     SizedBox(height: 20),
                     Column(
                       children: [
@@ -844,6 +858,95 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               SizedBox(width: 6),
                             ],
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                        BorderCard(
+                          width: MediaQuery.of(context).size.width,
+                          borderWidth: 1,
+                          borderRadius: 16,
+                          color: SharePerksColors.primary.withValues(
+                            alpha: 0.2,
+                          ),
+                          isGradientBackground: true,
+                          backgroundColor: SharePerksColors.primary.withValues(
+                            alpha: 0.4,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Image.asset(
+                                      Assets.ASSETS_ICONS_HAND_PNG,
+                                      width: 64,
+                                      height: 64,
+                                    ),
+                                    SizedBox(width: 16),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: 'Refer & ',
+                                                style: TextStyle(
+                                                  color: AppColors.brand,
+                                                  fontSize: 20,
+                                                  fontFamily: 'Albert Sans',
+                                                  fontWeight: FontWeight.w600,
+                                                  height: 1.21,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: 'Earn',
+                                                style: TextStyle(
+                                                  color: const Color(
+                                                    0xFFFF4AA7,
+                                                  ),
+                                                  fontSize: 20,
+                                                  fontFamily: 'Albert Sans',
+                                                  fontWeight: FontWeight.w600,
+                                                  height: 1.21,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        SizedBox(
+                                          width:
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.width -
+                                              110,
+                                          child: Text(
+                                            "Every time you invite your friends, you and your friend get ₹100 cash back from Shareparks. ",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontFamily: SharePerksFonts.inter,
+                                              fontWeight: FontWeight.w400,
+                                              color: SharePerksColors
+                                                  .textSecondaryLight,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 16),
+                                CopyReferCode(),
+                                SizedBox(height: 16),
+                              ],
+                            ),
                           ),
                         ),
                         SizedBox(height: 30),

@@ -46,8 +46,23 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
 
   Future<void> _load() async {
     try {
-      final tab = WalletTransitionsTab.fromHistoryTabIndex(_tabIndex);
-      final rows = await WalletDataService.getTransitions(tab: tab);
+      final List<WalletTransaction> rows;
+      switch (_tabIndex) {
+        case 1:
+          // Full payout / withdrawal history.
+          rows = await WalletDataService.getPayoutTransitions();
+          break;
+        case 2:
+          // Full earnings / cashback history.
+          rows = await WalletDataService.getCashbackTransitions();
+          break;
+        default:
+          // All wallet movements.
+          rows = await WalletDataService.getTransitions(
+            tab: WalletTransitionsTab.all,
+          );
+          break;
+      }
       if (!mounted) return;
       setState(() {
         _transactions = rows;

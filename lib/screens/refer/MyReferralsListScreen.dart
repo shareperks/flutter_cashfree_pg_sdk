@@ -172,21 +172,63 @@ class _NoReferralsView extends StatelessWidget {
   }
 }
 
-bool _referralLooksPending(ReferralListEntry e) {
-  if ((e.pendingStep ?? 0) > 0) return true;
-  final s = (e.status ?? '').toLowerCase();
-  return s.contains('pending');
+/// Status text that means the referral reward is finished (claimed / paid).
+bool _statusLooksCompleted(String? status) {
+  final s = (status ?? '').toLowerCase().trim();
+  if (s.isEmpty) return false;
+  return RegExp(
+    r'(settled|completed|complete|done|paid|claimed|success|credited|payout|transferred)',
+  ).hasMatch(s);
 }
 
+/// Fully finished referral: paid/claimed status wins even if `pendingStep` is stale.
 bool _referralLooksSettled(ReferralListEntry e) {
-  if ((e.pendingStep ?? 0) > 0) return false;
-  final s = (e.status ?? '').toLowerCase().trim();
-  if (s.isEmpty) return false;
-  if (s.contains('pending')) return false;
-  if (RegExp(r'\b(settled|completed|complete|done)\b').hasMatch(s)) {
-    return true;
+  if (_statusLooksCompleted(e.status)) return true;
+  // `pendingStep == 0` means the journey is done (reward claimed / paid).
+  if (e.pendingStep != null && e.pendingStep! <= 0) return true;
+  return false;
+}
+
+/// Remaining onboarding steps, excluding anything already settled/paid.
+bool _referralLooksPending(ReferralListEntry e) {
+  if (_referralLooksSettled(e)) return false;
+  if ((e.pendingStep ?? 0) > 0) return true;
+  final s = (e.status ?? '').toLowerCase();
+  return s.contains('pending') || s.contains('in progress');
+}
+
+int _referralDateMillis(ReferralListEntry e) {
+  for (final raw in [e.date?.trim(), e.dateFormatted?.trim()]) {
+    if (raw == null || raw.isEmpty) continue;
+    final iso = DateTime.tryParse(raw);
+    if (iso != null) return iso.millisecondsSinceEpoch;
+    // Fallback for display formats like `26/07/2026` or `26-07-2026`.
+    final m =
+        RegExp(r'^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$').firstMatch(raw);
+    if (m != null) {
+      final d = int.tryParse(m.group(1)!);
+      final mo = int.tryParse(m.group(2)!);
+      final y = int.tryParse(m.group(3)!);
+      if (d != null && mo != null && y != null) {
+        return DateTime(y, mo, d).millisecondsSinceEpoch;
+      }
+    }
   }
-  return s.contains('demat linked');
+  return 0;
+}
+
+/// Newest first, then name (respects A–Z / Z–A toggle).
+int _compareReferralByDateThenName(
+  ReferralListEntry a,
+  ReferralListEntry b,
+  String sortBy,
+) {
+  final byDate = _referralDateMillis(b).compareTo(_referralDateMillis(a));
+  if (byDate != 0) return byDate;
+  final an = (a.name ?? '').toLowerCase();
+  final bn = (b.name ?? '').toLowerCase();
+  final c = an.compareTo(bn);
+  return sortBy == 'a-z' ? c : -c;
 }
 
 class _ReferralsListContent extends StatefulWidget {
@@ -201,7 +243,7 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
   final TextEditingController _searchController = TextEditingController();
   String _sortBy = 'a-z';
 
-  /// Matches [TopPerksScreen] tabs; maps to referral filters: 0 all, 1 pending, 2 settled.
+  /// Tabs: 0 all, 1 pending, 2 completed.
   int _tabIndex = 0;
 
   @override
@@ -231,13 +273,35 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
         final status = (e.status ?? '').toLowerCase();
         if (name.contains(qLower)) return true;
         if (_tabIndex == 0) {
-          if (qLower == 'settled') return _referralLooksSettled(e);
+          if (qLower == 'settled' || qLower == 'completed') {
+            return _referralLooksSettled(e);
+          }
           if (qLower == 'pending') return _referralLooksPending(e);
         }
         return status.contains(qLower);
       }).toList();
     }
     list.sort((a, b) {
+      // Completed: newest paid/claimed first.
+      if (_tabIndex == 2) {
+        return _compareReferralByDateThenName(a, b, _sortBy);
+      }
+      // Pending: fewest steps remaining first, then name.
+      if (_tabIndex == 1) {
+        final byStep = (a.pendingStep ?? 0).compareTo(b.pendingStep ?? 0);
+        if (byStep != 0) return byStep;
+        final an = (a.name ?? '').toLowerCase();
+        final bn = (b.name ?? '').toLowerCase();
+        final c = an.compareTo(bn);
+        return _sortBy == 'a-z' ? c : -c;
+      }
+      // All: completed (newest) above pending, then name within each group.
+      final aDone = _referralLooksSettled(a);
+      final bDone = _referralLooksSettled(b);
+      if (aDone != bDone) return aDone ? -1 : 1;
+      if (aDone) return _compareReferralByDateThenName(a, b, _sortBy);
+      final byStep = (a.pendingStep ?? 0).compareTo(b.pendingStep ?? 0);
+      if (byStep != 0) return byStep;
       final an = (a.name ?? '').toLowerCase();
       final bn = (b.name ?? '').toLowerCase();
       final c = an.compareTo(bn);
@@ -253,7 +317,7 @@ class _ReferralsListContentState extends State<_ReferralsListContent> {
       case 1:
         return 'No pending referrals';
       case 2:
-        return 'No settled referrals yet';
+        return 'No completed referrals yet';
       default:
         return 'No matching referrals';
     }
@@ -389,7 +453,7 @@ class ReferUser extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: ShapeDecoration(
-                color: _colors[data.pendingStep ?? 0],
+                color: _colors[((data.pendingStep ?? 0).clamp(0, _colors.length - 1))],
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -397,7 +461,7 @@ class ReferUser extends StatelessWidget {
               child: Text(
                 data.status ?? "",
                 style: TextStyle(
-                  color: data.pendingStep == 2
+                  color: (data.pendingStep ?? 0) >= 2
                       ? const Color(0xFF333333)
                       : Colors.white,
                   fontSize: 10,
@@ -408,7 +472,7 @@ class ReferUser extends StatelessWidget {
             ),
 
             Text(
-              data.pendingStep != 0
+              (data.pendingStep ?? 0) > 0
                   ? 'Only ${data.pendingStep} steps left!'
                   : "",
               style: TextStyle(

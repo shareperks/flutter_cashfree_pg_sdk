@@ -17,11 +17,13 @@ import 'package:shareperks/screens/forms/UpdateProfileScreen.dart';
 import 'package:shareperks/screens/holding/ListBrokersScreen.dart';
 import 'package:shareperks/screens/holding/MyHoldingScreen.dart';
 import 'package:shareperks/screens/holding/UploadHoldingStatementScreen.dart';
+import 'package:shareperks/screens/info/DataSecurityInfoScreen.dart';
 import 'package:shareperks/screens/info/FaqsScreen.dart';
 import 'package:shareperks/screens/info/HelpAndSupportScreen.dart';
 import 'package:shareperks/screens/info/HowShowPerkScreen.dart';
 import 'package:shareperks/screens/info/InfoSlideScreen.dart';
 import 'package:shareperks/screens/info/LinkDematInfoScreen.dart';
+import 'package:shareperks/screens/info/RewardTiersInfoScreen.dart';
 import 'package:shareperks/screens/landing/LandingScreen.dart';
 import 'package:shareperks/screens/landing/LoginMfaScreen.dart';
 import 'package:shareperks/screens/landing/LoginScreen.dart';
@@ -74,6 +76,8 @@ class RouteNames {
   static const String MFA_BACKUP_CODES_SCREEN = 'MfaBackupCodesScreen';
   static const String PROFILE_SUCCESS_SCREEN = 'ProfileSuccessScreen';
   static const String HOW_SHOW_PERK_SCREEN = 'HowShowPerkScreen';
+  static const String REWARD_TIERS_INFO_SCREEN = 'RewardTiersInfoScreen';
+  static const String DATA_SECURITY_INFO_SCREEN = 'DataSecurityInfoScreen';
   static const String LINK_DEMAT_INFO_SCREEN = 'LinkDematInfoScreen';
   static const String INFO_SLIDE_SCREEN = 'InfoSlideScreen';
   static const String HOME_SCREEN = 'HomeScreen';
@@ -191,6 +195,18 @@ final List<GoRoute> routes = [
     builder: (BuildContext context, GoRouterState state) => HowShowPerkScreen(),
   ),
   GoRoute(
+    name: RouteNames.REWARD_TIERS_INFO_SCREEN,
+    path: RouteNames.path(RouteNames.REWARD_TIERS_INFO_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        const RewardTiersInfoScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.DATA_SECURITY_INFO_SCREEN,
+    path: RouteNames.path(RouteNames.DATA_SECURITY_INFO_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        const DataSecurityInfoScreen(),
+  ),
+  GoRoute(
     name: RouteNames.HELP_AND_SUPPORT_SCREEN,
     path: RouteNames.path(RouteNames.HELP_AND_SUPPORT_SCREEN),
     builder: (BuildContext context, GoRouterState state) =>
@@ -220,8 +236,18 @@ final List<GoRoute> routes = [
   GoRoute(
     name: RouteNames.UNLOCKED_PERKS_SCREEN,
     path: RouteNames.path(RouteNames.UNLOCKED_PERKS_SCREEN),
-    builder: (BuildContext context, GoRouterState state) =>
-        UnlockedPerksScreen(),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final tierName = extra is Map<String, dynamic>
+          ? extra['tier'] as String?
+          : null;
+      final initialTier = switch (tierName) {
+        'shareholder' => UnlockedTierFilter.shareholder,
+        'member' => UnlockedTierFilter.member,
+        _ => UnlockedTierFilter.all,
+      };
+      return UnlockedPerksScreen(initialTier: initialTier);
+    },
   ),
   GoRoute(
     name: RouteNames.NOTIFICATION_SCREEN,

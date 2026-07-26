@@ -168,9 +168,9 @@ class _WalletScreenState extends State<WalletScreen> {
                           height: 1.38,
                         ),
                       ),
-                      child: Container(
-                        child: Column(
-                          children: List.generate(
+                      child: Column(
+                        children: [
+                          ...List.generate(
                             data?.transactions.length ?? 0,
                             (index) {
                               WalletTransaction trx = data!.transactions[index];
@@ -184,7 +184,20 @@ class _WalletScreenState extends State<WalletScreen> {
                               );
                             },
                           ),
-                        ),
+                          if ((data?.transactions.length ?? 0) == 0)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                'No transactions yet',
+                                style: TextStyle(
+                                  color: SharePerksColors.textSecondaryLight,
+                                  fontSize: 13,
+                                  fontFamily: SharePerksFonts.inter,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),

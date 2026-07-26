@@ -47,9 +47,9 @@ class _MenuListScreenState extends State<MenuListScreen> {
   }
 
   Future<void> _openReferrals() async {
-    await context.pushNamed(RouteNames.MY_REFER_LIST_SCREEN);
+    await context.pushNamed(RouteNames.REFER_CODE_SCREEN);
     if (!mounted) return;
-    unawaited(_loadReferralCount());
+    // unawaited(_loadReferralCount());
   }
 
   Future<void> _onLogout(BuildContext context) async {
@@ -144,7 +144,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
                       color: Colors.black,
                     ),
                     title: Text(
-                      'My Referrals',
+                      'Refer & Earn',
                       style: TextStyle(
                         color: const Color(0xFF333333),
                         fontSize: 12,

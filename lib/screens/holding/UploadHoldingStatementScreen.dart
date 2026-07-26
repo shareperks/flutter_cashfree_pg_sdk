@@ -217,6 +217,7 @@ class _UploadHoldingStatementScreenState
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

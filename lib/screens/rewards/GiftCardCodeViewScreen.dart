@@ -421,48 +421,44 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
                       if ((data?.data?.info?.howToRedeem ?? '')
                           .trim()
                           .isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            context.pushNamed(
-                              RouteNames.HOW_TO_CLAIM_SCREEN,
-                              extra: {
-                                'html': data!.data!.info!.howToRedeem!,
-                                'title': 'How to claim',
-                              },
-                            );
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 14,
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              context.pushNamed(
+                                RouteNames.HOW_TO_CLAIM_SCREEN,
+                                extra: {
+                                  'html': data!.data!.info!.howToRedeem!,
+                                  'title': 'How to redeem',
+                                },
+                              );
+                            },
+                            icon: Icon(
+                              HugeIconsSolid.note01,
+                              size: 18,
+                              color: SharePerksColors.primary,
                             ),
-                            decoration: BoxDecoration(
-                              color: SharePerksColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: SharePerksColors.borderLight,
+                            label: Text(
+                              'How to redeem',
+                              style: TextStyle(
+                                color: SharePerksColors.primary,
+                                fontSize: 14,
+                                fontFamily: SharePerksFonts.inter,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'How to claim',
-                                    style: TextStyle(
-                                      color: SharePerksColors.primary,
-                                      fontSize: 14,
-                                      fontFamily: SharePerksFonts.inter,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: SharePerksColors.primary.withValues(
+                                  alpha: 0.35,
                                 ),
-                                Icon(
-                                  HugeIconsSolid.arrowRight02,
-                                  size: 16,
-                                  color: SharePerksColors.primary,
-                                ),
-                              ],
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: SharePerksColors.primary
+                                  .withValues(alpha: 0.06),
                             ),
                           ),
                         ),

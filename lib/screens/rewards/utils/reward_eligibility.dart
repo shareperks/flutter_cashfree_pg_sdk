@@ -55,7 +55,7 @@ extension RewardRateLabelX on RewardRateLabel {
       case RewardRateLabel.shareholder:
         return 'Shareholder Reward';
       case RewardRateLabel.member:
-        return 'Member Reward';
+        return 'Brokerage Reward';
       case RewardRateLabel.standard:
         return 'Standard Reward';
     }
@@ -66,15 +66,14 @@ extension RewardRateLabelX on RewardRateLabel {
       case RewardRateLabel.shareholder:
         return 'Maximum $perkLabel rate applies';
       case RewardRateLabel.member:
-        return 'Any-holding $perkLabel rate applies';
+        return 'Brokerage $perkLabel rate applies';
       case RewardRateLabel.standard:
         return 'Standard $perkLabel rate applies';
     }
   }
 }
 
-num? _positiveOrNull(num? rate) =>
-    rate != null && rate > 0 ? rate : null;
+num? _positiveOrNull(num? rate) => rate != null && rate > 0 ? rate : null;
 
 /// Picks the active reward rate for [tier].
 ///

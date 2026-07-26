@@ -92,6 +92,9 @@ class Assets {
   static const String ASSETS_CARDS_DATA_SAFETY_PNG =
       'assets/cards/Data safety.png';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/HomeRefer.svg)
+  static const String ASSETS_CARDS_HOMEREFER_SVG = 'assets/cards/HomeRefer.svg';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/Link%20Dark.png)
   static const String ASSETS_CARDS_LINK_DARK_PNG = 'assets/cards/Link Dark.png';
 
@@ -110,6 +113,10 @@ class Assets {
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/ReferBannerCard.png)
   static const String ASSETS_CARDS_REFERBANNERCARD_PNG =
       'assets/cards/ReferBannerCard.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/ReferEarn2.png)
+  static const String ASSETS_CARDS_REFEREARN2_PNG =
+      'assets/cards/ReferEarn2.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/cards/ReferSteps.png)
   static const String ASSETS_CARDS_REFERSTEPS_PNG =
@@ -152,6 +159,10 @@ class Assets {
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/Expired.svg)
   static const String ASSETS_ICONS_EXPIRED_SVG = 'assets/icons/Expired.svg';
 
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/MemberReward.svg)
+  static const String ASSETS_ICONS_MEMBERREWARD_SVG =
+      'assets/icons/MemberReward.svg';
+
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/NewAdditions.svg)
   static const String ASSETS_ICONS_NEWADDITIONS_SVG =
       'assets/icons/NewAdditions.svg';
@@ -176,6 +187,9 @@ class Assets {
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/giftcard.png)
   static const String ASSETS_ICONS_GIFTCARD_PNG = 'assets/icons/giftcard.png';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/hand.png)
+  static const String ASSETS_ICONS_HAND_PNG = 'assets/icons/hand.png';
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/icons/payout.png)
   static const String ASSETS_ICONS_PAYOUT_PNG = 'assets/icons/payout.png';
@@ -221,4 +235,7 @@ class Assets {
 
   /// ![preview](file:///Users/sourav/Documents/SharePerks/application/assets/splash/text.svg)
   static const String ASSETS_SPLASH_TEXT_SVG = 'assets/splash/text.svg';
+
+  /// ![preview](file:///Users/sourav/Documents/SharePerks/application/shorebird.yaml)
+  static const String SHOREBIRD_YAML = 'shorebird.yaml';
 }

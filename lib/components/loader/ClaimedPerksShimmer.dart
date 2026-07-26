@@ -28,13 +28,13 @@ class ClaimedPerksShimmer extends StatelessWidget {
         ShimmerBuilder(width: w, height: 52, radius: 12),
         const SizedBox(height: 12),
         ShimmerBuilder(width: w, height: 40, radius: 10),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         Wrap(
           spacing: 14,
           runSpacing: 14,
           children: List.generate(
             perkCardCount,
-            (_) => ShimmerBuilder(width: perkW, height: 210, radius: 12),
+            (_) => ShimmerBuilder(width: perkW, height: 196, radius: 16),
           ),
         ),
       ],

@@ -78,18 +78,18 @@ abstract final class RewardRateUi {
             'holding criteria. It applies to you.';
       case RewardRateLabel.member:
         return listedOnExchange
-            ? 'Member Reward applies when you have any holdings connected. '
-                'Hold the required shares to unlock the Shareholder Reward '
-                '(maximum).'
-            : 'Member Reward applies when you have connected holdings. '
-                'It applies to you for this perk.';
+            ? 'Brokerage Reward applies when you have any holdings connected. '
+                  'Hold the required shares to unlock the Shareholder Reward '
+                  '(maximum).'
+            : 'Brokerage Reward applies when you have connected holdings. '
+                  'It applies to you for this perk.';
       case RewardRateLabel.standard:
         return listedOnExchange
             ? 'Standard Reward applies when you have no holdings for this perk. '
-                'Connect your broker to unlock Member Reward (any holding) or '
-                'Shareholder Reward (maximum).'
+                  'Connect your broker to unlock Brokerage Reward (any holding) or '
+                  'Shareholder Reward (maximum).'
             : 'Standard Reward applies when you have no holdings connected. '
-                'Connect your broker to unlock the Member Reward.';
+                  'Connect your broker to unlock the Brokerage Reward.';
     }
   }
 }
@@ -181,7 +181,7 @@ class _RewardTierBanner extends StatelessWidget {
     switch (label) {
       case RewardRateLabel.shareholder:
         accent = SharePerksColors.accent;
-        icon = HugeIconsSolid.checkmarkCircle02;
+        icon = HugeIconsSolid.starCircle;
         break;
       case RewardRateLabel.member:
         accent = listedOnExchange
@@ -191,7 +191,7 @@ class _RewardTierBanner extends StatelessWidget {
         break;
       case RewardRateLabel.standard:
         accent = SharePerksColors.primary;
-        icon = HugeIconsSolid.checkmarkCircle02;
+        icon = HugeIconsSolid.giftCard;
         break;
     }
 
@@ -215,6 +215,7 @@ class _RewardTierBanner extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.18),
                 shape: BoxShape.circle,

@@ -47,10 +47,9 @@ void eligibilitySheet(
           : Assets.ASSETS_CARDS_ELIGIBLEREWARD_PNG;
 
       final proceedLabel = switch (tier) {
-        RewardEligibilityTier.fullyEligible => listedOnExchange
-            ? 'Claim Shareholder Perk'
-            : 'Claim Member Perk',
-        RewardEligibilityTier.brokerageEligible => 'Claim Member Perk',
+        RewardEligibilityTier.fullyEligible =>
+          listedOnExchange ? 'Claim Shareholder Perk' : 'Claim Brokerage Perk',
+        RewardEligibilityTier.brokerageEligible => 'Claim Brokerage Perk',
         RewardEligibilityTier.nonHolder => 'Claim Standard Reward',
       };
 

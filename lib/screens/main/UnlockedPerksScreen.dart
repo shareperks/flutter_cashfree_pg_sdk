@@ -16,10 +16,15 @@ import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/tab_buttons.dart';
 
-enum _UnlockedTierFilter { all, shareholder, member }
+enum UnlockedTierFilter { all, shareholder, member }
 
 class UnlockedPerksScreen extends StatefulWidget {
-  const UnlockedPerksScreen({super.key});
+  const UnlockedPerksScreen({
+    super.key,
+    this.initialTier = UnlockedTierFilter.all,
+  });
+
+  final UnlockedTierFilter initialTier;
 
   @override
   State<UnlockedPerksScreen> createState() => _UnlockedPerksScreenState();
@@ -29,7 +34,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
   bool _loading = true;
   bool _isError = true;
   int _index = 0;
-  _UnlockedTierFilter _tierFilter = _UnlockedTierFilter.all;
+  late UnlockedTierFilter _tierFilter;
 
   UnlockedPerksResponse? perks;
 
@@ -42,15 +47,13 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
   List<RewardItem> get _filteredItems {
     final items = rewardItems[_index];
     switch (_tierFilter) {
-      case _UnlockedTierFilter.all:
+      case UnlockedTierFilter.all:
         return items;
-      case _UnlockedTierFilter.shareholder:
+      case UnlockedTierFilter.shareholder:
         return items.where((r) => r.isEligible == true).toList();
-      case _UnlockedTierFilter.member:
+      case UnlockedTierFilter.member:
         return items
-            .where(
-              (r) => r.isEligible != true && r.isBrokerageEligible == true,
-            )
+            .where((r) => r.isEligible != true && r.isBrokerageEligible == true)
             .toList();
     }
   }
@@ -91,6 +94,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
   @override
   void initState() {
     super.initState();
+    _tierFilter = widget.initialTier;
     loadData();
   }
 
@@ -239,11 +243,11 @@ class _UnlockedTierTabs extends StatelessWidget {
     required this.onChanged,
   });
 
-  final _UnlockedTierFilter selected;
+  final UnlockedTierFilter selected;
   final int allCount;
   final int shareholderCount;
   final int memberCount;
-  final ValueChanged<_UnlockedTierFilter> onChanged;
+  final ValueChanged<UnlockedTierFilter> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -260,27 +264,27 @@ class _UnlockedTierTabs extends StatelessWidget {
             child: _UnlockedTierTab(
               label: 'All',
               count: allCount,
-              selected: selected == _UnlockedTierFilter.all,
+              selected: selected == UnlockedTierFilter.all,
               accent: SharePerksColors.textPrimaryLight,
-              onTap: () => onChanged(_UnlockedTierFilter.all),
+              onTap: () => onChanged(UnlockedTierFilter.all),
             ),
           ),
           Expanded(
             child: _UnlockedTierTab(
               label: 'Shareholder',
               count: shareholderCount,
-              selected: selected == _UnlockedTierFilter.shareholder,
+              selected: selected == UnlockedTierFilter.shareholder,
               accent: SharePerksColors.accent,
-              onTap: () => onChanged(_UnlockedTierFilter.shareholder),
+              onTap: () => onChanged(UnlockedTierFilter.shareholder),
             ),
           ),
           Expanded(
             child: _UnlockedTierTab(
-              label: 'Member',
+              label: 'Brokerage',
               count: memberCount,
-              selected: selected == _UnlockedTierFilter.member,
+              selected: selected == UnlockedTierFilter.member,
               accent: SharePerksColors.primary,
-              onTap: () => onChanged(_UnlockedTierFilter.member),
+              onTap: () => onChanged(UnlockedTierFilter.member),
             ),
           ),
         ],
@@ -316,7 +320,9 @@ class _UnlockedTierTab extends StatelessWidget {
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? SharePerksColors.backgroundLight : Colors.transparent,
+          color: selected
+              ? SharePerksColors.backgroundLight
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: selected
               ? [
@@ -362,5 +368,3 @@ class _UnlockedTierTab extends StatelessWidget {
     );
   }
 }
-
-

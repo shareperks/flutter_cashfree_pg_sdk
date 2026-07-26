@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
@@ -44,10 +46,7 @@ class _ReferAndEarnCodeScreenState extends State<ReferAndEarnCodeScreen> {
           spacing: 20,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18.0,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18.0),
               child: Image.asset(
                 Assets.ASSETS_CARDS_REFERANDEARNSTEPS_PNG,
                 width: MediaQuery.of(context).size.width,
@@ -104,61 +103,35 @@ class ReferCodeCard extends StatelessWidget {
         children: [
           SizedBox(height: 16),
 
-          Consumer<UserProvider>(
-            builder: (context, state, child) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                spacing: 10,
-                children: [
-                  Container(
-                    width: 230,
-                    height: 48.26,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 62,
-                      vertical: 7,
-                    ),
-                    decoration: ShapeDecoration(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      shadows: [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 7.80,
-                          offset: Offset(0, 4.80),
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      '${state.user?.referCode}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: const Color(0xFF6400E0),
-                        fontSize: 26.71,
-                        fontFamily: SharePerksFonts.albertSans,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      trackAction(AnalyticsEvent.referCodeCopied, {
-                        'referral_code': state.user?.referCode ?? '',
-                      });
-                    },
-                    icon: Icon(
-                      HugeIconsStroke.copy01,
-                      color: SharePerksColors.primary,
-                    ),
-                  ),
-                ],
-              );
-            },
+          CopyReferCode(),
+
+          Container(
+            width: MediaQuery.of(context).size.width - 80,
+            padding: EdgeInsets.all(18),
+
+            child: ElevatedButton(
+              onPressed: () {
+                context.pushNamed(RouteNames.MY_REFER_LIST_SCREEN);
+              },
+              child: Text(
+                'View My Referrals',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SharePerksColors.accent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
-          SizedBox(height: 16),
+
           Text(
             'Let your friends know you’ve leveled up:',
             style: TextStyle(
@@ -168,7 +141,7 @@ class ReferCodeCard extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
-          SizedBox(height: 16),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -216,6 +189,65 @@ class ReferCodeCard extends StatelessWidget {
           ClickToHelp(),
         ],
       ),
+    );
+  }
+}
+
+class CopyReferCode extends StatelessWidget {
+  const CopyReferCode({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserProvider>(
+      builder: (context, state, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 10,
+          children: [
+            Container(
+              width: 230,
+              height: 48.26,
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 7),
+              decoration: ShapeDecoration(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                shadows: [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 7.80,
+                    offset: Offset(0, 4.80),
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              child: Text(
+                '${state.user?.referCode}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: const Color(0xFF6400E0),
+                  fontSize: 26.71,
+                  fontFamily: SharePerksFonts.albertSans,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                trackAction(AnalyticsEvent.referCodeCopied, {
+                  'referral_code': state.user?.referCode ?? '',
+                });
+              },
+              icon: Icon(
+                HugeIconsStroke.copy01,
+                color: SharePerksColors.primary,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
