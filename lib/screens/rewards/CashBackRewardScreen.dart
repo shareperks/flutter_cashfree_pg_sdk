@@ -15,6 +15,7 @@ import 'package:shareperks/integrations/analytics/track_eligibility.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -31,6 +32,20 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
   bool _opening = false;
   CashbackDetailResponse? data;
   String? _errorMessage;
+
+  bool get _isEligible => data?.data?.eligibility?.isEligible ?? false;
+  bool get _isBrokerageEligible =>
+      data?.data?.eligibility?.isBrokerageEligible ?? false;
+  bool get _reqReimport =>
+      data?.data?.eligibility?.isBrokerConnected?.reqReimport == true;
+  bool get _listedOnExchange =>
+      data?.data?.company?.listedOnExchange ?? true;
+
+  RewardEligibilityTier get _tier => resolveRewardTier(
+    isEligible: _isEligible,
+    isBrokerageEligible: _isBrokerageEligible,
+    reqReimport: _reqReimport,
+  );
 
   Future<void> loadData() async {
     try {
@@ -57,19 +72,29 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
   Future<void> _openTrackingLink() async {
     if (_opening) return;
 
-    final isEligible = data?.data?.eligibility?.isEligible ?? false;
-    await trackButtonClick(
-      isEligible ? 'Shop Now & Earn Cashback' : 'Verify Eligibility',
-      {
-        'reward_name': data?.data?.basicInfo?.title ?? '',
-        'is_eligible': isEligible,
-      },
-    );
+    final label = switch (_tier) {
+      RewardEligibilityTier.fullyEligible => 'Shop Now & Earn Cashback',
+      RewardEligibilityTier.brokerageEligible =>
+        'Shop Now at Brokerage Rate',
+      RewardEligibilityTier.nonHolder => 'Verify Eligibility',
+    };
+    await trackButtonClick(label, {
+      'reward_name': data?.data?.basicInfo?.title ?? '',
+      'is_eligible': _isEligible,
+      'is_brokerage_eligible': _isBrokerageEligible,
+    });
     await trackEligibility(
       perkType: 'cashback',
       rewardId: widget.rewardId,
-      isEligible: isEligible,
-      reason: isEligible ? 'ok' : 'not_eligible',
+      isEligible: _isEligible,
+      isBrokerageEligible: _isBrokerageEligible,
+      reason: switch (_tier) {
+        RewardEligibilityTier.fullyEligible => 'ok',
+        RewardEligibilityTier.brokerageEligible => 'brokerage_eligible',
+        RewardEligibilityTier.nonHolder => _reqReimport
+            ? 'req_reimport'
+            : 'not_eligible',
+      },
       source: 'reward_detail',
       brandId: data?.data?.company?.id,
     );
@@ -118,6 +143,23 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
     return 'Could not open the merchant page. Please try again.';
   }
 
+  Widget _tierBanner() {
+    final rewardType =
+        data?.data?.eligibility?.rewardType ?? data?.data?.basicInfo?.type;
+    return RewardEligibilityBanner(
+      isEligible: _isEligible,
+      isBrokerageEligible: _isBrokerageEligible,
+      listedOnExchange: _listedOnExchange,
+      reqReimport: _reqReimport,
+      withHolderRewardRate: data?.data?.eligibility?.withHolderRewardRate,
+      withAnyHoldingRewardRate:
+          data?.data?.eligibility?.withAnyHoldingRewardRate,
+      nonHolderRewardRate: data?.data?.eligibility?.nonHolderRewardRate,
+      rewardType: rewardType,
+      showStandardBanner: true,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -159,14 +201,7 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    if (data?.data?.eligibility?.isEligible ?? false)
-                      EligibleRewardCard(
-                        rewardRatePercent:
-                            data?.data?.eligibility?.withHolderRewardRate,
-                        rewardType: data?.data?.eligibility?.rewardType ??
-                            data?.data?.basicInfo?.type,
-                      ),
-
+                    _tierBanner(),
                     Padding(
                       padding: const EdgeInsets.all(14),
                       child: Column(
@@ -203,11 +238,18 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                           RewardRatesSection(
                             shareholderRate:
                                 data?.data?.eligibility?.withHolderRewardRate,
+                            brokerageRate: data
+                                ?.data
+                                ?.eligibility
+                                ?.withAnyHoldingRewardRate,
                             nonShareholderRate:
                                 data?.data?.eligibility?.nonHolderRewardRate,
-                            isEligible:
-                                data?.data?.eligibility?.isEligible ?? false,
-                            rewardType: data?.data?.eligibility?.rewardType ??
+                            isEligible: _isEligible,
+                            isBrokerageEligible: _isBrokerageEligible,
+                            listedOnExchange: _listedOnExchange,
+                            reqReimport: _reqReimport,
+                            rewardType:
+                                data?.data?.eligibility?.rewardType ??
                                 data?.data?.basicInfo?.type,
                           ),
                           Center(
@@ -223,14 +265,19 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                                       ),
                                     )
                                   : Text(
-                                      (data?.data?.eligibility?.isEligible ??
-                                              false)
-                                          ? "Shop Now & Earn Cashback"
-                                          : "Verify Eligibility",
+                                      switch (_tier) {
+                                        RewardEligibilityTier.fullyEligible =>
+                                          'Shop Now & Earn Cashback',
+                                        RewardEligibilityTier
+                                            .brokerageEligible =>
+                                          'Shop Now at Brokerage Rate',
+                                        RewardEligibilityTier.nonHolder =>
+                                          'Verify Eligibility',
+                                      },
                                     ),
                             ),
                           ),
-                          if (!(data?.data?.eligibility?.isEligible ?? false))
+                          if (_tier != RewardEligibilityTier.fullyEligible)
                             Center(
                               child: TextButton(
                                 onPressed: _opening ? null : _openTrackingLink,
@@ -243,7 +290,9 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                               onViewAll: () {
                                 context.pushNamed(
                                   RouteNames.REWARD_TERM_VIEW_SCREEN,
-                                  extra: {"contentId": data?.data?.content?.id},
+                                  extra: {
+                                    "contentId": data?.data?.content?.id,
+                                  },
                                 );
                               },
                               termsAndConditions:

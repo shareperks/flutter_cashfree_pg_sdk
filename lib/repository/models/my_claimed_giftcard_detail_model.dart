@@ -137,6 +137,7 @@ class MyClaimedGiftcardDetailInfo {
     this.banner,
     this.provider,
     this.categoryName,
+    this.howToRedeem,
   });
 
   final String? rewardId;
@@ -148,6 +149,9 @@ class MyClaimedGiftcardDetailInfo {
   final String? provider;
   final String? categoryName;
 
+  /// Redeem steps from `Credit.howToRedeem` (plain text or HTML).
+  final String? howToRedeem;
+
   factory MyClaimedGiftcardDetailInfo.fromJson(Map<String, dynamic> json) {
     return MyClaimedGiftcardDetailInfo(
       rewardId: json['rewardId'] as String?,
@@ -158,6 +162,7 @@ class MyClaimedGiftcardDetailInfo {
       banner: json['banner'] as String?,
       provider: json['provider'] as String?,
       categoryName: json['categoryName'] as String?,
+      howToRedeem: json['howToRedeem'] as String?,
     );
   }
 
@@ -170,5 +175,6 @@ class MyClaimedGiftcardDetailInfo {
         'banner': banner,
         'provider': provider,
         'categoryName': categoryName,
+        'howToRedeem': howToRedeem,
       };
 }

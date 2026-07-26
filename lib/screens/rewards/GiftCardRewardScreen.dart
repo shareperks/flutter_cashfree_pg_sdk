@@ -15,6 +15,7 @@ import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 import 'package:soui/elements/SpScafold.dart';
 
 class GiftCardRewardScreen extends StatefulWidget {
@@ -30,6 +31,20 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
   GiftcardDetailResponse? data;
   String? _errorMessage;
 
+  bool get _isEligible => data?.data?.eligibility?.isEligible ?? false;
+  bool get _isBrokerageEligible =>
+      data?.data?.eligibility?.isBrokerageEligible ?? false;
+  bool get _reqReimport =>
+      data?.data?.eligibility?.isBrokerConnected?.reqReimport == true;
+  bool get _listedOnExchange =>
+      data?.data?.company?.listedOnExchange ?? true;
+
+  RewardEligibilityTier get _tier => resolveRewardTier(
+    isEligible: _isEligible,
+    isBrokerageEligible: _isBrokerageEligible,
+    reqReimport: _reqReimport,
+  );
+
   Future<void> loadData() async {
     try {
       _errorMessage = null;
@@ -42,7 +57,8 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
         'reward_id': widget.rewardId,
         'gift_card_name': data?.data?.basicInfo?.title ?? '',
         'brand_name': data?.data?.company?.name ?? '',
-        'is_eligible': data?.data?.eligibility?.isEligible ?? false,
+        'is_eligible': _isEligible,
+        'is_brokerage_eligible': _isBrokerageEligible,
         'source': 'reward_detail',
       });
       await _trackEligibilityFromData();
@@ -71,23 +87,44 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
     final eligibility = data?.data?.eligibility;
     if (eligibility == null) return;
     final isEligible = eligibility.isEligible ?? false;
+    final isBrokerageEligible = eligibility.isBrokerageEligible ?? false;
     String? reason;
-    if (!isEligible) {
-      if (eligibility.isBrokerConnected?.connected != true) {
-        reason = 'no_holdings';
-      } else {
-        reason = 'not_eligible';
-      }
-    } else {
+    if (_reqReimport) {
+      reason = 'req_reimport';
+    } else if (isEligible) {
       reason = 'ok';
+    } else if (isBrokerageEligible) {
+      reason = 'brokerage_eligible';
+    } else if (eligibility.isBrokerConnected?.connected != true) {
+      reason = 'no_holdings';
+    } else {
+      reason = 'not_eligible';
     }
     await trackEligibility(
       perkType: 'giftcard',
       rewardId: widget.rewardId,
       isEligible: isEligible,
+      isBrokerageEligible: isBrokerageEligible,
       reason: reason,
       source: 'reward_detail',
       brandId: data?.data?.company?.id,
+    );
+  }
+
+  Widget _tierBanner() {
+    final rewardType =
+        data?.data?.eligibility?.rewardType ?? data?.data?.basicInfo?.type;
+    return RewardEligibilityBanner(
+      isEligible: _isEligible,
+      isBrokerageEligible: _isBrokerageEligible,
+      listedOnExchange: _listedOnExchange,
+      reqReimport: _reqReimport,
+      withHolderRewardRate: data?.data?.eligibility?.withHolderRewardRate,
+      withAnyHoldingRewardRate:
+          data?.data?.eligibility?.withAnyHoldingRewardRate,
+      nonHolderRewardRate: data?.data?.eligibility?.nonHolderRewardRate,
+      rewardType: rewardType,
+      showStandardBanner: true,
     );
   }
 
@@ -116,14 +153,7 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    if (data?.data?.eligibility?.isEligible ?? false)
-                      EligibleRewardCard(
-                        rewardRatePercent:
-                            data?.data?.eligibility?.withHolderRewardRate,
-                        rewardType: data?.data?.eligibility?.rewardType ??
-                            data?.data?.basicInfo?.type,
-                      ),
-
+                    _tierBanner(),
                     Padding(
                       padding: const EdgeInsets.all(14),
                       child: Column(
@@ -160,11 +190,18 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                           RewardRatesSection(
                             shareholderRate:
                                 data?.data?.eligibility?.withHolderRewardRate,
+                            brokerageRate: data
+                                ?.data
+                                ?.eligibility
+                                ?.withAnyHoldingRewardRate,
                             nonShareholderRate:
                                 data?.data?.eligibility?.nonHolderRewardRate,
-                            isEligible:
-                                data?.data?.eligibility?.isEligible ?? false,
-                            rewardType: data?.data?.eligibility?.rewardType ??
+                            isEligible: _isEligible,
+                            isBrokerageEligible: _isBrokerageEligible,
+                            listedOnExchange: _listedOnExchange,
+                            reqReimport: _reqReimport,
+                            rewardType:
+                                data?.data?.eligibility?.rewardType ??
                                 data?.data?.basicInfo?.type,
                           ),
                           Center(
@@ -173,67 +210,107 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                                 trackButtonClick('Verify Eligibility', {
                                   'gift_card_name':
                                       data?.data?.basicInfo?.title ?? '',
-                                  'is_eligible':
-                                      data?.data?.eligibility?.isEligible ??
-                                      false,
+                                  'is_eligible': _isEligible,
+                                  'is_brokerage_eligible': _isBrokerageEligible,
                                 });
                                 if (!(data
                                         ?.data
                                         ?.eligibility
                                         ?.isBrokerConnected
                                         ?.connected ??
-                                    false)) {
+                                    false) ||
+                                    _reqReimport) {
                                   noDematAccountConnectSheet(context);
+                                  return;
+                                }
+                                // Brokerage / fully eligible: go claim with API tiers.
+                                if (_tier != RewardEligibilityTier.nonHolder) {
+                                  context.pushNamed(
+                                    RouteNames.GIFTCARD_AMOUNT_SCREEN,
+                                    extra: {
+                                      "rewardId": widget.rewardId,
+                                      "isEligible": _isEligible.toString(),
+                                      "isBrokerageEligible":
+                                          _isBrokerageEligible.toString(),
+                                      "forceNonHolder": "false",
+                                    },
+                                  );
                                   return;
                                 }
                                 eligibilitySheet(
                                   context,
-                                  isEligible:
-                                      data?.data?.eligibility?.isEligible ??
-                                      false,
+                                  isEligible: _isEligible,
+                                  isBrokerageEligible: _isBrokerageEligible,
                                   rewardId: widget.rewardId,
                                   shareholderRate: data
                                       ?.data
                                       ?.eligibility
                                       ?.withHolderRewardRate,
+                                  brokerageRate: data
+                                      ?.data
+                                      ?.eligibility
+                                      ?.withAnyHoldingRewardRate,
                                   nonShareholderRate: data
                                       ?.data
                                       ?.eligibility
                                       ?.nonHolderRewardRate,
+                                  listedOnExchange: _listedOnExchange,
+                                  reqReimport: _reqReimport,
                                   rewardType:
                                       data?.data?.eligibility?.rewardType ??
                                       data?.data?.basicInfo?.type,
                                 );
                               },
-                              child: Text("Verify Eligibility"),
+                              child: Text(
+                                switch (_tier) {
+                                  RewardEligibilityTier.fullyEligible =>
+                                    _listedOnExchange
+                                        ? 'Claim Shareholder Perk'
+                                        : 'Claim Member Perk',
+                                  RewardEligibilityTier.brokerageEligible =>
+                                    'Claim Member Perk',
+                                  RewardEligibilityTier.nonHolder =>
+                                    'Verify Eligibility',
+                                },
+                              ),
                             ),
                           ),
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                trackButtonClick('Claim Non-Shareholder Perk', {
-                                  'gift_card_name':
-                                      data?.data?.basicInfo?.title ?? '',
-                                  'is_eligible': false,
-                                });
-                                context.pushNamed(
-                                  RouteNames.GIFTCARD_AMOUNT_SCREEN,
-                                  extra: {
-                                    "rewardId": widget.rewardId,
-                                    "isEligible": "false",
-                                  },
-                                );
-                              },
-                              child: Text("Claim Non-Shareholder Perk"),
+                          if (_tier != RewardEligibilityTier.fullyEligible)
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  trackButtonClick(
+                                    'Claim Non-Shareholder Perk',
+                                    {
+                                      'gift_card_name':
+                                          data?.data?.basicInfo?.title ?? '',
+                                      'is_eligible': false,
+                                      'is_brokerage_eligible': false,
+                                      'force_non_holder': true,
+                                    },
+                                  );
+                                  context.pushNamed(
+                                    RouteNames.GIFTCARD_AMOUNT_SCREEN,
+                                    extra: {
+                                      "rewardId": widget.rewardId,
+                                      "isEligible": "false",
+                                      "isBrokerageEligible": "false",
+                                      "forceNonHolder": "true",
+                                    },
+                                  );
+                                },
+                                child: Text("Claim Non-Shareholder Perk"),
+                              ),
                             ),
-                          ),
                           Padding(
                             padding: const EdgeInsets.all(14.0),
                             child: PerkTerms(
                               onViewAll: () {
                                 context.pushNamed(
                                   RouteNames.REWARD_TERM_VIEW_SCREEN,
-                                  extra: {"contentId": data?.data?.content?.id},
+                                  extra: {
+                                    "contentId": data?.data?.content?.id,
+                                  },
                                 );
                               },
                               termsAndConditions:

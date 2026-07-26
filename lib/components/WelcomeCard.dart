@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
+import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/constants/theme_data.dart';
 import 'package:soui/theme.dart';
 
+/// Home / unlocked summary: active perks, new rewards, Member unlocked.
 class RewardCountCard extends StatelessWidget {
   final String activePerks;
   final String newRewards;
+
+  /// Brokerage-only / non-Shareholder unlocks (`anyRewardsEligible` bucket).
+  final int memberUnlocked;
 
   const RewardCountCard({
     super.key,
     required this.activePerks,
     required this.newRewards,
+    this.memberUnlocked = 0,
   });
 
   @override
@@ -36,7 +43,7 @@ class RewardCountCard extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 6,
+            spacing: 8,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,6 +66,12 @@ class RewardCountCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (memberUnlocked > 0)
+                _UnlockedCountChip(
+                  label: 'Shareholder',
+                  count: memberUnlocked,
+                  color: SharePerksColors.primary,
+                ),
               Text.rich(
                 TextSpan(
                   children: [
@@ -67,7 +80,7 @@ class RewardCountCard extends StatelessWidget {
                       style: TextStyle(
                         color: const Color(0xFF6400E0),
                         fontSize: 12,
-                        fontFamily: 'Inter',
+                        fontFamily: SharePerksFonts.inter,
                         fontWeight: FontWeight.w400,
                         height: 1.33,
                       ),
@@ -77,7 +90,7 @@ class RewardCountCard extends StatelessWidget {
                       style: TextStyle(
                         color: const Color(0xFF333333),
                         fontSize: 12,
-                        fontFamily: 'Inter',
+                        fontFamily: SharePerksFonts.inter,
                         fontWeight: FontWeight.w400,
                         height: 1.33,
                       ),
@@ -87,7 +100,7 @@ class RewardCountCard extends StatelessWidget {
                       style: TextStyle(
                         color: const Color(0xFF898989),
                         fontSize: 12,
-                        fontFamily: 'Inter',
+                        fontFamily: SharePerksFonts.inter,
                         fontWeight: FontWeight.w400,
                         height: 1.33,
                       ),
@@ -135,6 +148,38 @@ class RewardCountCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _UnlockedCountChip extends StatelessWidget {
+  const _UnlockedCountChip({
+    required this.label,
+    required this.count,
+    required this.color,
+  });
+
+  final String label;
+  final int count;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$count $label Perks',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontFamily: SharePerksFonts.inter,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

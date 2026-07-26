@@ -54,6 +54,7 @@ import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ClaimedPerksScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardCodeViewScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
+import 'package:shareperks/screens/rewards/HowToClaimScreen.dart';
 import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ReadRewardTermScreen.dart';
 import 'package:shareperks/screens/rewards/giftcard/GiftCardAmountScreen.dart';
@@ -105,6 +106,7 @@ class RouteNames {
   static const String EMAIL_SUCCESS_SCREEN = 'SuccessScreen';
   static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
+  static const String HOW_TO_CLAIM_SCREEN = 'HowToClaimScreen';
   static const String GIFTCARD_AMOUNT_SCREEN = 'GiftCardAmountScreen';
   static const String GIFTCARD_PAYMENT_SUCCESS_SCREEN = 'PaymentSuccessScreen';
   static const String MY_WALLET_SCREEN = 'MyWalletScreen';
@@ -429,6 +431,18 @@ final List<GoRoute> routes = [
     },
   ),
   GoRoute(
+    name: RouteNames.HOW_TO_CLAIM_SCREEN,
+    path: RouteNames.path(RouteNames.HOW_TO_CLAIM_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final map = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+      return HowToClaimScreen(
+        html: map['html'] as String? ?? '',
+        title: map['title'] as String? ?? 'How to claim',
+      );
+    },
+  ),
+  GoRoute(
     name: RouteNames.GIFTCARD_AMOUNT_SCREEN,
     path: RouteNames.path(RouteNames.GIFTCARD_AMOUNT_SCREEN),
     builder: (BuildContext context, GoRouterState state) {
@@ -437,11 +451,19 @@ final List<GoRoute> routes = [
           ? extra['rewardId'] as String?
           : null;
       final String isEligible = extra is Map<String, dynamic>
-          ? extra['isEligible'] as String
-          : "false";
+          ? '${extra['isEligible'] ?? false}'
+          : 'false';
+      final String isBrokerageEligible = extra is Map<String, dynamic>
+          ? '${extra['isBrokerageEligible'] ?? false}'
+          : 'false';
+      final String forceNonHolder = extra is Map<String, dynamic>
+          ? '${extra['forceNonHolder'] ?? false}'
+          : 'false';
       return GiftCardAmountScreen(
         rewardId: rewardId!,
         isEligible: bool.parse(isEligible),
+        isBrokerageEligible: bool.parse(isBrokerageEligible),
+        forceNonHolder: bool.parse(forceNonHolder),
       );
     },
   ),

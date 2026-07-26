@@ -1,0 +1,3 @@
+Shareholder Reward — maximum reward (specific holding criteria met)
+Member Reward — any-holding reward (broker connected with holdings)
+Standard Reward — no holding reward for this perk

@@ -62,6 +62,7 @@ class RewardItem {
   String? tickerName;
   String? type;
   bool? isEligible;
+  bool? isBrokerageEligible;
   bool? isNew;
   bool? topPerk;
   int? quantity;
@@ -84,6 +85,7 @@ class RewardItem {
     this.tickerName,
     this.type,
     this.isEligible,
+    this.isBrokerageEligible,
     this.isNew,
     this.topPerk,
     this.quantity,
@@ -107,6 +109,7 @@ class RewardItem {
     tickerName = json['tickerName'] as String?;
     type = json['type'] as String?;
     isEligible = json['isEligible'] as bool?;
+    isBrokerageEligible = json['isBrokerageEligible'] as bool?;
     isNew = json['isNew'] as bool?;
     topPerk = json['topPerk'] as bool?;
     quantity = parseJsonInt(json['quantity']);
@@ -131,6 +134,7 @@ class RewardItem {
       'tickerName': tickerName,
       'type': type,
       'isEligible': isEligible,
+      'isBrokerageEligible': isBrokerageEligible,
       'isNew': isNew,
       'topPerk': topPerk,
       'quantity': quantity,

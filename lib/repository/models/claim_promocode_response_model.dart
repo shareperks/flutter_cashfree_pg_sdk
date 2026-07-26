@@ -8,6 +8,7 @@ class ClaimPromocodeResponse {
     this.rewardId,
     this.code,
     this.isEligible,
+    this.isBrokerageEligible,
     this.allowFor,
     this.assignedAt,
     this.rewardType,
@@ -22,7 +23,11 @@ class ClaimPromocodeResponse {
   final String? code;
   final bool? isEligible;
 
-  /// `WITH_HOLDINGS` (eligible users) or `NON_HOLDINGS` (everyone else).
+  /// Mid tier: broker connected with holdings, but not fully eligible.
+  final bool? isBrokerageEligible;
+
+  /// `WITH_HOLDINGS` (fully eligible) or `NON_HOLDINGS` (everyone else).
+  /// Mid-tier still uses the non-holdings pool until a third pool exists.
   final String? allowFor;
 
   /// ISO 8601 timestamp.
@@ -51,6 +56,7 @@ class ClaimPromocodeResponse {
       rewardId: json['rewardId'] as String?,
       code: json['code'] as String?,
       isEligible: json['isEligible'] as bool?,
+      isBrokerageEligible: json['isBrokerageEligible'] as bool?,
       allowFor: json['allowFor'] as String?,
       assignedAt: json['assignedAt'] as String?,
       rewardType: json['rewardType'] as String?,

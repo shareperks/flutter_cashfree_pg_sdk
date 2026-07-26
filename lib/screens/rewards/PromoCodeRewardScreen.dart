@@ -21,7 +21,7 @@ import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/claim_promocode_response_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
-import 'package:shareperks/screens/rewards/utils/eligiblitySheet.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/title_view.dart';
 
@@ -56,25 +56,49 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
     }
   }
 
+  bool get _isEligible => data?.data?.eligibility?.isEligible ?? false;
+  bool get _isBrokerageEligible =>
+      data?.data?.eligibility?.isBrokerageEligible ?? false;
+  bool get _reqReimport =>
+      data?.data?.eligibility?.isBrokerConnected?.reqReimport == true;
+  bool get _listedOnExchange =>
+      data?.data?.company?.listedOnExchange ?? true;
+
+  RewardEligibilityTier get _tier => resolveRewardTier(
+    isEligible: _isEligible,
+    isBrokerageEligible: _isBrokerageEligible,
+    reqReimport: _reqReimport,
+  );
+
   /// `POST /rewards/promocode/:id/claim` — server picks the WITH_HOLDINGS
-  /// vs NON_HOLDINGS pool itself based on the user's eligibility, so both
-  /// the eligible and non-eligible CTAs route through this single call.
+  /// vs NON_HOLDINGS pool itself based on full eligibility only. Mid-tier
+  /// is display-only until a third claim pool exists.
   Future<void> _claimPromocode() async {
     if (_claiming) return;
 
-    final isEligible = data?.data?.eligibility?.isEligible ?? false;
-    await trackButtonClick(
-      isEligible ? 'Reveal Discount Code' : 'Claim Non-Shareholder Perk',
-      {
-        'reward_name': data?.data?.basicInfo?.title ?? '',
-        'is_eligible': isEligible,
-      },
-    );
+    final label = switch (_tier) {
+      RewardEligibilityTier.fullyEligible => 'Reveal Discount Code',
+      RewardEligibilityTier.brokerageEligible =>
+        'Claim Brokerage Discount Code',
+      RewardEligibilityTier.nonHolder => 'Claim Non-Shareholder Perk',
+    };
+    await trackButtonClick(label, {
+      'reward_name': data?.data?.basicInfo?.title ?? '',
+      'is_eligible': _isEligible,
+      'is_brokerage_eligible': _isBrokerageEligible,
+    });
     await trackEligibility(
       perkType: 'promocode',
       rewardId: widget.rewardId,
-      isEligible: isEligible,
-      reason: isEligible ? 'ok' : 'not_eligible',
+      isEligible: _isEligible,
+      isBrokerageEligible: _isBrokerageEligible,
+      reason: switch (_tier) {
+        RewardEligibilityTier.fullyEligible => 'ok',
+        RewardEligibilityTier.brokerageEligible => 'brokerage_eligible',
+        RewardEligibilityTier.nonHolder => _reqReimport
+            ? 'req_reimport'
+            : 'not_eligible',
+      },
       source: 'reward_detail',
       brandId: data?.data?.company?.id,
     );
@@ -183,14 +207,23 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    if (data?.data?.eligibility?.isEligible ?? false)
-                      EligibleRewardCard(
-                        rewardRatePercent:
-                            data?.data?.eligibility?.withHolderRewardRate,
-                        rewardType: data?.data?.eligibility?.rewardType ??
-                            data?.data?.basicInfo?.type,
-                      ),
-
+                    RewardEligibilityBanner(
+                      isEligible: _isEligible,
+                      isBrokerageEligible: _isBrokerageEligible,
+                      listedOnExchange: _listedOnExchange,
+                      reqReimport: _reqReimport,
+                      withHolderRewardRate:
+                          data?.data?.eligibility?.withHolderRewardRate,
+                      withAnyHoldingRewardRate: data
+                          ?.data
+                          ?.eligibility
+                          ?.withAnyHoldingRewardRate,
+                      nonHolderRewardRate:
+                          data?.data?.eligibility?.nonHolderRewardRate,
+                      rewardType: data?.data?.eligibility?.rewardType ??
+                          data?.data?.basicInfo?.type,
+                      showStandardBanner: true,
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(14),
                       child: Column(
@@ -227,10 +260,16 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                           RewardRatesSection(
                             shareholderRate:
                                 data?.data?.eligibility?.withHolderRewardRate,
+                            brokerageRate: data
+                                ?.data
+                                ?.eligibility
+                                ?.withAnyHoldingRewardRate,
                             nonShareholderRate:
                                 data?.data?.eligibility?.nonHolderRewardRate,
-                            isEligible:
-                                data?.data?.eligibility?.isEligible ?? false,
+                            isEligible: _isEligible,
+                            isBrokerageEligible: _isBrokerageEligible,
+                            listedOnExchange: _listedOnExchange,
+                            reqReimport: _reqReimport,
                             rewardType: data?.data?.eligibility?.rewardType ??
                                 data?.data?.basicInfo?.type,
                           ),
@@ -246,8 +285,7 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                             )
                           else
                             _ClaimPromoCodeCta(
-                              isEligible:
-                                  data?.data?.eligibility?.isEligible ?? false,
+                              tier: _tier,
                               loading: _claiming,
                               onPressed: _claimPromocode,
                             ),
@@ -465,27 +503,38 @@ void showClaimedPromoCodeSheet(
 }
 
 /// CTA shown on `PromoCodeRewardScreen` until the user has a claimed code.
-/// Eligible users see "Reveal Discount Code" (primary). Non-eligible users
-/// see a primary "Claim Non-Shareholder Perk" with a soft heads-up that the
-/// non-eligible pool is being used. Either CTA hits the same
-/// `POST /rewards/promocode/:id/claim` endpoint — the server picks the
-/// pool.
+/// Claim pool allocation is still binary (full holder vs everyone else);
+/// mid-tier messaging is display-only. Either CTA hits the same
+/// `POST /rewards/promocode/:id/claim` endpoint — the server picks the pool.
 class _ClaimPromoCodeCta extends StatelessWidget {
   const _ClaimPromoCodeCta({
-    required this.isEligible,
+    required this.tier,
     required this.loading,
     required this.onPressed,
   });
 
-  final bool isEligible;
+  final RewardEligibilityTier tier;
   final bool loading;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final label = isEligible
-        ? 'Reveal Discount Code'
-        : 'Claim Non-Shareholder Perk';
+    final label = switch (tier) {
+      RewardEligibilityTier.fullyEligible => 'Reveal Discount Code',
+      RewardEligibilityTier.brokerageEligible =>
+        'Claim Brokerage Discount Code',
+      RewardEligibilityTier.nonHolder => 'Claim Non-Shareholder Perk',
+    };
+
+    final hint = switch (tier) {
+      RewardEligibilityTier.fullyEligible => null,
+      RewardEligibilityTier.brokerageEligible =>
+        'Your brokerage mid rate is shown above. Hold the required shares to '
+            'unlock the shareholder code pool.',
+      RewardEligibilityTier.nonHolder =>
+        "You're not eligible for the shareholder pool, but you can still "
+            'claim a non-shareholder code.',
+    };
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -506,9 +555,9 @@ class _ClaimPromoCodeCta extends StatelessWidget {
                   )
                 : Text(label),
           ),
-          if (!isEligible)
+          if (hint != null)
             Text(
-              "You're not eligible for the shareholder pool, but you can still claim a non-shareholder code.",
+              hint,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: SharePerksColors.textSecondaryLight,

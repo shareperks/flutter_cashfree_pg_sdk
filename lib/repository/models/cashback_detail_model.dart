@@ -104,6 +104,7 @@ class CashbackBasicInfo {
   String? perkId;
   String? type;
   bool? isEligible;
+  bool? isBrokerageEligible;
 
   CashbackBasicInfo({
     this.id,
@@ -114,6 +115,7 @@ class CashbackBasicInfo {
     this.perkId,
     this.type,
     this.isEligible,
+    this.isBrokerageEligible,
   });
 
   CashbackBasicInfo.fromJson(Map<String, dynamic> json) {
@@ -125,6 +127,7 @@ class CashbackBasicInfo {
     perkId = json['perkId'] as String?;
     type = json['type'] as String?;
     isEligible = json['isEligible'] as bool?;
+    isBrokerageEligible = json['isBrokerageEligible'] as bool?;
   }
 
   Map<String, dynamic> toJson() {
@@ -137,6 +140,7 @@ class CashbackBasicInfo {
       'perkId': perkId,
       'type': type,
       'isEligible': isEligible,
+      'isBrokerageEligible': isBrokerageEligible,
     };
   }
 }
@@ -211,8 +215,10 @@ class CashbackEligibility {
   int? days;
   int? quantity;
   bool? isEligible;
+  bool? isBrokerageEligible;
   String? rewardType;
   int? withHolderRewardRate;
+  int? withAnyHoldingRewardRate;
   int? nonHolderRewardRate;
   RewardBrokerConnected? isBrokerConnected;
 
@@ -220,8 +226,10 @@ class CashbackEligibility {
     this.days,
     this.quantity,
     this.isEligible,
+    this.isBrokerageEligible,
     this.rewardType,
     this.withHolderRewardRate,
+    this.withAnyHoldingRewardRate,
     this.nonHolderRewardRate,
     this.isBrokerConnected,
   });
@@ -230,8 +238,10 @@ class CashbackEligibility {
     days = parseJsonInt(json['days']);
     quantity = parseJsonInt(json['quantity']);
     isEligible = json['isEligible'] as bool?;
+    isBrokerageEligible = json['isBrokerageEligible'] as bool?;
     rewardType = json['rewardType'] as String?;
     withHolderRewardRate = parseJsonInt(json['withHolderRewardRate']);
+    withAnyHoldingRewardRate = parseJsonInt(json['withAnyHoldingRewardRate']);
     nonHolderRewardRate = parseJsonInt(json['nonHolderRewardRate']);
 
     final bc = json['isBrokerConnected'];
@@ -245,8 +255,10 @@ class CashbackEligibility {
       'days': days,
       'quantity': quantity,
       'isEligible': isEligible,
+      'isBrokerageEligible': isBrokerageEligible,
       'rewardType': rewardType,
       'withHolderRewardRate': withHolderRewardRate,
+      'withAnyHoldingRewardRate': withAnyHoldingRewardRate,
       'nonHolderRewardRate': nonHolderRewardRate,
       if (isBrokerConnected != null)
         'isBrokerConnected': isBrokerConnected!.toJson(),

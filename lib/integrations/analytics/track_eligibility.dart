@@ -8,6 +8,7 @@ Future<void> trackEligibility({
   required String perkType,
   required String rewardId,
   required bool isEligible,
+  bool isBrokerageEligible = false,
   String? reason,
   required String source,
   String? brandId,
@@ -27,7 +28,7 @@ Future<void> trackEligibility({
       event = AnalyticsEvent.perkEligibilityChecked;
   }
 
-  if (!isEligible) {
+  if (!isEligible && !isBrokerageEligible) {
     JourneyContext.lastAction = 'ineligible_${reason ?? 'unknown'}';
   }
 
@@ -35,6 +36,7 @@ Future<void> trackEligibility({
     'reward_id': rewardId,
     'perk_type': perkType,
     'is_eligible': isEligible,
+    'is_brokerage_eligible': isBrokerageEligible,
     'eligibility_reason': ?reason,
     'source': source,
     'brand_id': ?brandId,

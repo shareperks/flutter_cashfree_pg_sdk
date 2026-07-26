@@ -5,13 +5,19 @@ class GiftCardProceedRequest {
     required this.rewardAmount,
     required this.creditId,
     required this.eligible,
+    this.isBrokerageEligible = false,
     this.journeyId,
   });
 
   final double payAmount;
   final double rewardAmount;
   final String creditId;
+
+  /// Fully eligible (max holder rate). Mid-tier users remain `false`.
   final bool eligible;
+
+  /// Mid tier: broker connected with holdings, not fully eligible.
+  final bool isBrokerageEligible;
   final String? journeyId;
 
   Map<String, dynamic> toJson() => {
@@ -19,6 +25,7 @@ class GiftCardProceedRequest {
     'rewardAmount': rewardAmount,
     'creditId': creditId,
     'eligible': eligible,
+    'isBrokerageEligible': isBrokerageEligible,
     if (journeyId != null) 'journey_id': journeyId,
   };
 }

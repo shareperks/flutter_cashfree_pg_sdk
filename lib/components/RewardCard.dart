@@ -18,6 +18,7 @@ Map<String, String> typeNameMap = {
 
 class RewardCard extends StatelessWidget {
   final bool isEligible;
+  final bool isBrokerageEligible;
   final String imageUrl;
   final String title;
   final String rewardId;
@@ -32,6 +33,7 @@ class RewardCard extends StatelessWidget {
   const RewardCard({
     super.key,
     this.isEligible = false,
+    this.isBrokerageEligible = false,
     this.width = 165,
     this.imageUrl = '',
     this.title = '',
@@ -45,17 +47,20 @@ class RewardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = isEligible
+        ? SharePerksColors.accent.withValues(alpha: 0.3)
+        : isBrokerageEligible
+        ? SharePerksColors.primary.withValues(alpha: 0.35)
+        : SharePerksColors.borderLight;
+    final ctaFilled = isEligible || isBrokerageEligible;
+
     return Container(
       width: width,
 
       decoration: BoxDecoration(
         color: SharePerksColors.backgroundLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isEligible
-              ? SharePerksColors.accent.withValues(alpha: 0.3)
-              : SharePerksColors.borderLight,
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -75,12 +80,37 @@ class RewardCard extends StatelessWidget {
                   height: 121,
                   fit: BoxFit.cover,
                 ),
+                // Shareholder unlocked badge (maximum).
                 if (isEligible)
                   Positioned(
                     top: -1,
                     left: 0,
                     child: SvgPicture.asset(
                       Assets.ASSETS_ICONS_ELIGIBLEREWARD_SVG,
+                    ),
+                  )
+                else if (isBrokerageEligible)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: SharePerksColors.primary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'Member',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: SharePerksColors.backgroundLight,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
+                      ),
                     ),
                   ),
                 if (isNew)
@@ -164,11 +194,15 @@ class RewardCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isEligible
                         ? SharePerksColors.accent
+                        : isBrokerageEligible
+                        ? SharePerksColors.primary
                         : SharePerksColors.borderLight.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isEligible
                           ? SharePerksColors.accent
+                          : isBrokerageEligible
+                          ? SharePerksColors.primary
                           : SharePerksColors.borderLight,
                     ),
                   ),
@@ -176,7 +210,7 @@ class RewardCard extends StatelessWidget {
                     child: Text(
                       "View ${typeNameMap[typeName ?? ''] ?? typeName ?? ''}",
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: isEligible
+                        color: ctaFilled
                             ? SharePerksColors.backgroundLight
                             : SharePerksColors.primary,
                         fontWeight: FontWeight.w600,

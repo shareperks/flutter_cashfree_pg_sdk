@@ -177,6 +177,7 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
                             title: reward.title!,
                             imageUrl: imageUrl(reward.image ?? ''),
                             isEligible: reward.isEligible ?? false,
+                            isBrokerageEligible: reward.isBrokerageEligible ?? false,
                             eligibility: reward.companyName ?? '--',
                           );
                         }),

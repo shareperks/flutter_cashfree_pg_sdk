@@ -105,6 +105,7 @@ class GiftcardBasicInfo {
   String? perkId;
   String? type;
   bool? isEligible;
+  bool? isBrokerageEligible;
   int? days;
   int? quantity;
 
@@ -117,6 +118,7 @@ class GiftcardBasicInfo {
     this.perkId,
     this.type,
     this.isEligible,
+    this.isBrokerageEligible,
     this.days,
     this.quantity,
   });
@@ -130,6 +132,7 @@ class GiftcardBasicInfo {
     perkId = json['perkId'] as String?;
     type = json['type'] as String?;
     isEligible = json['isEligible'] as bool?;
+    isBrokerageEligible = json['isBrokerageEligible'] as bool?;
     days = parseJsonInt(json['days']);
     quantity = parseJsonInt(json['quantity']);
   }
@@ -144,6 +147,7 @@ class GiftcardBasicInfo {
       'perkId': perkId,
       'type': type,
       'isEligible': isEligible,
+      'isBrokerageEligible': isBrokerageEligible,
       'days': days,
       'quantity': quantity,
     };
@@ -235,8 +239,10 @@ class GiftcardEligibility {
   int? quantity;
   String? rewardType;
   double? withHolderRewardRate;
+  double? withAnyHoldingRewardRate;
   double? nonHolderRewardRate;
   bool? isEligible;
+  bool? isBrokerageEligible;
   GiftcardBrokerConnected? isBrokerConnected;
 
   GiftcardEligibility({
@@ -244,8 +250,10 @@ class GiftcardEligibility {
     this.quantity,
     this.rewardType,
     this.withHolderRewardRate,
+    this.withAnyHoldingRewardRate,
     this.nonHolderRewardRate,
     this.isEligible,
+    this.isBrokerageEligible,
     this.isBrokerConnected,
   });
 
@@ -254,8 +262,10 @@ class GiftcardEligibility {
     quantity = parseJsonInt(json['quantity']);
     rewardType = json['rewardType'] as String?;
     withHolderRewardRate = parseJsonDouble(json['withHolderRewardRate']);
+    withAnyHoldingRewardRate = parseJsonDouble(json['withAnyHoldingRewardRate']);
     nonHolderRewardRate = parseJsonDouble(json['nonHolderRewardRate']);
     isEligible = json['isEligible'] as bool?;
+    isBrokerageEligible = json['isBrokerageEligible'] as bool?;
     final bc = json['isBrokerConnected'];
     if (bc is Map<String, dynamic>) {
       isBrokerConnected = GiftcardBrokerConnected.fromJson(bc);
@@ -268,8 +278,10 @@ class GiftcardEligibility {
       'quantity': quantity,
       'rewardType': rewardType,
       'withHolderRewardRate': withHolderRewardRate,
+      'withAnyHoldingRewardRate': withAnyHoldingRewardRate,
       'nonHolderRewardRate': nonHolderRewardRate,
       'isEligible': isEligible,
+      'isBrokerageEligible': isBrokerageEligible,
       if (isBrokerConnected != null)
         'isBrokerConnected': isBrokerConnected!.toJson(),
     };

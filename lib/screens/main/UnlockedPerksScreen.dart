@@ -7,12 +7,16 @@ import 'package:shareperks/components/RewardCard.dart';
 import 'package:shareperks/components/category_search_sort_bar.dart';
 import 'package:shareperks/components/loader/rewardloader.dart';
 import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/home_common_models.dart';
 import 'package:shareperks/repository/models/unlocked_perks_model.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/tab_buttons.dart';
+
+enum _UnlockedTierFilter { all, shareholder, member }
 
 class UnlockedPerksScreen extends StatefulWidget {
   const UnlockedPerksScreen({super.key});
@@ -25,6 +29,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
   bool _loading = true;
   bool _isError = true;
   int _index = 0;
+  _UnlockedTierFilter _tierFilter = _UnlockedTierFilter.all;
 
   UnlockedPerksResponse? perks;
 
@@ -34,9 +39,23 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
   Timer? _filterTimer;
   String _sortBy = 'a-z';
 
-  bool isEmpty() {
-    return rewardItems[_index].isEmpty;
+  List<RewardItem> get _filteredItems {
+    final items = rewardItems[_index];
+    switch (_tierFilter) {
+      case _UnlockedTierFilter.all:
+        return items;
+      case _UnlockedTierFilter.shareholder:
+        return items.where((r) => r.isEligible == true).toList();
+      case _UnlockedTierFilter.member:
+        return items
+            .where(
+              (r) => r.isEligible != true && r.isBrokerageEligible == true,
+            )
+            .toList();
+    }
   }
+
+  bool isEmpty() => _filteredItems.isEmpty;
 
   Future<void> loadData() async {
     setState(() {
@@ -71,7 +90,6 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loadData();
   }
@@ -104,6 +122,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
             width: MediaQuery.of(context).size.width,
             padding: EdgeInsets.all(18),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 CategorySearchSortBar(
                   controller: _searchController,
@@ -127,6 +146,23 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
                   layoutWidthInset: 44,
                   items: ["CashBack", "GiftCard", "Discount Code"],
                 ),
+                SizedBox(height: 12),
+                if (!_loading && !_isError)
+                  _UnlockedTierTabs(
+                    selected: _tierFilter,
+                    allCount: rewardItems[_index].length,
+                    shareholderCount: rewardItems[_index]
+                        .where((r) => r.isEligible == true)
+                        .length,
+                    memberCount: rewardItems[_index]
+                        .where(
+                          (r) =>
+                              r.isEligible != true &&
+                              r.isBrokerageEligible == true,
+                        )
+                        .length,
+                    onChanged: (tier) => setState(() => _tierFilter = tier),
+                  ),
                 SizedBox(height: 16),
                 Builder(
                   builder: (context) {
@@ -156,6 +192,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
                     if (isEmpty()) {
                       return NotFoundView(subtitle: "In this Type");
                     }
+                    final items = _filteredItems;
                     return SizedBox(
                       width: MediaQuery.of(context).size.width,
                       child: Wrap(
@@ -164,10 +201,8 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
                         crossAxisAlignment: WrapCrossAlignment.start,
                         runAlignment: WrapAlignment.start,
                         alignment: WrapAlignment.start,
-                        children: List.generate(rewardItems[_index].length, (
-                          index,
-                        ) {
-                          RewardItem reward = rewardItems[_index][index];
+                        children: List.generate(items.length, (index) {
+                          RewardItem reward = items[index];
                           return RewardCard(
                             width: (MediaQuery.of(context).size.width / 2) - 23,
                             rewardId: reward.id!,
@@ -176,7 +211,9 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
                             title: reward.title!,
                             imageUrl: imageUrl(reward.image ?? ""),
                             isEligible: reward.isEligible ?? false,
-
+                            isBrokerageEligible:
+                                reward.isBrokerageEligible ?? false,
+                            isNew: reward.isNew ?? false,
                             eligibility: reward.companyName ?? "--",
                           );
                         }),
@@ -192,3 +229,138 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
     );
   }
 }
+
+class _UnlockedTierTabs extends StatelessWidget {
+  const _UnlockedTierTabs({
+    required this.selected,
+    required this.allCount,
+    required this.shareholderCount,
+    required this.memberCount,
+    required this.onChanged,
+  });
+
+  final _UnlockedTierFilter selected;
+  final int allCount;
+  final int shareholderCount;
+  final int memberCount;
+  final ValueChanged<_UnlockedTierFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: SharePerksColors.surfaceLight,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SharePerksColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _UnlockedTierTab(
+              label: 'All',
+              count: allCount,
+              selected: selected == _UnlockedTierFilter.all,
+              accent: SharePerksColors.textPrimaryLight,
+              onTap: () => onChanged(_UnlockedTierFilter.all),
+            ),
+          ),
+          Expanded(
+            child: _UnlockedTierTab(
+              label: 'Shareholder',
+              count: shareholderCount,
+              selected: selected == _UnlockedTierFilter.shareholder,
+              accent: SharePerksColors.accent,
+              onTap: () => onChanged(_UnlockedTierFilter.shareholder),
+            ),
+          ),
+          Expanded(
+            child: _UnlockedTierTab(
+              label: 'Member',
+              count: memberCount,
+              selected: selected == _UnlockedTierFilter.member,
+              accent: SharePerksColors.primary,
+              onTap: () => onChanged(_UnlockedTierFilter.member),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnlockedTierTab extends StatelessWidget {
+  const _UnlockedTierTab({
+    required this.label,
+    required this.count,
+    required this.selected,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final bool selected;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = selected ? accent : SharePerksColors.textSecondaryLight;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? SharePerksColors.backgroundLight : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 11,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  height: 1.1,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: TextStyle(
+                color: fg.withValues(alpha: selected ? 1 : 0.75),
+                fontSize: 10,
+                fontFamily: SharePerksFonts.albertSans,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+

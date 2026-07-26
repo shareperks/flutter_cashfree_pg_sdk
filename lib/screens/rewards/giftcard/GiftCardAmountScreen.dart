@@ -24,6 +24,7 @@ import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/repository/services/payment/giftcard_payment.service.dart';
 import 'package:shareperks/repository/services/payment/razorpay.service.dart';
 import 'package:shareperks/screens/rewards/utils/rewardCalc.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/amount_picker.dart';
 import 'package:soui/elements/border_card.dart';
@@ -31,11 +32,21 @@ import 'package:soui/elements/collaps_card.dart';
 
 class GiftCardAmountScreen extends StatefulWidget {
   final String rewardId;
+
+  /// Route hint until detail loads. After load, API eligibility wins unless
+  /// [forceNonHolder] is true.
   final bool isEligible;
+  final bool isBrokerageEligible;
+
+  /// User explicitly chose the standard / non-shareholder rate.
+  final bool forceNonHolder;
+
   const GiftCardAmountScreen({
     super.key,
     required this.rewardId,
     required this.isEligible,
+    this.isBrokerageEligible = false,
+    this.forceNonHolder = false,
   });
   @override
   State<GiftCardAmountScreen> createState() => _GiftCardAmountScreenState();
@@ -53,6 +64,32 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   final TextEditingController _amountController = TextEditingController();
 
   GiftcardAmount? get _amountConfig => data?.data?.amount;
+
+  GiftcardEligibility? get _eligibility => data?.data?.eligibility;
+
+  /// High → mid → low from detail API (route hints only before load / force).
+  bool get _isEligible {
+    if (widget.forceNonHolder) return false;
+    return _eligibility?.isEligible ??
+        data?.data?.basicInfo?.isEligible ??
+        widget.isEligible;
+  }
+
+  bool get _isBrokerageEligible {
+    if (widget.forceNonHolder) return false;
+    return _eligibility?.isBrokerageEligible ??
+        data?.data?.basicInfo?.isBrokerageEligible ??
+        widget.isBrokerageEligible;
+  }
+
+  bool get _reqReimport =>
+      _eligibility?.isBrokerConnected?.reqReimport == true;
+
+  RewardEligibilityTier get _tier => resolveRewardTier(
+    isEligible: _isEligible,
+    isBrokerageEligible: _isBrokerageEligible,
+    reqReimport: _reqReimport,
+  );
 
   Future<void> loadData() async {
     try {
@@ -84,6 +121,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     trackAction(AnalyticsEvent.giftcardAmountScreenViewed, {
       'reward_id': widget.rewardId,
       'is_eligible': widget.isEligible,
+      'is_brokerage_eligible': widget.isBrokerageEligible,
+      'force_non_holder': widget.forceNonHolder,
     });
     loadData();
   }
@@ -91,7 +130,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   void _onProceedButtonTap() {
     trackButtonClick('Proceed to Claim Credit', {
       'gift_card_name': data?.data?.basicInfo?.title ?? '',
-      'is_eligible': widget.isEligible,
+      'is_eligible': _isEligible,
+      'is_brokerage_eligible': _isBrokerageEligible,
+      'eligibility_tier': _tier.name,
       'selected_amount': ?amount,
     });
     _onProceedToPay();
@@ -103,7 +144,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       trackAction(AnalyticsEvent.giftcardPaymentAbandoned, {
         'abandon_stage': 'amount_screen',
         'gift_card_name': data?.data?.basicInfo?.title ?? '',
-        'is_eligible': widget.isEligible,
+        'is_eligible': _isEligible,
+        'is_brokerage_eligible': _isBrokerageEligible,
+        'eligibility_tier': _tier.name,
         'selected_amount': ?amount,
       });
     }
@@ -228,7 +271,11 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   GiftCardCalc? get _calc {
     final detail = data?.data;
     if (detail == null) return null;
-    return GiftCardCalc(detail, isEligible: widget.isEligible);
+    return GiftCardCalc(
+      detail,
+      isEligible: _isEligible,
+      isBrokerageEligible: _isBrokerageEligible,
+    );
   }
 
   GiftCardCalcCalcData? get _pricing {
@@ -249,7 +296,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     'amount': pricing.discountedAmount,
     'discount_percent': pricing.percent,
     'savings': pricing.savings,
-    'is_eligible': widget.isEligible,
+    'is_eligible': _isEligible,
+    'is_brokerage_eligible': _isBrokerageEligible,
+    'eligibility_tier': _tier.name,
   };
 
   Future<void> _onProceedToPay() async {
@@ -270,7 +319,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           payAmount: pricing.discountedAmount,
           rewardAmount: pricing.amount,
           creditId: widget.rewardId,
-          eligible: widget.isEligible,
+          eligible: _isEligible,
+          isBrokerageEligible: _isBrokerageEligible,
           journeyId: JourneyContext.currentJourneyId,
         ),
       );
@@ -501,13 +551,24 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   children: [
-                    if (widget.isEligible)
-                      EligibleRewardCard(
-                        rewardRatePercent:
-                            data?.data?.eligibility?.withHolderRewardRate,
-                        rewardType: data?.data?.eligibility?.rewardType ??
-                            data?.data?.basicInfo?.type,
-                      ),
+                    RewardEligibilityBanner(
+                      isEligible: _isEligible,
+                      isBrokerageEligible: _isBrokerageEligible,
+                      listedOnExchange:
+                          data?.data?.company?.listedOnExchange ?? true,
+                      reqReimport: _reqReimport,
+                      withHolderRewardRate:
+                          data?.data?.eligibility?.withHolderRewardRate,
+                      withAnyHoldingRewardRate: data
+                          ?.data
+                          ?.eligibility
+                          ?.withAnyHoldingRewardRate,
+                      nonHolderRewardRate:
+                          data?.data?.eligibility?.nonHolderRewardRate,
+                      rewardType: data?.data?.eligibility?.rewardType ??
+                          data?.data?.basicInfo?.type,
+                      showStandardBanner: true,
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(14),
                       child: Column(
@@ -535,9 +596,17 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                           RewardRatesSection(
                             shareholderRate:
                                 data?.data?.eligibility?.withHolderRewardRate,
+                            brokerageRate: data
+                                ?.data
+                                ?.eligibility
+                                ?.withAnyHoldingRewardRate,
                             nonShareholderRate:
                                 data?.data?.eligibility?.nonHolderRewardRate,
-                            isEligible: widget.isEligible,
+                            isEligible: _isEligible,
+                            isBrokerageEligible: _isBrokerageEligible,
+                            listedOnExchange:
+                                data?.data?.company?.listedOnExchange ?? true,
+                            reqReimport: _reqReimport,
                             rewardType: data?.data?.eligibility?.rewardType ??
                                 data?.data?.basicInfo?.type,
                           ),

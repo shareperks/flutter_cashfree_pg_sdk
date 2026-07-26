@@ -418,6 +418,54 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
                           ),
                         ),
                       ),
+                      if ((data?.data?.info?.howToRedeem ?? '')
+                          .trim()
+                          .isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            context.pushNamed(
+                              RouteNames.HOW_TO_CLAIM_SCREEN,
+                              extra: {
+                                'html': data!.data!.info!.howToRedeem!,
+                                'title': 'How to claim',
+                              },
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: SharePerksColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: SharePerksColors.borderLight,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'How to claim',
+                                    style: TextStyle(
+                                      color: SharePerksColors.primary,
+                                      fontSize: 14,
+                                      fontFamily: SharePerksFonts.inter,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  HugeIconsSolid.arrowRight02,
+                                  size: 16,
+                                  color: SharePerksColors.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       Column(
                         spacing: 20,
                         children: [

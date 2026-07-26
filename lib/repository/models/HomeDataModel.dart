@@ -107,6 +107,14 @@ class UnlockedRewards {
   int? offer;
   int? benefit;
   int? total;
+
+  /// From `eligibleRewardCounts.anyRewardsEligible`.
+  /// May be `true`/`false` or `1`/`0` (and occasionally a count).
+  bool? anyRewardsEligible;
+
+  /// Numeric form of [anyRewardsEligible] when the API sends a count / `0`/`1`.
+  int? fullUnlockedCount;
+
   List<RewardItem>? rewards;
 
   UnlockedRewards({
@@ -117,6 +125,7 @@ class UnlockedRewards {
     this.offer,
     this.benefit,
     this.total,
+    this.anyRewardsEligible,
     this.rewards,
   });
 
@@ -128,6 +137,15 @@ class UnlockedRewards {
     offer = parseJsonInt(json['offer']);
     benefit = parseJsonInt(json['benefit']);
     total = parseJsonInt(json['total']);
+
+    final anyEligible = json['anyRewardsEligible'];
+    if (anyEligible is bool) {
+      anyRewardsEligible = anyEligible;
+    } else {
+      fullUnlockedCount = parseJsonInt(anyEligible);
+      anyRewardsEligible = (fullUnlockedCount ?? 0) > 0;
+    }
+
     if (json['rewards'] != null) {
       rewards = <RewardItem>[];
       for (final v in json['rewards'] as List<dynamic>) {
@@ -145,6 +163,7 @@ class UnlockedRewards {
       'offer': offer,
       'benefit': benefit,
       'total': total,
+      'fullUnlocked': fullUnlockedCount,
       if (rewards != null) 'rewards': rewards!.map((v) => v.toJson()).toList(),
     };
   }

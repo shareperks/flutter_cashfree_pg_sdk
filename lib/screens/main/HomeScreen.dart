@@ -402,10 +402,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   false))
                             RewardCountCard(
                               activePerks:
-                                  (data?.data?.unlockedRewards?.total ?? "0")
+                                  (data
+                                              ?.data
+                                              ?.unlockedRewards
+                                              ?.fullUnlockedCount ??
+                                          "0")
                                       .toString(),
                               newRewards:
                                   data?.data?.newRewards?.toString() ?? "0",
+                              memberUnlocked:
+                                  data?.data?.unlockedRewards?.total ?? 0,
                             ),
                         ],
                       ),
@@ -551,6 +557,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         title: reward.title ?? "--",
                                         imageUrl: imageUrl(reward.image ?? ""),
                                         isEligible: reward.isEligible ?? false,
+                                        isBrokerageEligible:
+                                            reward.isBrokerageEligible ?? false,
                                         eligibility: reward.companyName ?? "--",
                                         onTap: () => navigateRewardScreen(
                                           reward.type!,
@@ -723,6 +731,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           isEligible:
                                               reward.isEligible ?? false,
+                                          isBrokerageEligible:
+                                              reward.isBrokerageEligible ??
+                                              false,
                                           eligibility:
                                               reward.companyName ?? "--",
                                           onTap: () => navigateRewardScreen(

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 
 enum RewardRateKind { giftCard, cashback, promoCode }
 
-/// Shared copy + formatting for shareholder / non-shareholder rates.
+/// Shared copy + formatting for 3-tier reward rates.
 abstract final class RewardRateUi {
   static const double gutter = 20;
 
@@ -60,29 +61,112 @@ abstract final class RewardRateUi {
 
   static bool hasRate(num? rate) => rate != null && rate > 0;
 
-  /// Explains why two reward rates exist and which applies to the user.
-  static String ratesDescription({required bool isEligible}) {
-    if (isEligible) {
-      return 'Brands on SharePerks reward shareholders with better perks '
-          'because you invest in them. Since you hold shares in this company, '
-          'the shareholder rate applies to you.';
+  /// Explains which tier applies.
+  ///
+  /// Shareholder = maximum · Member = any holding · Standard = no holding.
+  static String ratesDescription({
+    required RewardEligibilityTier tier,
+    bool listedOnExchange = true,
+  }) {
+    final label = resolveRewardRateLabel(
+      tier: tier,
+      listedOnExchange: listedOnExchange,
+    );
+    switch (label) {
+      case RewardRateLabel.shareholder:
+        return 'Shareholder Reward is the maximum rate for meeting this perk’s '
+            'holding criteria. It applies to you.';
+      case RewardRateLabel.member:
+        return listedOnExchange
+            ? 'Member Reward applies when you have any holdings connected. '
+                'Hold the required shares to unlock the Shareholder Reward '
+                '(maximum).'
+            : 'Member Reward applies when you have connected holdings. '
+                'It applies to you for this perk.';
+      case RewardRateLabel.standard:
+        return listedOnExchange
+            ? 'Standard Reward applies when you have no holdings for this perk. '
+                'Connect your broker to unlock Member Reward (any holding) or '
+                'Shareholder Reward (maximum).'
+            : 'Standard Reward applies when you have no holdings connected. '
+                'Connect your broker to unlock the Member Reward.';
     }
-    return 'Brands on SharePerks reward shareholders with better perks '
-        'because you invest in them. You can still claim this perk at the '
-        'standard rate—or link your broker to verify holdings and unlock '
-        'the shareholder rate.';
   }
 }
 
-/// Top banner when the user is an eligible shareholder.
-class EligibleRewardCard extends StatelessWidget {
-  final num? rewardRatePercent;
+/// Top eligibility banner — uses the same label + rate as [RewardRatesSection].
+class RewardEligibilityBanner extends StatelessWidget {
+  final bool isEligible;
+  final bool isBrokerageEligible;
+  final bool listedOnExchange;
+  final bool reqReimport;
+  final num? withHolderRewardRate;
+  final num? withAnyHoldingRewardRate;
+  final num? nonHolderRewardRate;
   final String? rewardType;
 
-  const EligibleRewardCard({
+  /// When false, Standard tier shows no banner (detail screens).
+  /// Claim screens may set true to always show the active tier.
+  final bool showStandardBanner;
+
+  const RewardEligibilityBanner({
     super.key,
+    required this.isEligible,
+    this.isBrokerageEligible = false,
+    this.listedOnExchange = true,
+    this.reqReimport = false,
+    this.withHolderRewardRate,
+    this.withAnyHoldingRewardRate,
+    this.nonHolderRewardRate,
+    this.rewardType,
+    this.showStandardBanner = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = resolveRewardTier(
+      isEligible: isEligible,
+      isBrokerageEligible: isBrokerageEligible,
+      reqReimport: reqReimport,
+    );
+    final label = resolveRewardRateLabel(
+      tier: tier,
+      listedOnExchange: listedOnExchange,
+    );
+
+    if (label == RewardRateLabel.standard && !showStandardBanner) {
+      return const SizedBox.shrink();
+    }
+
+    final rate = activeRewardDisplayRate(
+      tier: tier,
+      listedOnExchange: listedOnExchange,
+      withHolderRewardRate: withHolderRewardRate,
+      withAnyHoldingRewardRate: withAnyHoldingRewardRate,
+      nonHolderRewardRate: nonHolderRewardRate,
+    );
+
+    return _RewardTierBanner(
+      label: label,
+      rewardRatePercent: rate,
+      rewardType: rewardType,
+      listedOnExchange: listedOnExchange,
+    );
+  }
+}
+
+/// Shared visual for Shareholder / Member / Standard eligibility.
+class _RewardTierBanner extends StatelessWidget {
+  final RewardRateLabel label;
+  final num? rewardRatePercent;
+  final String? rewardType;
+  final bool listedOnExchange;
+
+  const _RewardTierBanner({
+    required this.label,
     required this.rewardRatePercent,
     this.rewardType,
+    this.listedOnExchange = true,
   });
 
   @override
@@ -90,16 +174,39 @@ class EligibleRewardCard extends StatelessWidget {
     final kind = RewardRateUi.kindFor(rewardType);
     final rateText = RewardRateUi.formatRate(rewardRatePercent);
     final hasRate = RewardRateUi.hasRate(rewardRatePercent);
-    final perkLabel = RewardRateUi.perkLabel(kind);
     final rateSuffix = RewardRateUi.rateSuffix(kind);
 
+    final Color accent;
+    final IconData icon;
+    switch (label) {
+      case RewardRateLabel.shareholder:
+        accent = SharePerksColors.accent;
+        icon = HugeIconsSolid.checkmarkCircle02;
+        break;
+      case RewardRateLabel.member:
+        accent = listedOnExchange
+            ? SharePerksColors.primary
+            : SharePerksColors.accent;
+        icon = HugeIconsSolid.analyticsUp;
+        break;
+      case RewardRateLabel.standard:
+        accent = SharePerksColors.primary;
+        icon = HugeIconsSolid.checkmarkCircle02;
+        break;
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(RewardRateUi.gutter, 16, RewardRateUi.gutter, 0),
+      padding: const EdgeInsets.fromLTRB(
+        RewardRateUi.gutter,
+        16,
+        RewardRateUi.gutter,
+        0,
+      ),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: SharePerksColors.accent.withValues(alpha: 0.1),
+          color: accent.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(SharePerksRadii.lg),
         ),
         child: Row(
@@ -109,55 +216,22 @@ class EligibleRewardCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: SharePerksColors.accent.withValues(alpha: 0.18),
+                color: accent.withValues(alpha: 0.18),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                HugeIconsSolid.checkmarkCircle02,
-                size: 22,
-                color: SharePerksColors.accent,
-              ),
+              child: Icon(icon, size: 22, color: accent),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Eligible shareholder',
-                    style: TextStyle(
-                      color: SharePerksColors.accent,
-                      fontSize: 11,
-                      fontFamily: SharePerksFonts.inter,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Your $perkLabel rate is unlocked',
-                    style: TextStyle(
-                      color: SharePerksColors.textPrimaryLight,
-                      fontSize: 15,
-                      fontFamily: SharePerksFonts.albertSans,
-                      fontWeight: FontWeight.w700,
-                      height: 1.25,
-                    ),
-                  ),
-                  if (!hasRate) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Shareholder benefits apply to this perk.',
-                      style: TextStyle(
-                        color: SharePerksColors.textSecondaryLight,
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                label.title,
+                style: TextStyle(
+                  color: SharePerksColors.textPrimaryLight,
+                  fontSize: 15,
+                  fontFamily: SharePerksFonts.albertSans,
+                  fontWeight: FontWeight.w700,
+                  height: 1.25,
+                ),
               ),
             ),
             if (hasRate) ...[
@@ -168,7 +242,7 @@ class EligibleRewardCard extends StatelessWidget {
                   Text(
                     rateText,
                     style: TextStyle(
-                      color: SharePerksColors.accent,
+                      color: accent,
                       fontSize: 28,
                       fontFamily: SharePerksFonts.albertSans,
                       fontWeight: FontWeight.w700,
@@ -195,11 +269,15 @@ class EligibleRewardCard extends StatelessWidget {
   }
 }
 
-/// Body section comparing shareholder vs non-shareholder reward rates.
+/// Body section comparing Shareholder / Member / Standard reward rates.
 class RewardRatesSection extends StatelessWidget {
   final num? shareholderRate;
+  final num? brokerageRate;
   final num? nonShareholderRate;
   final bool isEligible;
+  final bool isBrokerageEligible;
+  final bool listedOnExchange;
+  final bool reqReimport;
   final String? rewardType;
 
   const RewardRatesSection({
@@ -207,6 +285,10 @@ class RewardRatesSection extends StatelessWidget {
     required this.shareholderRate,
     required this.nonShareholderRate,
     required this.isEligible,
+    this.brokerageRate,
+    this.isBrokerageEligible = false,
+    this.listedOnExchange = true,
+    this.reqReimport = false,
     this.rewardType,
   });
 
@@ -214,6 +296,31 @@ class RewardRatesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final kind = RewardRateUi.kindFor(rewardType);
     final suffix = RewardRateUi.rateSuffix(kind);
+    final tier = resolveRewardTier(
+      isEligible: isEligible,
+      isBrokerageEligible: isBrokerageEligible,
+      reqReimport: reqReimport,
+    );
+    final activeLabel = resolveRewardRateLabel(
+      tier: tier,
+      listedOnExchange: listedOnExchange,
+    );
+
+    // Listed: Shareholder + optional Member + Standard.
+    // Non-listed: Member + Standard only.
+    final showShareholder = listedOnExchange;
+    final showMember = listedOnExchange
+        ? shouldShowBrokerageRateRow(
+            listedOnExchange: listedOnExchange,
+            withAnyHoldingRewardRate: brokerageRate,
+          )
+        : true;
+
+    final memberRate = memberRewardDisplayRate(
+      listedOnExchange: listedOnExchange,
+      withHolderRewardRate: shareholderRate,
+      withAnyHoldingRewardRate: brokerageRate,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -229,7 +336,10 @@ class RewardRatesSection extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          RewardRateUi.ratesDescription(isEligible: isEligible),
+          RewardRateUi.ratesDescription(
+            tier: tier,
+            listedOnExchange: listedOnExchange,
+          ),
           style: TextStyle(
             color: SharePerksColors.textSecondaryLight,
             fontSize: 12,
@@ -247,17 +357,28 @@ class RewardRatesSection extends StatelessWidget {
           ),
           child: Column(
             children: [
+              if (showShareholder)
+                _RateLine(
+                  label: RewardRateLabel.shareholder.title,
+                  value: RewardRateUi.formatRateLine(shareholderRate, suffix),
+                  isActive: activeLabel == RewardRateLabel.shareholder,
+                  accent: SharePerksColors.accent,
+                  showDivider: true,
+                ),
+              if (showMember)
+                _RateLine(
+                  label: RewardRateLabel.member.title,
+                  value: RewardRateUi.formatRateLine(memberRate, suffix),
+                  isActive: activeLabel == RewardRateLabel.member,
+                  accent: listedOnExchange
+                      ? SharePerksColors.primary
+                      : SharePerksColors.accent,
+                  showDivider: true,
+                ),
               _RateLine(
-                label: 'Shareholder rate',
-                value: RewardRateUi.formatRateLine(shareholderRate, suffix),
-                isActive: isEligible,
-                accent: SharePerksColors.accent,
-                showDivider: true,
-              ),
-              _RateLine(
-                label: 'Non-shareholder rate',
+                label: RewardRateLabel.standard.title,
                 value: RewardRateUi.formatRateLine(nonShareholderRate, suffix),
-                isActive: !isEligible,
+                isActive: activeLabel == RewardRateLabel.standard,
                 accent: SharePerksColors.primary,
                 showDivider: false,
               ),

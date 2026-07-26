@@ -1,4 +1,5 @@
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 
 class GiftCardCalcCalcData {
   final double amount;
@@ -59,19 +60,38 @@ class GiftCardCalcCalcData {
 }
 
 class GiftCardCalc {
-  GiftCardCalc(this.data, {required this.isEligible});
+  GiftCardCalc(
+    this.data, {
+    required this.isEligible,
+    this.isBrokerageEligible = false,
+  });
 
   final GiftcardDetailData data;
   final bool isEligible;
+  final bool isBrokerageEligible;
+
+  bool get _listedOnExchange => data.company?.listedOnExchange ?? true;
+
+  /// Priority: fully eligible → brokerage eligible → non-holder.
+  RewardEligibilityTier get tier => resolveRewardTier(
+    isEligible: isEligible,
+    isBrokerageEligible: isBrokerageEligible,
+    reqReimport: data.eligibility?.isBrokerConnected?.reqReimport == true,
+  );
 
   num get rewardRatePercent {
-    final rate = isEligible
-        ? data.eligibility?.withHolderRewardRate
-        : data.eligibility?.nonHolderRewardRate;
-    return (rate ?? 0).clamp(0, 100);
+    final eligibility = data.eligibility;
+    final rate = resolveRewardRate(
+      tier: tier,
+      withHolderRewardRate: eligibility?.withHolderRewardRate,
+      withAnyHoldingRewardRate: eligibility?.withAnyHoldingRewardRate,
+      nonHolderRewardRate: eligibility?.nonHolderRewardRate,
+      listedOnExchange: _listedOnExchange,
+    );
+    return rate.clamp(0, 100);
   }
 
-  /// Applies shareholder / non-shareholder [rewardRatePercent] to [amount].
+  /// Applies the active 3-tier [rewardRatePercent] to [amount].
   GiftCardCalcCalcData calc(double amount) {
     if (amount <= 0) {
       return const GiftCardCalcCalcData(

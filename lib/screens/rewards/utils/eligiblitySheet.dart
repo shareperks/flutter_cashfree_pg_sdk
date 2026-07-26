@@ -6,18 +6,30 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/integrations/analytics/tracked_action.dart';
+import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
 
 /// Bottom sheet after verifying perk eligibility.
 void eligibilitySheet(
   BuildContext context, {
   required bool isEligible,
+  bool isBrokerageEligible = false,
   required String rewardId,
   num? shareholderRate,
+  num? brokerageRate,
   num? nonShareholderRate,
+  bool listedOnExchange = true,
+  bool reqReimport = false,
   String? rewardType,
 }) {
+  final tier = resolveRewardTier(
+    isEligible: isEligible,
+    isBrokerageEligible: isBrokerageEligible,
+    reqReimport: reqReimport,
+  );
   final restoreScreen = trackBottomSheet('eligibility_result_sheet', {
     'is_eligible': isEligible,
+    'is_brokerage_eligible': isBrokerageEligible,
+    'eligibility_tier': tier.name,
   });
   showModalBottomSheet<void>(
     context: context,
@@ -30,9 +42,17 @@ void eligibilitySheet(
     builder: (sheetContext) {
       final bottom = MediaQuery.viewInsetsOf(sheetContext).bottom;
       final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.85;
-      final imageAsset = isEligible
-          ? Assets.ASSETS_CARDS_ELIGIBLEREWARD_PNG
-          : Assets.ASSETS_CARDS_NOTELIGIBLEREWARD_PNG;
+      final imageAsset = tier == RewardEligibilityTier.nonHolder
+          ? Assets.ASSETS_CARDS_NOTELIGIBLEREWARD_PNG
+          : Assets.ASSETS_CARDS_ELIGIBLEREWARD_PNG;
+
+      final proceedLabel = switch (tier) {
+        RewardEligibilityTier.fullyEligible => listedOnExchange
+            ? 'Claim Shareholder Perk'
+            : 'Claim Member Perk',
+        RewardEligibilityTier.brokerageEligible => 'Claim Member Perk',
+        RewardEligibilityTier.nonHolder => 'Claim Standard Reward',
+      };
 
       return ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
@@ -50,8 +70,12 @@ void eligibilitySheet(
               const SizedBox(height: 20),
               RewardRatesSection(
                 shareholderRate: shareholderRate,
+                brokerageRate: brokerageRate,
                 nonShareholderRate: nonShareholderRate,
                 isEligible: isEligible,
+                isBrokerageEligible: isBrokerageEligible,
+                listedOnExchange: listedOnExchange,
+                reqReimport: reqReimport,
                 rewardType: rewardType,
               ),
               const SizedBox(height: 20),
@@ -65,17 +89,20 @@ void eligibilitySheet(
                       extra: {
                         "rewardId": rewardId,
                         "isEligible": isEligible.toString(),
+                        "isBrokerageEligible": isBrokerageEligible.toString(),
+                        // Only force standard rate when neither higher tier applies.
+                        "forceNonHolder":
+                            (tier == RewardEligibilityTier.nonHolder)
+                                .toString(),
                       },
                     );
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: isEligible
+                    backgroundColor: tier == RewardEligibilityTier.fullyEligible
                         ? SharePerksColors.accent
                         : SharePerksColors.primary,
                   ),
-                  child: Text(
-                    isEligible ? 'Proceed' : 'Claim Non-Shareholder Perk',
-                  ),
+                  child: Text(proceedLabel),
                 ),
               ),
               Center(
