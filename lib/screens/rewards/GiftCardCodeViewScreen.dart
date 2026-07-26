@@ -190,6 +190,28 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
                                       ),
                                     ),
                                   ),
+                                  if (data?.data?.paidViaLabel != null)
+                                    KeyValueList(
+                                      keyWidth: 90,
+                                      keyWidget: Text(
+                                        "Payment",
+                                        style: TextStyle(
+                                          color: const Color(0xFF898989),
+                                          fontSize: 12,
+                                          fontFamily: SharePerksFonts.inter,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      valueWidget: Text(
+                                        data!.data!.paidViaLabel!,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontFamily: SharePerksFonts.inter,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
                                   KeyValueList(
                                     keyWidth: 90,
                                     keyWidget: Text(

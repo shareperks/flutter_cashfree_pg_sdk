@@ -19,9 +19,9 @@ class MyClaimedGiftcardDetailResponse {
   }
 
   Map<String, dynamic> toJson() => {
-        'success': success,
-        if (data != null) 'data': data!.toJson(),
-      };
+    'success': success,
+    if (data != null) 'data': data!.toJson(),
+  };
 }
 
 /// Claimed gift card instance with full `card` + catalog `info`.
@@ -34,6 +34,10 @@ class MyClaimedGiftcardDetailData {
     this.createdAt,
     this.card,
     this.info,
+    this.paymentMethod,
+    this.walletAmount,
+    this.gatewayAmount,
+    this.gateway,
   });
 
   final String? id;
@@ -43,6 +47,46 @@ class MyClaimedGiftcardDetailData {
   final String? createdAt;
   final MyClaimedGiftcardDetailCard? card;
   final MyClaimedGiftcardDetailInfo? info;
+
+  /// `GATEWAY` | `WALLET` | `HYBRID`
+  final String? paymentMethod;
+  final double? walletAmount;
+  final double? gatewayAmount;
+
+  /// `WALLET` | `CASHFREE` | `RAZORPAY`
+  final String? gateway;
+
+  /// Human-readable tender summary for order details.
+  String? get paidViaLabel {
+    final method = (paymentMethod ?? '').toUpperCase();
+    final gw = (gateway ?? '').toUpperCase();
+    final wallet = walletAmount ?? 0;
+    final usedWallet = method == 'WALLET' || method == 'HYBRID' || wallet > 0;
+
+    String gatewayLabel;
+    if (gw == 'CASHFREE') {
+      gatewayLabel = 'CashFree';
+    } else if (gw == 'RAZORPAY') {
+      gatewayLabel = 'Razorpay';
+    } else if (gw == 'WALLET' || method == 'WALLET') {
+      return 'Paid via Wallet';
+    } else {
+      gatewayLabel = 'UPI/Card';
+    }
+
+    if (method == 'WALLET' || (usedWallet && (gatewayAmount ?? 0) <= 0)) {
+      return 'Paid via Wallet';
+    }
+    if (usedWallet) {
+      return 'Paid via Wallet + $gatewayLabel';
+    }
+    if (gw == 'CASHFREE') return 'Paid via CashFree';
+    if (gw == 'RAZORPAY') return 'Paid via Razorpay';
+    if (method == 'GATEWAY' || paymentId != null) {
+      return 'Paid via $gatewayLabel';
+    }
+    return null;
+  }
 
   factory MyClaimedGiftcardDetailData.fromJson(Map<String, dynamic> json) {
     return MyClaimedGiftcardDetailData(
@@ -61,18 +105,31 @@ class MyClaimedGiftcardDetailData {
               json['info'] as Map<String, dynamic>,
             )
           : null,
+      paymentMethod: (json['paymentMethod'] ?? json['payment_method'])
+          ?.toString(),
+      walletAmount: parseJsonDouble(
+        json['walletAmount'] ?? json['wallet_amount'],
+      ),
+      gatewayAmount: parseJsonDouble(
+        json['gatewayAmount'] ?? json['gateway_amount'],
+      ),
+      gateway: json['gateway']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'isUsedByUser': isUsedByUser,
-        'paymentId': paymentId,
-        'status': status,
-        'createdAt': createdAt,
-        if (card != null) 'card': card!.toJson(),
-        if (info != null) 'info': info!.toJson(),
-      };
+    'id': id,
+    'isUsedByUser': isUsedByUser,
+    'paymentId': paymentId,
+    'status': status,
+    'createdAt': createdAt,
+    if (card != null) 'card': card!.toJson(),
+    if (info != null) 'info': info!.toJson(),
+    if (paymentMethod != null) 'paymentMethod': paymentMethod,
+    if (walletAmount != null) 'walletAmount': walletAmount,
+    if (gatewayAmount != null) 'gatewayAmount': gatewayAmount,
+    if (gateway != null) 'gateway': gateway,
+  };
 }
 
 /// Physical / redemption fields for the claimed voucher.
@@ -114,16 +171,16 @@ class MyClaimedGiftcardDetailCard {
   }
 
   Map<String, dynamic> toJson() => {
-        'eligible': eligible,
-        'payAmount': payAmount,
-        'rewardAmount': rewardAmount,
-        'savedAmount': savedAmount,
-        'code': code,
-        'pin': pin,
-        'expireAt': expireAt,
-        'expireAtFormatted': expireAtFormatted,
-        'remainingDays': remainingDays,
-      };
+    'eligible': eligible,
+    'payAmount': payAmount,
+    'rewardAmount': rewardAmount,
+    'savedAmount': savedAmount,
+    'code': code,
+    'pin': pin,
+    'expireAt': expireAt,
+    'expireAtFormatted': expireAtFormatted,
+    'remainingDays': remainingDays,
+  };
 }
 
 /// Catalog / marketing info for the underlying perk.
@@ -167,14 +224,14 @@ class MyClaimedGiftcardDetailInfo {
   }
 
   Map<String, dynamic> toJson() => {
-        'rewardId': rewardId,
-        'name': name,
-        'brandId': brandId,
-        'brandName': brandName,
-        'image': image,
-        'banner': banner,
-        'provider': provider,
-        'categoryName': categoryName,
-        'howToRedeem': howToRedeem,
-      };
+    'rewardId': rewardId,
+    'name': name,
+    'brandId': brandId,
+    'brandName': brandName,
+    'image': image,
+    'banner': banner,
+    'provider': provider,
+    'categoryName': categoryName,
+    'howToRedeem': howToRedeem,
+  };
 }

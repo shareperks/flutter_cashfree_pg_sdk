@@ -1,3 +1,5 @@
+import 'package:shareperks/repository/models/home_common_models.dart';
+
 /// Body for `POST /payment/giftcard/proceed`.
 class GiftCardProceedRequest {
   const GiftCardProceedRequest({
@@ -8,30 +10,40 @@ class GiftCardProceedRequest {
     this.isBrokerageEligible = false,
     this.journeyId,
     this.couponCode,
+    this.useWallet,
+    this.useFullWallet,
+    this.walletAmount,
   });
 
-  /// Dual contract for backward compatibility:
-  /// - **No coupon:** client SharePerks-discounted payable (older behavior).
-  /// - **With [couponCode]:** same SharePerks-discounted payable as the coupon
-  ///   order base; server applies coupon on top and returns gateway `amount` /
-  ///   optional `pricing`.
+  /// Dual contract:
+  /// - **No coupon:** SharePerks-discounted payable (legacy gateway-only).
+  /// - **With [couponCode]:** face amount; server does
+  ///   face → coupon → SharePerks → wallet → gateway.
   final double payAmount;
 
   /// Gift-card face / entered amount.
   final double rewardAmount;
   final String creditId;
 
-  /// Fully eligible (max holder rate). Mid-tier users remain `false`.
-  /// Used as a hint; without coupon the server trusts client [payAmount].
+  /// Fully eligible (max holder rate). Hint only when coupon path applies.
   final bool eligible;
 
   /// Mid tier: broker connected with holdings, not fully eligible.
   final bool isBrokerageEligible;
   final String? journeyId;
 
-  /// When set, server applies the coupon on [payAmount] (SharePerks payable).
-  /// Omit for the legacy path (charge client [payAmount] as-is).
+  /// When set, server stacks face → coupon → SharePerks (then wallet).
+  /// Apply/validate against face — never a client-reduced base.
   final String? couponCode;
+
+  /// Opt into wallet tender. Server caps by balance and payable.
+  final bool? useWallet;
+
+  /// Prefer using as much wallet balance as allowed.
+  final bool? useFullWallet;
+
+  /// Optional explicit wallet portion (rupees). Server still caps.
+  final double? walletAmount;
 
   Map<String, dynamic> toJson() => {
     'payAmount': payAmount,
@@ -42,6 +54,9 @@ class GiftCardProceedRequest {
     if (journeyId != null) 'journey_id': journeyId,
     if (couponCode != null && couponCode!.trim().isNotEmpty)
       'couponCode': couponCode!.trim().toUpperCase(),
+    if (useWallet != null) 'useWallet': useWallet,
+    if (useFullWallet != null) 'useFullWallet': useFullWallet,
+    if (walletAmount != null) 'walletAmount': walletAmount,
   };
 }
 
@@ -51,25 +66,27 @@ class GiftCardProceedPricing {
     required this.couponDiscount,
     required this.sharePerksDiscount,
     required this.chargeAmount,
+    this.walletAmount,
+    this.gatewayAmount,
   });
 
   final double faceAmount;
   final double couponDiscount;
   final double sharePerksDiscount;
+
+  /// Payable after coupon + SharePerks (before wallet split), when provided.
   final double chargeAmount;
+  final double? walletAmount;
+  final double? gatewayAmount;
 
   factory GiftCardProceedPricing.fromJson(Map<String, dynamic> json) {
-    double readAmount(String key) {
-      final raw = json[key];
-      if (raw is num) return raw.toDouble();
-      return double.tryParse(raw?.toString() ?? '') ?? 0;
-    }
-
     return GiftCardProceedPricing(
-      faceAmount: readAmount('faceAmount'),
-      couponDiscount: readAmount('couponDiscount'),
-      sharePerksDiscount: readAmount('sharePerksDiscount'),
-      chargeAmount: readAmount('chargeAmount'),
+      faceAmount: parseJsonDouble(json['faceAmount']) ?? 0,
+      couponDiscount: parseJsonDouble(json['couponDiscount']) ?? 0,
+      sharePerksDiscount: parseJsonDouble(json['sharePerksDiscount']) ?? 0,
+      chargeAmount: parseJsonDouble(json['chargeAmount']) ?? 0,
+      walletAmount: parseJsonDouble(json['walletAmount']),
+      gatewayAmount: parseJsonDouble(json['gatewayAmount']),
     );
   }
 }
@@ -86,16 +103,10 @@ class GiftCardProceedCoupon {
   final double payableAfterDiscount;
 
   factory GiftCardProceedCoupon.fromJson(Map<String, dynamic> json) {
-    double readAmount(String key) {
-      final raw = json[key];
-      if (raw is num) return raw.toDouble();
-      return double.tryParse(raw?.toString() ?? '') ?? 0;
-    }
-
     return GiftCardProceedCoupon(
       code: json['code']?.toString() ?? '',
-      discountApplied: readAmount('discountApplied'),
-      payableAfterDiscount: readAmount('payableAfterDiscount'),
+      discountApplied: parseJsonDouble(json['discountApplied']) ?? 0,
+      payableAfterDiscount: parseJsonDouble(json['payableAfterDiscount']) ?? 0,
     );
   }
 }
@@ -113,6 +124,13 @@ class GiftCardProceedResponse {
     this.currency,
     this.pricing,
     this.coupon,
+    this.paymentMethod = 'GATEWAY',
+    this.walletAmount = 0,
+    this.gatewayAmount = 0,
+    this.paid,
+    this.orderStatus,
+    this.claimedId,
+    this.sessionId,
   });
 
   final bool success;
@@ -120,13 +138,44 @@ class GiftCardProceedResponse {
   final String orderId;
   final String razorpayOrderId;
 
-  /// Amount in paise for Razorpay Checkout.
+  /// Razorpay Checkout amount in paise (gateway charge). For `WALLET` may be 0.
   final int amountPaise;
   final String? keyId;
+
+  /// `WALLET` | `CASHFREE` | `RAZORPAY`
   final String? gateway;
   final String? currency;
   final GiftCardProceedPricing? pricing;
   final GiftCardProceedCoupon? coupon;
+
+  /// `GATEWAY` | `WALLET` | `HYBRID`
+  final String paymentMethod;
+  final double walletAmount;
+  final double gatewayAmount;
+  final bool? paid;
+  final String? orderStatus;
+  final String? claimedId;
+
+  /// Cashfree payment session id when [gateway] is `CASHFREE`.
+  final String? sessionId;
+
+  bool get isWalletOnly {
+    final g = (gateway ?? '').toUpperCase();
+    final m = paymentMethod.toUpperCase();
+    if (g == 'WALLET' || m == 'WALLET') return true;
+    if (paid == true && gatewayAmount <= 0 && walletAmount > 0) return true;
+    final status = (orderStatus ?? '').toUpperCase();
+    return paid == true && status == 'PAID' && razorpayOrderId.isEmpty;
+  }
+
+  bool get isHybrid => paymentMethod.toUpperCase() == 'HYBRID';
+
+  /// Rupees charged on the gateway (authoritative when present).
+  double get gatewayChargeRupees {
+    if (gatewayAmount > 0) return gatewayAmount;
+    if (amountPaise > 0) return amountPaise / 100.0;
+    return 0;
+  }
 
   factory GiftCardProceedResponse.fromJson(Map<String, dynamic> json) {
     final data = json['data'] is Map<String, dynamic>
@@ -139,6 +188,14 @@ class GiftCardProceedResponse {
         : amountRaw is num
         ? amountRaw.round()
         : int.tryParse(amountRaw?.toString() ?? '') ?? 0;
+
+    final paymentMethod =
+        (data['paymentMethod'] ?? data['payment_method'])?.toString() ??
+        'GATEWAY';
+    final walletAmount =
+        parseJsonDouble(data['walletAmount'] ?? data['wallet_amount']) ?? 0;
+    final gatewayAmount =
+        parseJsonDouble(data['gatewayAmount'] ?? data['gateway_amount']) ?? 0;
 
     return GiftCardProceedResponse(
       success: data['success'] as bool? ?? json['success'] as bool? ?? false,
@@ -161,6 +218,17 @@ class GiftCardProceedResponse {
               Map<String, dynamic>.from(data['coupon'] as Map),
             )
           : null,
+      paymentMethod: paymentMethod,
+      walletAmount: walletAmount,
+      gatewayAmount: gatewayAmount,
+      paid: data['paid'] as bool?,
+      orderStatus: (data['orderStatus'] ?? data['order_status'])?.toString(),
+      claimedId: (data['claimedId'] ?? data['claimed_id'])?.toString(),
+      sessionId:
+          (data['sessionId'] ??
+                  data['paymentSessionId'] ??
+                  data['payment_session_id'])
+              ?.toString(),
     );
   }
 }

@@ -9,14 +9,14 @@ class GiftCardCouponApplyRequest {
 
   final String code;
 
-  /// Payable before coupon (after eligibility rate), in rupees.
-  /// For gift cards this is the SharePerks-discounted amount, not face.
+  /// Face / entered gift-card amount used for coupon eligibility.
+  /// Do not send a SharePerks- or wallet-reduced base.
   final double orderAmount;
 
   Map<String, dynamic> toJson() => {
-        'code': code.trim().toUpperCase(),
-        'orderAmount': orderAmount,
-      };
+    'code': code.trim().toUpperCase(),
+    'orderAmount': orderAmount,
+  };
 }
 
 /// `data` from a successful coupon apply response.
@@ -55,13 +55,13 @@ class GiftCardCouponApplyData {
   }
 
   Map<String, dynamic> toJson() => {
-        'code': code,
-        'discountType': discountType,
-        'discountAmount': discountAmount,
-        'discountPercentage': discountPercentage,
-        'discountApplied': discountApplied,
-        'payableAfterDiscount': payableAfterDiscount,
-      };
+    'code': code,
+    'discountType': discountType,
+    'discountAmount': discountAmount,
+    'discountPercentage': discountPercentage,
+    'discountApplied': discountApplied,
+    'payableAfterDiscount': payableAfterDiscount,
+  };
 
   bool get isFixed => discountType.toUpperCase() == 'FIXED';
 

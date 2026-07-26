@@ -25,8 +25,10 @@ import 'package:shareperks/repository/models/razorpay_verify_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
 import 'package:shareperks/repository/services/payment/giftcard_payment.service.dart';
 import 'package:shareperks/repository/services/payment/razorpay.service.dart';
+import 'package:shareperks/repository/services/wallet/wallet.service.dart';
 import 'package:shareperks/screens/rewards/utils/rewardCalc.dart';
 import 'package:shareperks/screens/rewards/utils/reward_eligibility.dart';
+import 'dart:math' as math;
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/amount_picker.dart';
 import 'package:soui/elements/border_card.dart';
@@ -54,7 +56,8 @@ class GiftCardAmountScreen extends StatefulWidget {
   State<GiftCardAmountScreen> createState() => _GiftCardAmountScreenState();
 }
 
-class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
+class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
+    with WidgetsBindingObserver {
   bool _loading = true;
   bool _paying = false;
   bool _paymentStarted = false;
@@ -68,6 +71,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   bool _applyingCoupon = false;
   GiftCardCouponApplyData? _appliedCoupon;
   GiftCardProceedPricing? _serverPricing;
+  double _walletBalance = 0;
+  bool _useWallet = false;
+  String? _lastProceedOrderId;
   GiftcardAmount? get _amountConfig => data?.data?.amount;
 
   GiftcardEligibility? get _eligibility => data?.data?.eligibility;
@@ -111,6 +117,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       } else {
         _amountController.clear();
       }
+      await _refreshWalletBalance(silent: true);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -120,9 +127,26 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     }
   }
 
+  Future<void> _refreshWalletBalance({bool silent = false}) async {
+    try {
+      final info = await WalletDataService.getWalletInfo();
+      final balance = info.wallet?.balance ?? 0;
+      if (!mounted) return;
+      setState(() {
+        _walletBalance = balance;
+        if (balance <= 0) _useWallet = false;
+      });
+    } catch (_) {
+      if (!silent && mounted) {
+        Fluttertoast.showToast(msg: 'Could not refresh wallet balance');
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     trackAction(AnalyticsEvent.giftcardAmountScreenViewed, {
       'reward_id': widget.rewardId,
       'is_eligible': widget.isEligible,
@@ -132,19 +156,33 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     loadData();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshWalletBalance(silent: true);
+      final orderId = _lastProceedOrderId;
+      if (orderId != null && orderId.isNotEmpty && !_paymentFinished) {
+        _syncOrderStatusAfterGateway(orderId);
+      }
+    }
+  }
+
   void _onProceedButtonTap() {
-    trackButtonClick('Proceed to Claim Credit', {
+    trackButtonClick(_proceedCtaLabel, {
       'gift_card_name': data?.data?.basicInfo?.title ?? '',
       'is_eligible': _isEligible,
       'is_brokerage_eligible': _isBrokerageEligible,
       'eligibility_tier': _tier.name,
       'selected_amount': ?amount,
+      'use_wallet': _useWallet,
+      'wallet_balance': _walletBalance,
     });
     _onProceedToPay();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (_paymentStarted && !_paymentFinished) {
       trackAction(AnalyticsEvent.giftcardPaymentAbandoned, {
         'abandon_stage': 'amount_screen',
@@ -298,30 +336,80 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     return _calc?.calc(selected.toDouble());
   }
 
-  /// SharePerks holding discount on the face amount (before coupon).
-  double? get _sharePerksDiscountAmount {
-    if (_serverPricing != null) {
-      return _serverPricing!.sharePerksDiscount;
-    }
-    final pricing = _pricing;
-    if (pricing == null || !pricing.hasDiscount) return null;
-    return pricing.savings;
-  }
-
-  /// SharePerks-discounted payable — the base coupon apply uses.
-  double? get _sharePerksPayable => _pricing?.discountedAmount;
-
-  /// Final charge preview: SharePerks payable, then coupon if applied.
-  /// After proceed with coupon, prefer server [pricing.chargeAmount].
-  double? get _finalPayAmount {
-    if (_serverPricing != null && _serverPricing!.chargeAmount > 0) {
-      return _serverPricing!.chargeAmount;
-    }
+  /// Face after coupon (before SharePerks). Coupon apply uses face.
+  double? get _amountAfterCoupon {
+    final face = _pricing?.amount;
+    if (face == null) return null;
     final coupon = _appliedCoupon;
     if (coupon != null && coupon.payableAfterDiscount > 0) {
       return coupon.payableAfterDiscount;
     }
-    return _sharePerksPayable;
+    return face;
+  }
+
+  /// Payable after face → coupon → SharePerks (before wallet).
+  double? get _payableAfterDiscounts {
+    if (_serverPricing != null && _serverPricing!.chargeAmount > 0) {
+      return _serverPricing!.chargeAmount;
+    }
+    final afterCoupon = _amountAfterCoupon;
+    final pricing = _pricing;
+    if (afterCoupon == null || pricing == null) return null;
+    if (_appliedCoupon == null) return pricing.discountedAmount;
+    if (pricing.percent <= 0) return afterCoupon;
+    return ((afterCoupon * (100 - pricing.percent)) / 100).round().toDouble();
+  }
+
+  /// SharePerks holding discount on the post-coupon amount (preview).
+  double? get _sharePerksDiscountAmount {
+    if (_serverPricing != null) {
+      return _serverPricing!.sharePerksDiscount;
+    }
+    final afterCoupon = _amountAfterCoupon;
+    final pricing = _pricing;
+    if (afterCoupon == null || pricing == null || pricing.percent <= 0) {
+      return null;
+    }
+    final payable = _payableAfterDiscounts;
+    if (payable == null) return null;
+    final savings = afterCoupon - payable;
+    return savings > 0 ? savings : 0;
+  }
+
+  double get _previewWalletAmount {
+    if (!_useWallet) return 0;
+    final payable = _payableAfterDiscounts;
+    if (payable == null || payable <= 0) return 0;
+    return math.min(_walletBalance, payable);
+  }
+
+  double? get _previewGatewayAmount {
+    final payable = _payableAfterDiscounts;
+    if (payable == null) return null;
+    return math.max(0, payable - _previewWalletAmount);
+  }
+
+  /// Final user-facing payable (gateway remainder when wallet used).
+  double? get _finalPayAmount =>
+      _previewGatewayAmount ?? _payableAfterDiscounts;
+
+  bool get _walletCoversFullPayable {
+    final payable = _payableAfterDiscounts;
+    if (payable == null || payable <= 0) return false;
+    return _useWallet && _walletBalance >= payable;
+  }
+
+  String get _proceedCtaLabel {
+    final payable = _payableAfterDiscounts;
+    if (payable == null) return 'Proceed to Claim Credit';
+    if (_walletCoversFullPayable) {
+      return 'Pay ${_formatInr(payable)} with wallet';
+    }
+    final gateway = _previewGatewayAmount ?? payable;
+    if (_useWallet && _previewWalletAmount > 0) {
+      return 'Pay ${_formatInr(gateway)} via Razorpay';
+    }
+    return 'Pay ${_formatInr(payable)}';
   }
 
   String get _formattedFinalPayable {
@@ -336,8 +424,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   }
 
   Future<void> _applyCoupon() async {
-    final sharePerksPayable = _sharePerksPayable;
-    if (sharePerksPayable == null || _applyingCoupon || _paying) return;
+    final face = _pricing?.amount;
+    if (face == null || _applyingCoupon || _paying) return;
 
     final code = _couponController.text.trim();
     if (code.isEmpty) {
@@ -351,10 +439,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     });
 
     try {
-      // Coupon is applied on the SharePerks-discounted amount (not face).
-      // face → SharePerks → coupon.
+      // Coupon eligibility is always against face (not SharePerks/wallet).
       final applied = await RewardListingDataService.applyGiftcardCoupon(
-        GiftCardCouponApplyRequest(code: code, orderAmount: sharePerksPayable),
+        GiftCardCouponApplyRequest(code: code, orderAmount: face),
       );
       if (!mounted) return;
       setState(() {
@@ -412,7 +499,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     'reward_id': widget.rewardId,
     'perk_type': 'giftcard',
     'face_value': pricing.amount,
-    'amount': _finalPayAmount ?? pricing.discountedAmount,
+    'amount': _payableAfterDiscounts ?? pricing.discountedAmount,
     'shareperks_payable': pricing.discountedAmount,
     'shareperks_discount': _sharePerksDiscountAmount,
     'discount_percent': pricing.percent,
@@ -420,10 +507,106 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     'is_eligible': _isEligible,
     'is_brokerage_eligible': _isBrokerageEligible,
     'eligibility_tier': _tier.name,
+    'use_wallet': _useWallet,
+    'wallet_balance': _walletBalance,
+    'wallet_amount': _previewWalletAmount,
+    'gateway_amount': _previewGatewayAmount,
     if (_appliedCoupon != null) 'coupon_code': _appliedCoupon!.code,
     if (_appliedCoupon != null)
       'coupon_discount': _appliedCoupon!.discountApplied,
   };
+
+  Map<String, Object?> _orderPaymentProps(GiftCardProceedResponse order) => {
+    'payment_method': order.paymentMethod,
+    'wallet_amount': order.walletAmount,
+    'gateway_amount': order.gatewayAmount,
+    'wallet_balance': _walletBalance,
+    'gateway': order.gateway,
+    'order_id': order.orderId,
+    if (_appliedCoupon != null) 'coupon_code': _appliedCoupon!.code,
+    if (order.claimedId != null) 'claimed_id': order.claimedId!,
+    if (order.orderStatus != null) 'order_status': order.orderStatus!,
+  };
+
+  static const _terminalGatewayStatuses = {
+    'PAID',
+    'FAILED',
+    'EXPIRED',
+    'CANCELLED',
+    'TERMINATED',
+    'VOID',
+  };
+
+  Future<void> _syncOrderStatusAfterGateway(
+    String orderId, {
+    bool navigateIfPaid = false,
+    double? successAmount,
+  }) async {
+    try {
+      final status = await RazorpayPaymentService.fetchGiftCardOrderStatus(
+        orderId,
+      );
+      if (!mounted) return;
+
+      final orderStatus = GiftCardOrderStatusData.orderStatusOf(status);
+      final paid = GiftCardOrderStatusData.isPaid(status);
+
+      if (orderStatus != null &&
+          _terminalGatewayStatuses.contains(orderStatus) &&
+          !paid) {
+        // Status sync triggers server wallet refund for hybrid failures.
+        trackAction(AnalyticsEvent.giftcardWalletRefundObserved, {
+          'order_id': orderId,
+          'order_status': orderStatus,
+          'wallet_balance': _walletBalance,
+        });
+      }
+
+      if (paid && navigateIfPaid && !_paymentFinished) {
+        _paymentFinished = true;
+        final claimedId = GiftCardOrderStatusData.claimedIdOf(status);
+        if (!mounted) return;
+        context.pushReplacementNamed(
+          RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
+          extra: {
+            'orderId': orderId,
+            if (claimedId != null) 'claimedId': claimedId,
+            if (successAmount != null) 'amount': successAmount,
+          },
+        );
+        return;
+      }
+    } catch (_) {
+      // Best-effort sync — wallet refresh still runs below.
+    } finally {
+      await _refreshWalletBalance(silent: true);
+    }
+  }
+
+  void _openWalletOnlySuccess({
+    required GiftCardProceedResponse order,
+    required int paymentCheckGeneration,
+  }) {
+    if (!_isCurrentPaymentCheck(paymentCheckGeneration)) return;
+    _paymentFinished = true;
+
+    final amount = order.walletAmount > 0
+        ? order.walletAmount
+        : (order.pricing?.chargeAmount ?? order.amountPaise / 100.0);
+
+    if (!mounted) return;
+    context.pushReplacementNamed(
+      RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
+      extra: {
+        'orderId': order.orderId,
+        if (order.claimedId != null && order.claimedId!.isNotEmpty)
+          'claimedId': order.claimedId,
+        'amount': amount,
+      },
+    );
+    _refreshWalletBalance(silent: true);
+    if (mounted) setState(() => _paying = false);
+  }
 
   Future<void> _onProceedToPay() async {
     final pricing = _pricing;
@@ -438,30 +621,42 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         ..._purchaseProps(pricing),
       });
 
-      // Always send SharePerks-discounted payable as payAmount.
-      // - No coupon: server charges it as-is (legacy).
-      // - With coupon: server applies coupon on this base (face → SP → coupon).
+      final hasCoupon = _appliedCoupon != null;
+      // No coupon: legacy SharePerks payable. With coupon: face (server stacks
+      // face → coupon → SharePerks → wallet).
+      final proceedPayAmount = hasCoupon
+          ? pricing.amount
+          : pricing.discountedAmount;
+
       final order = await GiftCardPaymentService.proceedGiftCardPayment(
         GiftCardProceedRequest(
-          payAmount: pricing.discountedAmount,
+          payAmount: proceedPayAmount,
           rewardAmount: pricing.amount,
           creditId: widget.rewardId,
           eligible: _isEligible,
           isBrokerageEligible: _isBrokerageEligible,
           journeyId: JourneyContext.currentJourneyId,
           couponCode: _appliedCoupon?.code,
+          useWallet: _useWallet ? true : null,
+          useFullWallet: _useWallet ? true : null,
         ),
       );
 
-      if (mounted && order.pricing != null) {
-        setState(() => _serverPricing = order.pricing);
-      }
+      if (!mounted) return;
+      setState(() {
+        _lastProceedOrderId = order.orderId;
+        if (order.pricing != null) _serverPricing = order.pricing;
+        // Hybrid: wallet already debited when the gateway session was created.
+        if (order.walletAmount > 0 && !order.isWalletOnly) {
+          _walletBalance = math.max(0, _walletBalance - order.walletAmount);
+        }
+      });
 
       trackAction(AnalyticsEvent.giftcardPaymentOrderCreated, {
         'label': 'Payment Order Created',
         ..._purchaseProps(pricing),
+        ..._orderPaymentProps(order),
         'razorpay_order_id': order.razorpayOrderId,
-        'order_id': order.orderId,
         if (order.pricing != null)
           'server_charge_amount': order.pricing!.chargeAmount,
         if (order.pricing != null)
@@ -470,12 +665,65 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           'server_shareperks_discount': order.pricing!.sharePerksDiscount,
       });
 
+      final gateway =
+          (order.gateway ?? (order.isWalletOnly ? 'WALLET' : 'RAZORPAY'))
+              .toUpperCase();
+
+      if (order.isWalletOnly || gateway == 'WALLET') {
+        trackAction(AnalyticsEvent.giftcardWalletOnlyCheckout, {
+          'label': 'Wallet Only Checkout',
+          ..._purchaseProps(pricing),
+          ..._orderPaymentProps(order),
+        });
+        trackAction(AnalyticsEvent.giftcardPaymentSucceeded, {
+          'label': 'Payment Completed',
+          'detail': 'success',
+          ..._purchaseProps(pricing),
+          ..._orderPaymentProps(order),
+        });
+        _openWalletOnlySuccess(
+          order: order,
+          paymentCheckGeneration: paymentCheckGeneration,
+        );
+        return;
+      }
+
+      if (order.isHybrid) {
+        trackAction(AnalyticsEvent.giftcardHybridCheckout, {
+          'label': 'Hybrid Checkout',
+          ..._purchaseProps(pricing),
+          ..._orderPaymentProps(order),
+        });
+      }
+
+      if (gateway == 'CASHFREE') {
+        trackAction(AnalyticsEvent.giftcardPaymentFailed, {
+          'label': 'Payment Failed',
+          'detail': 'failed',
+          ..._purchaseProps(pricing),
+          ..._orderPaymentProps(order),
+          'failure_stage': 'unsupported_gateway',
+          'reason': 'cashfree_not_supported_in_app',
+        });
+        Fluttertoast.showToast(
+          msg: 'This payment method is not supported. Please try again.',
+        );
+        await _syncOrderStatusAfterGateway(order.orderId);
+        if (mounted) setState(() => _paying = false);
+        return;
+      }
+
+      // Default / RAZORPAY — charge gatewayAmount only (amount is in paise).
       trackAction(AnalyticsEvent.giftcardCheckoutOpened, {
         'label': 'Opened Payment Gateway',
         ..._purchaseProps(pricing),
+        ..._orderPaymentProps(order),
         'razorpay_order_id': order.razorpayOrderId,
-        'order_id': order.orderId,
       });
+
+      final successAmount = order.gatewayChargeRupees > 0
+          ? order.gatewayChargeRupees
+          : (order.pricing?.chargeAmount ?? order.amountPaise / 100.0);
 
       RazorpayPayment.openCheckout(
         razorpayOrderId: order.razorpayOrderId,
@@ -486,13 +734,15 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           response: response,
           internalOrderId: order.orderId,
           paymentCheckGeneration: paymentCheckGeneration,
-          amount: order.pricing?.chargeAmount ?? (order.amountPaise / 100),
+          amount: successAmount,
+          order: order,
         ),
         onError: (error) => _handleRazorpayError(
           error: error,
           paymentCheckGeneration: paymentCheckGeneration,
           razorpayOrderId: order.razorpayOrderId,
           internalOrderId: order.orderId,
+          order: order,
         ),
       );
     } on ApiErrorResponse catch (e) {
@@ -502,11 +752,17 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         ..._purchaseProps(pricing),
         'failure_stage': 'order_creation',
         'reason': e.displayMessage,
+        'use_wallet': _useWallet,
+        'wallet_balance': _walletBalance,
       });
-      print(e);
       if (mounted) {
         Fluttertoast.showToast(msg: e.displayMessage);
         setState(() => _paying = false);
+      }
+      // Balance may have changed between load and checkout.
+      final msg = e.displayMessage.toLowerCase();
+      if (msg.contains('wallet') || msg.contains('balance')) {
+        await _refreshWalletBalance();
       }
     } catch (e) {
       trackAction(AnalyticsEvent.giftcardPaymentFailed, {
@@ -516,7 +772,6 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         'failure_stage': 'checkout_launch',
         'reason': e.toString(),
       });
-      print(e);
       if (mounted) {
         Fluttertoast.showToast(msg: 'Could not start payment');
         setState(() => _paying = false);
@@ -532,6 +787,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     required String internalOrderId,
     required int paymentCheckGeneration,
     required double amount,
+    GiftCardProceedResponse? order,
   }) async {
     if (!_isCurrentPaymentCheck(paymentCheckGeneration)) return;
 
@@ -573,6 +829,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           'label': 'Payment Failed',
           'detail': 'failed',
           if (pricing != null) ..._purchaseProps(pricing),
+          if (order != null) ..._orderPaymentProps(order),
           'reason': 'payment_not_complete',
           'razorpay_order_id': razorpayOrderId,
           'order_id': internalOrderId,
@@ -581,6 +838,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
             'order_status': verified!.orderStatus!,
         });
         Fluttertoast.showToast(msg: 'Payment is not complete');
+        await _syncOrderStatusAfterGateway(internalOrderId);
         return;
       }
 
@@ -590,6 +848,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         'label': 'Payment Completed',
         'detail': 'success',
         if (pricing != null) ..._purchaseProps(pricing),
+        if (order != null) ..._orderPaymentProps(order),
         'razorpay_order_id': razorpayOrderId,
         'order_id': internalOrderId,
         if (paymentId.isNotEmpty) 'razorpay_payment_id': paymentId,
@@ -600,6 +859,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       if (!_isCurrentPaymentCheck(paymentCheckGeneration)) return;
       if (!mounted) return;
 
+      await _refreshWalletBalance(silent: true);
+
+      if (!mounted) return;
       context.pushReplacementNamed(
         RouteNames.GIFTCARD_PAYMENT_SUCCESS_SCREEN,
         extra: {
@@ -612,6 +874,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       if (_isCurrentPaymentCheck(paymentCheckGeneration)) {
         Fluttertoast.showToast(msg: 'Payment is not complete');
       }
+      await _syncOrderStatusAfterGateway(internalOrderId);
     } finally {
       if (_isCurrentPaymentCheck(paymentCheckGeneration)) {
         setState(() => _paying = false);
@@ -619,12 +882,13 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     }
   }
 
-  void _handleRazorpayError({
+  Future<void> _handleRazorpayError({
     required PaymentFailureResponse error,
     required int paymentCheckGeneration,
     required String razorpayOrderId,
     required String internalOrderId,
-  }) {
+    GiftCardProceedResponse? order,
+  }) async {
     if (paymentCheckGeneration == _paymentCheckGeneration) {
       _paymentCheckGeneration++;
     }
@@ -635,6 +899,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         'label': 'Payment Cancelled',
         'detail': 'cancelled',
         if (pricing != null) ..._purchaseProps(pricing),
+        if (order != null) ..._orderPaymentProps(order),
         'reason': 'user_cancelled_checkout',
         'razorpay_order_id': razorpayOrderId,
         'order_id': internalOrderId,
@@ -644,6 +909,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         'label': 'Payment Failed',
         'detail': 'failed',
         if (pricing != null) ..._purchaseProps(pricing),
+        if (order != null) ..._orderPaymentProps(order),
         'failure_stage': 'checkout',
         'reason': error.message ?? 'razorpay_checkout_error',
         'error_code': '${error.code}',
@@ -651,8 +917,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         'order_id': internalOrderId,
       });
     }
+    // Sync so hybrid wallet debit can be refunded server-side.
+    await _syncOrderStatusAfterGateway(internalOrderId);
     if (!mounted) return;
-    // Quiet dismiss when the user closes Checkout; toast only on real failures.
     if (!cancelled) {
       Fluttertoast.showToast(msg: 'Payment Failed Please try again');
     }
@@ -794,17 +1061,43 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                             faceValueLabel: _serverPricing != null
                                 ? _formatInr(_serverPricing!.faceAmount)
                                 : (pricing?.formattedFaceValue ?? '₹ —'),
+                            couponCode: _appliedCoupon?.code,
+                            couponDiscount:
+                                _serverPricing?.couponDiscount ??
+                                _appliedCoupon?.discountApplied,
                             sharePerksDiscount: _sharePerksDiscountAmount,
                             sharePerksPercent:
                                 pricing != null && pricing.percent > 0
                                 ? pricing.percent
                                 : null,
-                            couponCode: _appliedCoupon?.code,
-                            couponDiscount:
-                                _serverPricing?.couponDiscount ??
-                                _appliedCoupon?.discountApplied,
+                            walletAmount: _previewWalletAmount > 0
+                                ? _previewWalletAmount
+                                : null,
+                            gatewayAmount: _useWallet
+                                ? _previewGatewayAmount
+                                : null,
                             finalPayableLabel: _formattedFinalPayable,
                             formatInr: _formatInr,
+                          ),
+                          const SizedBox(height: 8),
+                          _WalletPayToggle(
+                            balance: _walletBalance,
+                            enabled: _walletBalance > 0 && !_paying,
+                            useWallet: _useWallet,
+                            formatInr: _formatInr,
+                            onChanged: (value) {
+                              setState(() => _useWallet = value);
+                              trackAction(
+                                AnalyticsEvent.giftcardWalletToggled,
+                                {
+                                  'enabled': value,
+                                  'wallet_balance': _walletBalance,
+                                  'selected_amount': ?amount,
+                                  'payable_after_discounts':
+                                      _payableAfterDiscounts,
+                                },
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           _CouponApplyField(
@@ -854,7 +1147,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                   SharePerksColors.accent,
                 ),
               ),
-              onPressed: _finalPayAmount == null || _paying
+              onPressed: _payableAfterDiscounts == null || _paying
                   ? null
                   : _onProceedButtonTap,
               child: _paying
@@ -866,7 +1159,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Proceed to Claim Credit'),
+                  : Text(_proceedCtaLabel),
             ),
           );
         },
@@ -875,23 +1168,27 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   }
 }
 
-/// Face → SharePerks discount → coupon discount → you pay.
+/// Face → coupon → SharePerks → wallet → gateway remainder.
 class _PayableBreakdown extends StatelessWidget {
   const _PayableBreakdown({
     required this.faceValueLabel,
-    required this.sharePerksDiscount,
-    required this.sharePerksPercent,
     required this.couponCode,
     required this.couponDiscount,
+    required this.sharePerksDiscount,
+    required this.sharePerksPercent,
+    required this.walletAmount,
+    required this.gatewayAmount,
     required this.finalPayableLabel,
     required this.formatInr,
   });
 
   final String faceValueLabel;
-  final double? sharePerksDiscount;
-  final double? sharePerksPercent;
   final String? couponCode;
   final double? couponDiscount;
+  final double? sharePerksDiscount;
+  final double? sharePerksPercent;
+  final double? walletAmount;
+  final double? gatewayAmount;
   final String finalPayableLabel;
   final String Function(double) formatInr;
 
@@ -899,6 +1196,8 @@ class _PayableBreakdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasCoupon = couponDiscount != null && couponDiscount! > 0;
     final hasSharePerks = sharePerksDiscount != null && sharePerksDiscount! > 0;
+    final hasWallet = walletAmount != null && walletAmount! > 0;
+    final showGatewaySplit = hasWallet && gatewayAmount != null;
 
     return Container(
       width: double.infinity,
@@ -920,10 +1219,21 @@ class _PayableBreakdown extends StatelessWidget {
       child: Column(
         children: [
           _BreakdownRow(
-            label: 'Card amount',
+            label: 'Gift card',
             value: faceValueLabel,
             valueColor: SharePerksColors.textPrimaryLight,
           ),
+          if (hasCoupon) ...[
+            const SizedBox(height: 8),
+            _BreakdownRow(
+              label: couponCode != null && couponCode!.isNotEmpty
+                  ? 'Coupon ($couponCode)'
+                  : 'Coupon',
+              value: '- ${formatInr(couponDiscount!)}',
+              valueColor: SharePerksColors.success,
+              labelColor: SharePerksColors.success,
+            ),
+          ],
           if (hasSharePerks) ...[
             const SizedBox(height: 8),
             _BreakdownRow(
@@ -935,27 +1245,95 @@ class _PayableBreakdown extends StatelessWidget {
               labelColor: SharePerksColors.accent,
             ),
           ],
-          if (hasCoupon) ...[
+          if (hasWallet) ...[
             const SizedBox(height: 8),
             _BreakdownRow(
-              label: couponCode != null && couponCode!.isNotEmpty
-                  ? 'Coupon discount ($couponCode)'
-                  : 'Coupon discount',
-              value: '- ${formatInr(couponDiscount!)}',
-              valueColor: SharePerksColors.success,
-              labelColor: SharePerksColors.success,
+              label: 'Wallet',
+              value: '- ${formatInr(walletAmount!)}',
+              valueColor: SharePerksColors.primary,
+              labelColor: SharePerksColors.primary,
             ),
           ],
           const SizedBox(height: 10),
           const Divider(height: 1, color: SharePerksColors.borderLight),
           const SizedBox(height: 10),
           _BreakdownRow(
-            label: 'You pay',
-            value: finalPayableLabel,
+            label: showGatewaySplit ? 'Pay via UPI/Card' : 'You pay',
+            value: showGatewaySplit
+                ? formatInr(gatewayAmount!)
+                : finalPayableLabel,
             valueColor: SharePerksColors.primary,
             labelColor: SharePerksColors.primary,
             bold: true,
             large: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WalletPayToggle extends StatelessWidget {
+  const _WalletPayToggle({
+    required this.balance,
+    required this.enabled,
+    required this.useWallet,
+    required this.onChanged,
+    required this.formatInr,
+  });
+
+  final double balance;
+  final bool enabled;
+  final bool useWallet;
+  final ValueChanged<bool> onChanged;
+  final String Function(double) formatInr;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SharePerksColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Use wallet',
+                  style: TextStyle(
+                    color: SharePerksColors.textPrimaryLight,
+                    fontSize: 14,
+                    fontFamily: SharePerksFonts.albertSans,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Available balance: ${formatInr(balance)}',
+                  style: TextStyle(
+                    color: enabled
+                        ? SharePerksColors.textSecondaryLight
+                        : SharePerksColors.textSecondaryLight.withValues(
+                            alpha: 0.7,
+                          ),
+                    fontSize: 12,
+                    fontFamily: SharePerksFonts.inter,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: useWallet && enabled,
+            onChanged: enabled ? onChanged : null,
+            activeThumbColor: SharePerksColors.accent,
           ),
         ],
       ),
