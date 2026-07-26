@@ -3,6 +3,8 @@ import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/models/cashback_detail_model.dart';
 import 'package:shareperks/repository/models/cashback_tracking_link_model.dart';
 import 'package:shareperks/repository/models/claim_promocode_response_model.dart';
+import 'package:shareperks/repository/models/api_error_model.dart';
+import 'package:shareperks/repository/models/giftcard_coupon_model.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/promocode_detail_model.dart';
 import 'package:shareperks/repository/models/my_claimed_giftcard_detail_model.dart';
@@ -24,6 +26,46 @@ class RewardListingDataService {
       throw StateError('Giftcard detail: empty response body');
     }
     return GiftcardDetailResponse.fromJson(body);
+  }
+
+  /// `POST /rewards/giftcard/coupon/apply` — validate coupon against payable.
+  ///
+  /// Throws [ApiErrorResponse] on business errors (invalid / inactive /
+  /// expired / usage caps).
+  static Future<GiftCardCouponApplyData> applyGiftcardCoupon(
+    GiftCardCouponApplyRequest request,
+  ) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/rewards/giftcard/coupon/apply',
+        data: request.toJson(),
+      );
+      final body = response.data;
+      if (body == null) {
+        throw const FormatException('Coupon apply: empty response body');
+      }
+      final result = GiftCardCouponApplyResponse.fromJson(body);
+      if (!result.success || result.data == null) {
+        throw ApiErrorResponse(
+          success: false,
+          message: result.message ?? 'Could not apply coupon',
+        );
+      }
+      if (result.data!.payableAfterDiscount <= 0 ||
+          result.data!.discountApplied < 0) {
+        throw const ApiErrorResponse(
+          success: false,
+          message: 'Invalid coupon response',
+        );
+      }
+      return result.data!;
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      if (body is Map<String, dynamic>) {
+        throw ApiErrorResponse.fromJson(body);
+      }
+      rethrow;
+    }
   }
 
   /// `GET /rewards/cashback/:id` — cashback/benefit perk detail.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/CopyRight.dart';
@@ -18,6 +19,7 @@ import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/integrations/razorpay_payment.dart';
 import 'package:shareperks/repository/models/api_error_model.dart';
 import 'package:shareperks/repository/models/gift_card_proceed_model.dart';
+import 'package:shareperks/repository/models/giftcard_coupon_model.dart';
 import 'package:shareperks/repository/models/giftcard_detail_model.dart';
 import 'package:shareperks/repository/models/razorpay_verify_model.dart';
 import 'package:shareperks/repository/services/listing/rewards.service.dart';
@@ -62,7 +64,10 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
   String? _errorMessage;
   int? amount;
   final TextEditingController _amountController = TextEditingController();
-
+  final TextEditingController _couponController = TextEditingController();
+  bool _applyingCoupon = false;
+  GiftCardCouponApplyData? _appliedCoupon;
+  GiftCardProceedPricing? _serverPricing;
   GiftcardAmount? get _amountConfig => data?.data?.amount;
 
   GiftcardEligibility? get _eligibility => data?.data?.eligibility;
@@ -82,8 +87,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         widget.isBrokerageEligible;
   }
 
-  bool get _reqReimport =>
-      _eligibility?.isBrokerConnected?.reqReimport == true;
+  bool get _reqReimport => _eligibility?.isBrokerConnected?.reqReimport == true;
 
   RewardEligibilityTier get _tier => resolveRewardTier(
     isEligible: _isEligible,
@@ -101,6 +105,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       );
       final initial = _amountConfig?.min?.round();
       amount = initial != null && initial > 0 ? initial : null;
+      _clearCoupon(keepText: false);
       if (_amountConfig?.isAmountEditable == true && amount != null) {
         _amountController.text = '$amount';
       } else {
@@ -152,7 +157,28 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     }
     _paymentCheckGeneration++;
     _amountController.dispose();
+    _couponController.dispose();
     super.dispose();
+  }
+
+  void _clearCoupon({bool keepText = true}) {
+    _appliedCoupon = null;
+    _serverPricing = null;
+    if (!keepText) _couponController.clear();
+  }
+
+  void _setAmount(int? next, {required String denominationType}) {
+    setState(() {
+      amount = next;
+      _clearCoupon();
+    });
+    if (next != null) {
+      trackAction(AnalyticsEvent.giftcardAmountSelected, {
+        'label': 'Selected Amount',
+        'amount': next,
+        'denomination_type': denominationType,
+      });
+    }
   }
 
   void _onEditableAmountChanged(String raw) {
@@ -169,14 +195,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       }
     }
 
-    setState(() => amount = next);
-    if (next != null) {
-      trackAction(AnalyticsEvent.giftcardAmountSelected, {
-        'label': 'Selected Amount',
-        'amount': next,
-        'denomination_type': 'editable',
-      });
-    }
+    _setAmount(next, denominationType: 'editable');
   }
 
   String? _editableAmountErrorText() {
@@ -238,15 +257,10 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
       return AmountPicker(
         selectedAmount: amount,
         onAmountDeselected: () {
-          setState(() => amount = null);
+          _setAmount(null, denominationType: 'fixed');
         },
         onAmountSelected: (value) {
-          setState(() => amount = value);
-          trackAction(AnalyticsEvent.giftcardAmountSelected, {
-            'label': 'Selected Amount',
-            'amount': value,
-            'denomination_type': 'fixed',
-          });
+          _setAmount(value, denominationType: 'fixed');
         },
         amounts: options.map((v) => v.round()).toList(),
       );
@@ -284,6 +298,111 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     return _calc?.calc(selected.toDouble());
   }
 
+  /// SharePerks holding discount on the face amount (before coupon).
+  double? get _sharePerksDiscountAmount {
+    if (_serverPricing != null) {
+      return _serverPricing!.sharePerksDiscount;
+    }
+    final pricing = _pricing;
+    if (pricing == null || !pricing.hasDiscount) return null;
+    return pricing.savings;
+  }
+
+  /// SharePerks-discounted payable — the base coupon apply uses.
+  double? get _sharePerksPayable => _pricing?.discountedAmount;
+
+  /// Final charge preview: SharePerks payable, then coupon if applied.
+  /// After proceed with coupon, prefer server [pricing.chargeAmount].
+  double? get _finalPayAmount {
+    if (_serverPricing != null && _serverPricing!.chargeAmount > 0) {
+      return _serverPricing!.chargeAmount;
+    }
+    final coupon = _appliedCoupon;
+    if (coupon != null && coupon.payableAfterDiscount > 0) {
+      return coupon.payableAfterDiscount;
+    }
+    return _sharePerksPayable;
+  }
+
+  String get _formattedFinalPayable {
+    final pay = _finalPayAmount;
+    if (pay == null) return '₹ —';
+    return _formatInr(pay);
+  }
+
+  String _formatInr(double value) {
+    final whole = value % 1 == 0;
+    return '₹ ${value.toStringAsFixed(whole ? 0 : 2)}';
+  }
+
+  Future<void> _applyCoupon() async {
+    final sharePerksPayable = _sharePerksPayable;
+    if (sharePerksPayable == null || _applyingCoupon || _paying) return;
+
+    final code = _couponController.text.trim();
+    if (code.isEmpty) {
+      _showCouponError('Enter a coupon code');
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _applyingCoupon = true;
+    });
+
+    try {
+      // Coupon is applied on the SharePerks-discounted amount (not face).
+      // face → SharePerks → coupon.
+      final applied = await RewardListingDataService.applyGiftcardCoupon(
+        GiftCardCouponApplyRequest(code: code, orderAmount: sharePerksPayable),
+      );
+      if (!mounted) return;
+      setState(() {
+        _appliedCoupon = applied;
+        _serverPricing = null;
+        _couponController.text = applied.code;
+      });
+      Fluttertoast.showToast(
+        msg: 'Coupon applied — saved ${applied.formattedDiscountApplied}',
+        backgroundColor: SharePerksColors.success,
+        textColor: Colors.white,
+      );
+    } on ApiErrorResponse catch (e) {
+      _showCouponError(e.displayMessage);
+    } catch (e) {
+      _showCouponError(_friendlyCouponError(e));
+    } finally {
+      if (mounted) setState(() => _applyingCoupon = false);
+    }
+  }
+
+  /// Coupon errors surface as a red toast (inline field text can be clipped).
+  void _showCouponError(String message) {
+    if (!mounted) return;
+    if (_appliedCoupon != null || _serverPricing != null) {
+      setState(() {
+        _appliedCoupon = null;
+        _serverPricing = null;
+      });
+    }
+    Fluttertoast.showToast(
+      msg: message,
+      backgroundColor: SharePerksColors.error,
+      textColor: Colors.white,
+      toastLength: Toast.LENGTH_LONG,
+    );
+  }
+
+  String _friendlyCouponError(Object e) {
+    final raw = e.toString().replaceFirst('Exception: ', '').trim();
+    if (raw.isEmpty) return 'Could not apply coupon';
+    return raw;
+  }
+
+  void _removeCoupon() {
+    setState(() => _clearCoupon(keepText: false));
+  }
+
   /// "What the user is purchasing" — attached to every payment gateway event so
   /// the CRM/audit trail shows the gift card, its price, and the discount.
   Map<String, Object?> _purchaseProps(GiftCardCalcCalcData pricing) => {
@@ -293,12 +412,17 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
     'reward_id': widget.rewardId,
     'perk_type': 'giftcard',
     'face_value': pricing.amount,
-    'amount': pricing.discountedAmount,
+    'amount': _finalPayAmount ?? pricing.discountedAmount,
+    'shareperks_payable': pricing.discountedAmount,
+    'shareperks_discount': _sharePerksDiscountAmount,
     'discount_percent': pricing.percent,
     'savings': pricing.savings,
     'is_eligible': _isEligible,
     'is_brokerage_eligible': _isBrokerageEligible,
     'eligibility_tier': _tier.name,
+    if (_appliedCoupon != null) 'coupon_code': _appliedCoupon!.code,
+    if (_appliedCoupon != null)
+      'coupon_discount': _appliedCoupon!.discountApplied,
   };
 
   Future<void> _onProceedToPay() async {
@@ -314,6 +438,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
         ..._purchaseProps(pricing),
       });
 
+      // Always send SharePerks-discounted payable as payAmount.
+      // - No coupon: server charges it as-is (legacy).
+      // - With coupon: server applies coupon on this base (face → SP → coupon).
       final order = await GiftCardPaymentService.proceedGiftCardPayment(
         GiftCardProceedRequest(
           payAmount: pricing.discountedAmount,
@@ -322,14 +449,25 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           eligible: _isEligible,
           isBrokerageEligible: _isBrokerageEligible,
           journeyId: JourneyContext.currentJourneyId,
+          couponCode: _appliedCoupon?.code,
         ),
       );
+
+      if (mounted && order.pricing != null) {
+        setState(() => _serverPricing = order.pricing);
+      }
 
       trackAction(AnalyticsEvent.giftcardPaymentOrderCreated, {
         'label': 'Payment Order Created',
         ..._purchaseProps(pricing),
         'razorpay_order_id': order.razorpayOrderId,
         'order_id': order.orderId,
+        if (order.pricing != null)
+          'server_charge_amount': order.pricing!.chargeAmount,
+        if (order.pricing != null)
+          'server_coupon_discount': order.pricing!.couponDiscount,
+        if (order.pricing != null)
+          'server_shareperks_discount': order.pricing!.sharePerksDiscount,
       });
 
       trackAction(AnalyticsEvent.giftcardCheckoutOpened, {
@@ -348,7 +486,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           response: response,
           internalOrderId: order.orderId,
           paymentCheckGeneration: paymentCheckGeneration,
-          amount: pricing.discountedAmount,
+          amount: order.pricing?.chargeAmount ?? (order.amountPaise / 100),
         ),
         onError: (error) => _handleRazorpayError(
           error: error,
@@ -559,13 +697,12 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                       reqReimport: _reqReimport,
                       withHolderRewardRate:
                           data?.data?.eligibility?.withHolderRewardRate,
-                      withAnyHoldingRewardRate: data
-                          ?.data
-                          ?.eligibility
-                          ?.withAnyHoldingRewardRate,
+                      withAnyHoldingRewardRate:
+                          data?.data?.eligibility?.withAnyHoldingRewardRate,
                       nonHolderRewardRate:
                           data?.data?.eligibility?.nonHolderRewardRate,
-                      rewardType: data?.data?.eligibility?.rewardType ??
+                      rewardType:
+                          data?.data?.eligibility?.rewardType ??
                           data?.data?.basicInfo?.type,
                       showStandardBanner: true,
                     ),
@@ -607,7 +744,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                             listedOnExchange:
                                 data?.data?.company?.listedOnExchange ?? true,
                             reqReimport: _reqReimport,
-                            rewardType: data?.data?.eligibility?.rewardType ??
+                            rewardType:
+                                data?.data?.eligibility?.rewardType ??
                                 data?.data?.basicInfo?.type,
                           ),
                           BorderCard(
@@ -652,72 +790,35 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            decoration: ShapeDecoration(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                  width: 1,
-                                  color: const Color(0xFF6400E0),
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              shadows: [
-                                BoxShadow(
-                                  color: Color(0x266400E0),
-                                  blurRadius: 20,
-                                  offset: Offset(0, 4),
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  spacing: 10,
-                                  children: [
-                                    Text(
-                                      pricing?.formattedPayable ?? '₹ —',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: SharePerksColors.primary,
-                                        fontSize: 22,
-                                        fontFamily: SharePerksFonts.albertSans,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    if (pricing != null && pricing.hasDiscount)
-                                      Text(
-                                        pricing.formattedFaceValue,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: SharePerksColors
-                                              .textSecondaryLight,
-                                          fontSize: 13,
-                                          fontFamily: SharePerksFonts.inter,
-                                          fontWeight: FontWeight.w400,
-                                          decoration:
-                                              TextDecoration.lineThrough,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                Text(
-                                  pricing?.formattedPercentOff ?? '—',
-                                  style: TextStyle(
-                                    color: SharePerksColors.accent,
-                                    fontSize: 22,
-                                    fontFamily: SharePerksFonts.albertSans,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          _PayableBreakdown(
+                            faceValueLabel: _serverPricing != null
+                                ? _formatInr(_serverPricing!.faceAmount)
+                                : (pricing?.formattedFaceValue ?? '₹ —'),
+                            sharePerksDiscount: _sharePerksDiscountAmount,
+                            sharePerksPercent:
+                                pricing != null && pricing.percent > 0
+                                ? pricing.percent
+                                : null,
+                            couponCode: _appliedCoupon?.code,
+                            couponDiscount:
+                                _serverPricing?.couponDiscount ??
+                                _appliedCoupon?.discountApplied,
+                            finalPayableLabel: _formattedFinalPayable,
+                            formatInr: _formatInr,
+                          ),
+                          const SizedBox(height: 8),
+                          _CouponApplyField(
+                            controller: _couponController,
+                            enabled: pricing != null && !_paying,
+                            applying: _applyingCoupon,
+                            applied: _appliedCoupon != null,
+                            onApply: _applyCoupon,
+                            onRemove: _removeCoupon,
+                            onChanged: (_) {
+                              if (_appliedCoupon != null) {
+                                setState(() => _appliedCoupon = null);
+                              }
+                            },
                           ),
                           SizedBox(height: 20),
                           PerkTerms(
@@ -753,7 +854,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
                   SharePerksColors.accent,
                 ),
               ),
-              onPressed: _pricing == null || _paying
+              onPressed: _finalPayAmount == null || _paying
                   ? null
                   : _onProceedButtonTap,
               child: _paying
@@ -770,6 +871,242 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+/// Face → SharePerks discount → coupon discount → you pay.
+class _PayableBreakdown extends StatelessWidget {
+  const _PayableBreakdown({
+    required this.faceValueLabel,
+    required this.sharePerksDiscount,
+    required this.sharePerksPercent,
+    required this.couponCode,
+    required this.couponDiscount,
+    required this.finalPayableLabel,
+    required this.formatInr,
+  });
+
+  final String faceValueLabel;
+  final double? sharePerksDiscount;
+  final double? sharePerksPercent;
+  final String? couponCode;
+  final double? couponDiscount;
+  final String finalPayableLabel;
+  final String Function(double) formatInr;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCoupon = couponDiscount != null && couponDiscount! > 0;
+    final hasSharePerks = sharePerksDiscount != null && sharePerksDiscount! > 0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(width: 1, color: Color(0xFF6400E0)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        shadows: const [
+          BoxShadow(
+            color: Color(0x266400E0),
+            blurRadius: 20,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _BreakdownRow(
+            label: 'Card amount',
+            value: faceValueLabel,
+            valueColor: SharePerksColors.textPrimaryLight,
+          ),
+          if (hasSharePerks) ...[
+            const SizedBox(height: 8),
+            _BreakdownRow(
+              label: sharePerksPercent != null
+                  ? 'SharePerks discount (${sharePerksPercent!.toStringAsFixed(sharePerksPercent! % 1 == 0 ? 0 : 1)}% Off)'
+                  : 'SharePerks discount',
+              value: '- ${formatInr(sharePerksDiscount!)}',
+              valueColor: SharePerksColors.accent,
+              labelColor: SharePerksColors.accent,
+            ),
+          ],
+          if (hasCoupon) ...[
+            const SizedBox(height: 8),
+            _BreakdownRow(
+              label: couponCode != null && couponCode!.isNotEmpty
+                  ? 'Coupon discount ($couponCode)'
+                  : 'Coupon discount',
+              value: '- ${formatInr(couponDiscount!)}',
+              valueColor: SharePerksColors.success,
+              labelColor: SharePerksColors.success,
+            ),
+          ],
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: SharePerksColors.borderLight),
+          const SizedBox(height: 10),
+          _BreakdownRow(
+            label: 'You pay',
+            value: finalPayableLabel,
+            valueColor: SharePerksColors.primary,
+            labelColor: SharePerksColors.primary,
+            bold: true,
+            large: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreakdownRow extends StatelessWidget {
+  const _BreakdownRow({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.labelColor,
+    this.bold = false,
+    this.large = false,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+  final Color? labelColor;
+  final bool bold;
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: labelColor ?? SharePerksColors.textSecondaryLight,
+              fontSize: large ? 15 : 13,
+              fontFamily: SharePerksFonts.inter,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: large ? 22 : 14,
+            fontFamily: SharePerksFonts.albertSans,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CouponApplyField extends StatelessWidget {
+  const _CouponApplyField({
+    required this.controller,
+    required this.enabled,
+    required this.applying,
+    required this.applied,
+    required this.onApply,
+    required this.onRemove,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final bool enabled;
+  final bool applying;
+  final bool applied;
+  final VoidCallback onApply;
+  final VoidCallback onRemove;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Have a coupon?',
+          style: TextStyle(
+            color: SharePerksColors.textPrimaryLight,
+            fontSize: 13,
+            fontFamily: SharePerksFonts.albertSans,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                enabled: enabled && !applying && !applied,
+                textCapitalization: TextCapitalization.characters,
+                textInputAction: TextInputAction.done,
+                onChanged: onChanged,
+                onSubmitted: (_) {
+                  if (!applied && enabled && !applying) onApply();
+                },
+                decoration: InputDecoration(
+                  hintText: 'Enter coupon code',
+                  prefixIcon: Icon(
+                    HugeIconsSolid.couponPercent,
+                    size: 18,
+                    color: SharePerksColors.textSecondaryLight,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 48,
+              child: applied
+                  ? OutlinedButton(
+                      onPressed: enabled ? onRemove : null,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: SharePerksColors.error),
+                        foregroundColor: SharePerksColors.error,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                      ),
+                      child: const Text('Remove'),
+                    )
+                  : ElevatedButton(
+                      onPressed: enabled && !applying ? onApply : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: SharePerksColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      child: applying
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Apply'),
+                    ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
