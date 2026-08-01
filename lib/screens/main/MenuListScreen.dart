@@ -139,6 +139,37 @@ class _MenuListScreenState extends State<MenuListScreen> {
 
                   GredentListTile(
                     leading: Icon(
+                      HugeIconsSolid.mailOpen01,
+                      size: 17,
+                      color: Colors.black,
+                    ),
+                    title: Text(
+                      'My Email Coupons',
+                      style: TextStyle(
+                        color: const Color(0xFF333333),
+                        fontSize: 12,
+                        fontFamily: SharePerksFonts.inter,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    color: AppColors.accent,
+                    onTap: () {
+                      context.pushNamed(RouteNames.MY_EMAIL_COUPONS_SCREEN);
+                    },
+                    style: GredentListTileStyle(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.neutral700.withAlpha(40),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  GredentListTile(
+                    leading: Icon(
                       HugeIconsSolid.share01,
                       size: 17,
                       color: Colors.black,

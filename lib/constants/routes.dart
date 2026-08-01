@@ -54,9 +54,11 @@ import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ClaimedPerksScreen.dart';
+import 'package:shareperks/screens/rewards/EmailCouponsScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardCodeViewScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
 import 'package:shareperks/screens/rewards/HowToClaimScreen.dart';
+import 'package:shareperks/screens/rewards/ManageGoogleAccountsScreen.dart';
 import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ReadRewardTermScreen.dart';
 import 'package:shareperks/screens/rewards/giftcard/GiftCardAmountScreen.dart';
@@ -110,6 +112,8 @@ class RouteNames {
   static const String EMAIL_SUCCESS_SCREEN = 'SuccessScreen';
   static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
+  static const String MY_EMAIL_COUPONS_SCREEN = 'MyEmailCouponsScreen';
+  static const String MANAGE_GOOGLE_ACCOUNTS_SCREEN = 'ManageGoogleAccountsScreen';
   static const String HOW_TO_CLAIM_SCREEN = 'HowToClaimScreen';
   static const String GIFTCARD_AMOUNT_SCREEN = 'GiftCardAmountScreen';
   static const String GIFTCARD_PAYMENT_SUCCESS_SCREEN = 'PaymentSuccessScreen';
@@ -444,6 +448,18 @@ final List<GoRoute> routes = [
     path: RouteNames.path(RouteNames.CLAIMED_PERKS_SCREEN),
     builder: (BuildContext context, GoRouterState state) =>
         ClaimedPerksScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.MY_EMAIL_COUPONS_SCREEN,
+    path: RouteNames.path(RouteNames.MY_EMAIL_COUPONS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        const EmailCouponsScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.MANAGE_GOOGLE_ACCOUNTS_SCREEN,
+    path: RouteNames.path(RouteNames.MANAGE_GOOGLE_ACCOUNTS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        const ManageGoogleAccountsScreen(),
   ),
   GoRoute(
     name: RouteNames.CLAIMED_GIFTCARD_SCREEN,

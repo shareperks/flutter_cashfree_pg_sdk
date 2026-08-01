@@ -11,4 +11,7 @@ class Host {
 
   /// Payout / withdraw API (`POST /payout/request`). Point to your service (e.g. `http://127.0.0.1:3004` for local).
   static String payoutUrl = 'https://listing.shareperks.in';
+
+  /// Gmail coupon scrape service (connect Google, list email coupons).
+  static String linkAccountUrl = 'https://link-account.shareperks.in';
 }
