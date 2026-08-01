@@ -127,7 +127,7 @@ class _TopPerksScreenState extends State<TopPerksScreen> {
                     applyFilter();
                   },
                   layoutWidthInset: 44,
-                  items: ["CashBack", "GiftCard", "Discount Code"],
+                  items: ["Cashback", "Gift Cards", "Discount Coupons"],
                 ),
                 SizedBox(height: 16),
                 Builder(
@@ -176,7 +176,8 @@ class _TopPerksScreenState extends State<TopPerksScreen> {
                             title: reward.title!,
                             imageUrl: imageUrl(reward.image ?? ""),
                             isEligible: reward.isEligible ?? false,
-                            isBrokerageEligible: reward.isBrokerageEligible ?? false,
+                            isBrokerageEligible:
+                                reward.isBrokerageEligible ?? false,
 
                             eligibility: reward.companyName ?? "--",
                           );

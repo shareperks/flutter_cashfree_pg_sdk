@@ -30,9 +30,9 @@ class _TypePerkScreenState extends State<TypePerkScreen> {
 
   List<RewardItem> rewardItems = [];
   Map<String, String> tabOption = {
-    "cashback": "CashBack",
-    "promocode": "Discount Code",
-    "giftcard": "GiftCard",
+    "cashback": "Cashback",
+    "promocode": "Discount Coupons",
+    "giftcard": "Gift Cards",
   };
 
   final TextEditingController _searchController = TextEditingController();
@@ -93,7 +93,7 @@ class _TypePerkScreenState extends State<TypePerkScreen> {
       appBar: AppBar(
         leading: AppBackButton(),
         toolbarHeight: 40,
-        title: Text("${tabOption[widget.type]} Perks"),
+        title: Text("${tabOption[widget.type]}"),
         actions: [
           Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 16),
           SizedBox(width: 20),
@@ -167,7 +167,8 @@ class _TypePerkScreenState extends State<TypePerkScreen> {
                             title: reward.title!,
                             imageUrl: imageUrl(reward.image ?? ""),
                             isEligible: reward.isEligible ?? false,
-                            isBrokerageEligible: reward.isBrokerageEligible ?? false,
+                            isBrokerageEligible:
+                                reward.isBrokerageEligible ?? false,
 
                             eligibility: reward.companyName ?? "--",
                           );

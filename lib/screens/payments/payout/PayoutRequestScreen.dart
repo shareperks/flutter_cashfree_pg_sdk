@@ -96,7 +96,7 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
         leading: AppBackButton(),
         title: Text("Withdraw"),
         toolbarHeight: 40,
-        backgroundColor: SharePerksColors.info,
+        backgroundColor: SharePerksColors.primary,
         actions: [
           Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 17),
           const SizedBox(width: 20),
@@ -109,7 +109,7 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
           children: [
             BorderCard(
               width: MediaQuery.of(context).size.width,
-              color: SharePerksColors.info,
+              color: SharePerksColors.primary,
               padding: EdgeInsets.all(15),
               borderWidth: 1,
               borderRadius: 16,
@@ -122,7 +122,10 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(width: 1, color: const Color(0x3F5182FE)),
+                    side: BorderSide(
+                      width: 1,
+                      color: SharePerksColors.primary.withValues(alpha: 0.25),
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -133,7 +136,7 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
                     Text(
                       'For withdrawal of',
                       style: TextStyle(
-                        color: const Color(0xFF5182FE) /* Information */,
+                        color: SharePerksColors.primary,
                         fontSize: 16,
                         fontFamily: 'Albert Sans',
                         fontWeight: FontWeight.w500,
@@ -142,7 +145,7 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
                     Text(
                       '₹ ${widget.amount}',
                       style: TextStyle(
-                        color: const Color(0xFF333333),
+                        color: SharePerksColors.textPrimaryLight,
                         fontSize: 22,
                         fontFamily: 'Albert Sans',
                         fontWeight: FontWeight.w600,
@@ -162,7 +165,7 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
                   Text(
                     'Enter UPI id',
                     style: TextStyle(
-                      color: const Color(0xFF333333),
+                      color: SharePerksColors.textPrimaryLight,
                       fontSize: 12,
                       fontFamily: 'Albert Sans',
                       fontWeight: FontWeight.w600,
@@ -179,7 +182,9 @@ class _PayoutRequestScreenState extends State<PayoutRequestScreen> {
             Copyright(),
             ElevatedButton(
               style: ButtonStyle(
-                backgroundColor: WidgetStatePropertyAll(SharePerksColors.info),
+                backgroundColor: WidgetStatePropertyAll(
+                  SharePerksColors.primary,
+                ),
               ),
               onPressed: _onProceedToPayout,
               child: Text("Proceed To Payout"),

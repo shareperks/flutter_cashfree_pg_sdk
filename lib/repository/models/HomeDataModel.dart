@@ -126,6 +126,7 @@ class UnlockedRewards {
     this.benefit,
     this.total,
     this.anyRewardsEligible,
+    this.fullUnlockedCount,
     this.rewards,
   });
 
@@ -138,12 +139,17 @@ class UnlockedRewards {
     benefit = parseJsonInt(json['benefit']);
     total = parseJsonInt(json['total']);
 
+    // Prefer the dedicated field from `/home-data`.
+    fullUnlockedCount = parseJsonInt(json['fullUnlockedCount']);
+
     final anyEligible = json['anyRewardsEligible'];
     if (anyEligible is bool) {
       anyRewardsEligible = anyEligible;
-    } else {
-      fullUnlockedCount = parseJsonInt(anyEligible);
-      anyRewardsEligible = (fullUnlockedCount ?? 0) > 0;
+    } else if (anyEligible != null) {
+      // Legacy: some responses encoded eligibility/count in this field.
+      final asCount = parseJsonInt(anyEligible);
+      anyRewardsEligible = (asCount ?? 0) > 0;
+      fullUnlockedCount ??= asCount;
     }
 
     if (json['rewards'] != null) {
@@ -163,7 +169,8 @@ class UnlockedRewards {
       'offer': offer,
       'benefit': benefit,
       'total': total,
-      'fullUnlocked': fullUnlockedCount,
+      'anyRewardsEligible': anyRewardsEligible,
+      'fullUnlockedCount': fullUnlockedCount,
       if (rewards != null) 'rewards': rewards!.map((v) => v.toJson()).toList(),
     };
   }

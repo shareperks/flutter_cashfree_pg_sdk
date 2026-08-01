@@ -72,8 +72,19 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
   GiftCardCouponApplyData? _appliedCoupon;
   GiftCardProceedPricing? _serverPricing;
   double _walletBalance = 0;
+
+  /// From `wallet.maxPayPercent` (default 70).
+  double _walletMaxPayPercent = 70;
   bool _useWallet = false;
   String? _lastProceedOrderId;
+
+  /// Authoritative split from last proceed response.
+  double? _appliedWalletAmount;
+  double? _appliedGatewayAmount;
+  double? _serverWalletEligibleAmount;
+
+  static const double _minGatewayAmount = 1;
+
   GiftcardAmount? get _amountConfig => data?.data?.amount;
 
   GiftcardEligibility? get _eligibility => data?.data?.eligibility;
@@ -131,10 +142,14 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
     try {
       final info = await WalletDataService.getWalletInfo();
       final balance = info.wallet?.balance ?? 0;
+      final percent = info.wallet?.maxPayPercent ?? 70;
       if (!mounted) return;
       setState(() {
         _walletBalance = balance;
-        if (balance <= 0) _useWallet = false;
+        _walletMaxPayPercent = percent > 0 ? percent : 70;
+        if (balance <= 0 || _previewWalletEligibleAmount <= 0) {
+          _useWallet = false;
+        }
       });
     } catch (_) {
       if (!silent && mounted) {
@@ -176,6 +191,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
       'selected_amount': ?amount,
       'use_wallet': _useWallet,
       'wallet_balance': _walletBalance,
+      'wallet_max_percent': _walletMaxPayPercent,
+      'wallet_eligible_amount': _previewWalletEligibleAmount,
     });
     _onProceedToPay();
   }
@@ -202,7 +219,16 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
   void _clearCoupon({bool keepText = true}) {
     _appliedCoupon = null;
     _serverPricing = null;
+    _appliedWalletAmount = null;
+    _appliedGatewayAmount = null;
+    _serverWalletEligibleAmount = null;
     if (!keepText) _couponController.clear();
+  }
+
+  void _clearAppliedWalletSplit() {
+    _appliedWalletAmount = null;
+    _appliedGatewayAmount = null;
+    _serverWalletEligibleAmount = null;
   }
 
   void _setAmount(int? next, {required String denominationType}) {
@@ -336,80 +362,118 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
     return _calc?.calc(selected.toDouble());
   }
 
-  /// Face after coupon (before SharePerks). Coupon apply uses face.
-  double? get _amountAfterCoupon {
-    final face = _pricing?.amount;
-    if (face == null) return null;
-    final coupon = _appliedCoupon;
-    if (coupon != null && coupon.payableAfterDiscount > 0) {
-      return coupon.payableAfterDiscount;
+  /// Face → SharePerks amount (before wallet / coupon).
+  double? get _amountAfterSharePerks {
+    if (_appliedCoupon?.amountAfterSharePerks != null) {
+      return _appliedCoupon!.amountAfterSharePerks;
     }
-    return face;
+    if (_serverPricing != null &&
+        _serverPricing!.faceAmount > 0 &&
+        _serverPricing!.sharePerksDiscount >= 0) {
+      final after =
+          _serverPricing!.faceAmount - _serverPricing!.sharePerksDiscount;
+      return after > 0 ? after : 0;
+    }
+    return _pricing?.discountedAmount;
   }
 
-  /// Payable after face → coupon → SharePerks (before wallet).
-  double? get _payableAfterDiscounts {
-    if (_serverPricing != null && _serverPricing!.chargeAmount > 0) {
-      return _serverPricing!.chargeAmount;
-    }
-    final afterCoupon = _amountAfterCoupon;
-    final pricing = _pricing;
-    if (afterCoupon == null || pricing == null) return null;
-    if (_appliedCoupon == null) return pricing.discountedAmount;
-    if (pricing.percent <= 0) return afterCoupon;
-    return ((afterCoupon * (100 - pricing.percent)) / 100).round().toDouble();
-  }
-
-  /// SharePerks holding discount on the post-coupon amount (preview).
+  /// SharePerks holding discount on face (before wallet / coupon).
   double? get _sharePerksDiscountAmount {
+    if (_appliedCoupon?.sharePerksDiscount != null) {
+      return _appliedCoupon!.sharePerksDiscount;
+    }
     if (_serverPricing != null) {
       return _serverPricing!.sharePerksDiscount;
     }
-    final afterCoupon = _amountAfterCoupon;
     final pricing = _pricing;
-    if (afterCoupon == null || pricing == null || pricing.percent <= 0) {
-      return null;
+    if (pricing == null || !pricing.hasDiscount) return null;
+    return pricing.savings;
+  }
+
+  double? get _couponDiscountAmount {
+    if (_serverPricing != null && _serverPricing!.couponDiscount > 0) {
+      return _serverPricing!.couponDiscount;
     }
-    final payable = _payableAfterDiscounts;
-    if (payable == null) return null;
-    final savings = afterCoupon - payable;
-    return savings > 0 ? savings : 0;
+    final coupon = _appliedCoupon;
+    if (coupon == null) return null;
+    final d = coupon.effectiveCouponDiscount;
+    return d > 0 ? d : null;
+  }
+
+  /// Cap ignoring balance: floor(payable × percent) / 100 (paise-safe).
+  /// Cap is measured against amount after SharePerks (wallet before coupon).
+  double _walletCapForPayable(double payable) {
+    if (payable <= 0 || _walletMaxPayPercent <= 0) return 0;
+    var cap = (payable * _walletMaxPayPercent).floorToDouble() / 100.0;
+    // Mirror server MIN_GATEWAY_AMOUNT so tiny payables don't preview ₹0 gateway.
+    if (cap > 0 && payable - cap < _minGatewayAmount) {
+      cap = math.max(
+        0,
+        ((payable - _minGatewayAmount) * 100).floorToDouble() / 100,
+      );
+    }
+    return cap;
+  }
+
+  /// Preview eligible wallet spend on post-SharePerks amount.
+  double get _previewWalletEligibleAmount {
+    if (_serverWalletEligibleAmount != null) {
+      return _serverWalletEligibleAmount!;
+    }
+    final fromCoupon = _appliedCoupon?.wallet?.eligibleAmount;
+    if (fromCoupon != null) return fromCoupon;
+    final afterSp = _amountAfterSharePerks;
+    if (afterSp == null || afterSp <= 0) return 0;
+    return math.min(_walletBalance, _walletCapForPayable(afterSp));
   }
 
   double get _previewWalletAmount {
     if (!_useWallet) return 0;
-    final payable = _payableAfterDiscounts;
-    if (payable == null || payable <= 0) return 0;
-    return math.min(_walletBalance, payable);
+    if (_appliedWalletAmount != null) return _appliedWalletAmount!;
+    final fromCoupon = _appliedCoupon?.effectiveWalletApplied;
+    if (fromCoupon != null) return fromCoupon;
+    return _previewWalletEligibleAmount;
   }
 
+  /// Local preview gateway when no server quote: after SP − wallet − coupon.
+  /// Coupon %/fixed without a quote is approximate; prefer apply response.
   double? get _previewGatewayAmount {
-    final payable = _payableAfterDiscounts;
-    if (payable == null) return null;
-    return math.max(0, payable - _previewWalletAmount);
+    if (_appliedGatewayAmount != null) return _appliedGatewayAmount;
+    if (_appliedCoupon?.gatewayAmount != null) {
+      return _appliedCoupon!.gatewayAmount;
+    }
+    final afterSp = _amountAfterSharePerks;
+    if (afterSp == null) return null;
+    final afterWallet = math.max(0.0, afterSp - _previewWalletAmount);
+    final coupon = _couponDiscountAmount ?? 0;
+    return math.max(0.0, afterWallet - coupon);
   }
 
-  /// Final user-facing payable (gateway remainder when wallet used).
+  /// Gateway remainder the user pays via Razorpay/CashFree.
   double? get _finalPayAmount =>
-      _previewGatewayAmount ?? _payableAfterDiscounts;
+      _previewGatewayAmount ?? _amountAfterSharePerks;
 
+  /// Kept for when `WALLET_MAX_PAY_PERCENT` is raised to 100.
   bool get _walletCoversFullPayable {
-    final payable = _payableAfterDiscounts;
-    if (payable == null || payable <= 0) return false;
-    return _useWallet && _walletBalance >= payable;
+    final afterSp = _amountAfterSharePerks;
+    if (afterSp == null || afterSp <= 0) return false;
+    return _useWallet &&
+        _walletMaxPayPercent >= 100 &&
+        _previewWalletEligibleAmount >= afterSp &&
+        (_couponDiscountAmount == null || _couponDiscountAmount == 0);
   }
 
   String get _proceedCtaLabel {
-    final payable = _payableAfterDiscounts;
-    if (payable == null) return 'Proceed to Claim Credit';
+    final afterSp = _amountAfterSharePerks;
+    if (afterSp == null) return 'Proceed to Claim Credit';
     if (_walletCoversFullPayable) {
-      return 'Pay ${_formatInr(payable)} with wallet';
+      return 'Pay ${_formatInr(afterSp)} with wallet';
     }
-    final gateway = _previewGatewayAmount ?? payable;
+    final gateway = _previewGatewayAmount ?? afterSp;
     if (_useWallet && _previewWalletAmount > 0) {
       return 'Pay ${_formatInr(gateway)} via Razorpay';
     }
-    return 'Pay ${_formatInr(payable)}';
+    return 'Pay ${_formatInr(gateway)}';
   }
 
   String get _formattedFinalPayable {
@@ -423,13 +487,13 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
     return '₹ ${value.toStringAsFixed(whole ? 0 : 2)}';
   }
 
-  Future<void> _applyCoupon() async {
+  Future<void> _applyCoupon({bool silent = false}) async {
     final face = _pricing?.amount;
     if (face == null || _applyingCoupon || _paying) return;
 
     final code = _couponController.text.trim();
     if (code.isEmpty) {
-      _showCouponError('Enter a coupon code');
+      if (!silent) _showCouponError('Enter a coupon code');
       return;
     }
 
@@ -439,21 +503,42 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
     });
 
     try {
-      // Coupon eligibility is always against face (not SharePerks/wallet).
+      // Server quotes face → SharePerks → wallet → coupon; never send a
+      // client-reduced coupon base.
       final applied = await RewardListingDataService.applyGiftcardCoupon(
-        GiftCardCouponApplyRequest(code: code, orderAmount: face),
+        GiftCardCouponApplyRequest(
+          code: code,
+          creditId: widget.rewardId,
+          rewardAmount: face,
+          useWallet: _useWallet ? true : false,
+          useFullWallet: _useWallet ? true : false,
+        ),
       );
       if (!mounted) return;
       setState(() {
         _appliedCoupon = applied;
         _serverPricing = null;
+        _clearAppliedWalletSplit();
+        // Prefer quote wallet fields for immediate redraw.
+        if (applied.wallet?.balance != null) {
+          _walletBalance = applied.wallet!.balance!;
+        }
+        if (applied.wallet?.maxPayPercent != null &&
+            applied.wallet!.maxPayPercent! > 0) {
+          _walletMaxPayPercent = applied.wallet!.maxPayPercent!;
+        }
+        _serverWalletEligibleAmount = applied.wallet?.eligibleAmount;
+        _appliedWalletAmount = applied.effectiveWalletApplied;
+        _appliedGatewayAmount = applied.gatewayAmount;
         _couponController.text = applied.code;
       });
-      Fluttertoast.showToast(
-        msg: 'Coupon applied — saved ${applied.formattedDiscountApplied}',
-        backgroundColor: SharePerksColors.success,
-        textColor: Colors.white,
-      );
+      if (!silent) {
+        Fluttertoast.showToast(
+          msg: 'Coupon applied — saved ${applied.formattedDiscountApplied}',
+          backgroundColor: SharePerksColors.success,
+          textColor: Colors.white,
+        );
+      }
     } on ApiErrorResponse catch (e) {
       _showCouponError(e.displayMessage);
     } catch (e) {
@@ -466,10 +551,13 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
   /// Coupon errors surface as a red toast (inline field text can be clipped).
   void _showCouponError(String message) {
     if (!mounted) return;
-    if (_appliedCoupon != null || _serverPricing != null) {
+    if (_appliedCoupon != null ||
+        _serverPricing != null ||
+        _appliedWalletAmount != null) {
       setState(() {
         _appliedCoupon = null;
         _serverPricing = null;
+        _clearAppliedWalletSplit();
       });
     }
     Fluttertoast.showToast(
@@ -499,7 +587,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
     'reward_id': widget.rewardId,
     'perk_type': 'giftcard',
     'face_value': pricing.amount,
-    'amount': _payableAfterDiscounts ?? pricing.discountedAmount,
+    'amount': _finalPayAmount ?? pricing.discountedAmount,
     'shareperks_payable': pricing.discountedAmount,
     'shareperks_discount': _sharePerksDiscountAmount,
     'discount_percent': pricing.percent,
@@ -509,18 +597,25 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
     'eligibility_tier': _tier.name,
     'use_wallet': _useWallet,
     'wallet_balance': _walletBalance,
+    'wallet_max_percent': _walletMaxPayPercent,
+    'wallet_eligible_amount': _previewWalletEligibleAmount,
     'wallet_amount': _previewWalletAmount,
     'gateway_amount': _previewGatewayAmount,
     if (_appliedCoupon != null) 'coupon_code': _appliedCoupon!.code,
     if (_appliedCoupon != null)
-      'coupon_discount': _appliedCoupon!.discountApplied,
+      'coupon_discount': _appliedCoupon!.effectiveCouponDiscount,
+    if (_appliedCoupon?.couponBaseAmount != null)
+      'coupon_base_amount': _appliedCoupon!.couponBaseAmount,
   };
 
   Map<String, Object?> _orderPaymentProps(GiftCardProceedResponse order) => {
     'payment_method': order.paymentMethod,
     'wallet_amount': order.walletAmount,
     'gateway_amount': order.gatewayAmount,
-    'wallet_balance': _walletBalance,
+    'wallet_balance': order.walletBalance ?? _walletBalance,
+    'wallet_max_percent': order.walletMaxPercent ?? _walletMaxPayPercent,
+    'wallet_cap_amount': order.walletCapAmount,
+    'wallet_eligible_amount': order.walletEligibleAmount,
     'gateway': order.gateway,
     'order_id': order.orderId,
     if (_appliedCoupon != null) 'coupon_code': _appliedCoupon!.code,
@@ -622,8 +717,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
       });
 
       final hasCoupon = _appliedCoupon != null;
-      // No coupon: legacy SharePerks payable. With coupon: face (server stacks
-      // face → coupon → SharePerks → wallet).
+      // No coupon: legacy SharePerks payable. With coupon: face; server quotes
+      // face → SharePerks → wallet → coupon → gateway.
       final proceedPayAmount = hasCoupon
           ? pricing.amount
           : pricing.discountedAmount;
@@ -646,8 +741,17 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
       setState(() {
         _lastProceedOrderId = order.orderId;
         if (order.pricing != null) _serverPricing = order.pricing;
-        // Hybrid: wallet already debited when the gateway session was created.
-        if (order.walletAmount > 0 && !order.isWalletOnly) {
+        // Authoritative split from proceed (cap may silently reduce client ask).
+        _appliedWalletAmount = order.walletAmount;
+        _appliedGatewayAmount = order.gatewayAmount;
+        _serverWalletEligibleAmount = order.walletEligibleAmount;
+        if (order.walletMaxPercent != null && order.walletMaxPercent! > 0) {
+          _walletMaxPayPercent = order.walletMaxPercent!;
+        }
+        if (order.walletBalance != null) {
+          // Prefer server balance; for hybrid this is typically post-debit.
+          _walletBalance = order.walletBalance!;
+        } else if (order.walletAmount > 0 && !order.isWalletOnly) {
           _walletBalance = math.max(0, _walletBalance - order.walletAmount);
         }
       });
@@ -981,10 +1085,18 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                         spacing: 10,
                         children: [
                           PerkBasicInfo(
-                            onTickerTap: () {
+                            onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
                                 extra: {"companyId": data?.data?.company?.id},
+                              );
+                            },
+                            onBrandTap: () {
+                              final brandId = data?.data?.brand?.id;
+                              if (brandId == null || brandId.isEmpty) return;
+                              context.pushNamed(
+                                RouteNames.BRAND_SCREEN,
+                                extra: {"brandId": brandId},
                               );
                             },
                             data: PerkBasicInfoData(
@@ -992,8 +1104,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                                   data?.data?.basicInfo?.bannerImage ?? '',
                               typeLabel: data?.data?.basicInfo?.type ?? '',
                               title: data?.data?.basicInfo?.title ?? '',
-                              tickerValue: data?.data?.basicInfo?.ticker ?? '',
-                              perkIdValue: data?.data?.basicInfo?.perkId ?? '',
+                              companyValue: data?.data?.company?.name ?? '',
+                              brandValue: data?.data?.brand?.name ?? '',
                               detailsBody: null,
                             ),
                           ),
@@ -1061,10 +1173,6 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                             faceValueLabel: _serverPricing != null
                                 ? _formatInr(_serverPricing!.faceAmount)
                                 : (pricing?.formattedFaceValue ?? '₹ —'),
-                            couponCode: _appliedCoupon?.code,
-                            couponDiscount:
-                                _serverPricing?.couponDiscount ??
-                                _appliedCoupon?.discountApplied,
                             sharePerksDiscount: _sharePerksDiscountAmount,
                             sharePerksPercent:
                                 pricing != null && pricing.percent > 0
@@ -1073,7 +1181,12 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                             walletAmount: _previewWalletAmount > 0
                                 ? _previewWalletAmount
                                 : null,
-                            gatewayAmount: _useWallet
+                            couponCode: _appliedCoupon?.code,
+                            couponDiscount: _couponDiscountAmount,
+                            gatewayAmount:
+                                (_useWallet ||
+                                    _appliedCoupon != null ||
+                                    _appliedGatewayAmount != null)
                                 ? _previewGatewayAmount
                                 : null,
                             finalPayableLabel: _formattedFinalPayable,
@@ -1082,21 +1195,38 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                           const SizedBox(height: 8),
                           _WalletPayToggle(
                             balance: _walletBalance,
-                            enabled: _walletBalance > 0 && !_paying,
+                            eligibleAmount: _previewWalletEligibleAmount,
+                            maxPayPercent: _walletMaxPayPercent,
+                            enabled:
+                                _previewWalletEligibleAmount > 0 && !_paying,
                             useWallet: _useWallet,
                             formatInr: _formatInr,
-                            onChanged: (value) {
-                              setState(() => _useWallet = value);
+                            onChanged: (value) async {
+                              final hadCoupon = _appliedCoupon != null;
+                              setState(() {
+                                _useWallet = value;
+                                _clearAppliedWalletSplit();
+                                // Wallet changes the coupon base — clear stale quote.
+                                if (hadCoupon) _appliedCoupon = null;
+                              });
                               trackAction(
                                 AnalyticsEvent.giftcardWalletToggled,
                                 {
                                   'enabled': value,
                                   'wallet_balance': _walletBalance,
+                                  'wallet_max_percent': _walletMaxPayPercent,
+                                  'wallet_eligible_amount':
+                                      _previewWalletEligibleAmount,
                                   'selected_amount': ?amount,
-                                  'payable_after_discounts':
-                                      _payableAfterDiscounts,
+                                  'amount_after_shareperks':
+                                      _amountAfterSharePerks,
                                 },
                               );
+                              // Re-quote coupon against the new wallet tender.
+                              if (hadCoupon &&
+                                  _couponController.text.trim().isNotEmpty) {
+                                await _applyCoupon(silent: true);
+                              }
                             },
                           ),
                           const SizedBox(height: 8),
@@ -1105,11 +1235,14 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                             enabled: pricing != null && !_paying,
                             applying: _applyingCoupon,
                             applied: _appliedCoupon != null,
-                            onApply: _applyCoupon,
+                            onApply: () => _applyCoupon(),
                             onRemove: _removeCoupon,
                             onChanged: (_) {
                               if (_appliedCoupon != null) {
-                                setState(() => _appliedCoupon = null);
+                                setState(() {
+                                  _appliedCoupon = null;
+                                  _clearAppliedWalletSplit();
+                                });
                               }
                             },
                           ),
@@ -1147,7 +1280,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                   SharePerksColors.accent,
                 ),
               ),
-              onPressed: _payableAfterDiscounts == null || _paying
+              onPressed: _finalPayAmount == null || _paying
                   ? null
                   : _onProceedButtonTap,
               child: _paying
@@ -1168,36 +1301,36 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
   }
 }
 
-/// Face → coupon → SharePerks → wallet → gateway remainder.
+/// Face → SharePerks → wallet → coupon → gateway remainder.
 class _PayableBreakdown extends StatelessWidget {
   const _PayableBreakdown({
     required this.faceValueLabel,
-    required this.couponCode,
-    required this.couponDiscount,
     required this.sharePerksDiscount,
     required this.sharePerksPercent,
     required this.walletAmount,
+    required this.couponCode,
+    required this.couponDiscount,
     required this.gatewayAmount,
     required this.finalPayableLabel,
     required this.formatInr,
   });
 
   final String faceValueLabel;
-  final String? couponCode;
-  final double? couponDiscount;
   final double? sharePerksDiscount;
   final double? sharePerksPercent;
   final double? walletAmount;
+  final String? couponCode;
+  final double? couponDiscount;
   final double? gatewayAmount;
   final String finalPayableLabel;
   final String Function(double) formatInr;
 
   @override
   Widget build(BuildContext context) {
-    final hasCoupon = couponDiscount != null && couponDiscount! > 0;
     final hasSharePerks = sharePerksDiscount != null && sharePerksDiscount! > 0;
     final hasWallet = walletAmount != null && walletAmount! > 0;
-    final showGatewaySplit = hasWallet && gatewayAmount != null;
+    final hasCoupon = couponDiscount != null && couponDiscount! > 0;
+    final showGatewaySplit = gatewayAmount != null && (hasWallet || hasCoupon);
 
     return Container(
       width: double.infinity,
@@ -1223,17 +1356,6 @@ class _PayableBreakdown extends StatelessWidget {
             value: faceValueLabel,
             valueColor: SharePerksColors.textPrimaryLight,
           ),
-          if (hasCoupon) ...[
-            const SizedBox(height: 8),
-            _BreakdownRow(
-              label: couponCode != null && couponCode!.isNotEmpty
-                  ? 'Coupon ($couponCode)'
-                  : 'Coupon',
-              value: '- ${formatInr(couponDiscount!)}',
-              valueColor: SharePerksColors.success,
-              labelColor: SharePerksColors.success,
-            ),
-          ],
           if (hasSharePerks) ...[
             const SizedBox(height: 8),
             _BreakdownRow(
@@ -1252,6 +1374,17 @@ class _PayableBreakdown extends StatelessWidget {
               value: '- ${formatInr(walletAmount!)}',
               valueColor: SharePerksColors.primary,
               labelColor: SharePerksColors.primary,
+            ),
+          ],
+          if (hasCoupon) ...[
+            const SizedBox(height: 8),
+            _BreakdownRow(
+              label: couponCode != null && couponCode!.isNotEmpty
+                  ? 'Coupon ($couponCode)'
+                  : 'Coupon',
+              value: '- ${formatInr(couponDiscount!)}',
+              valueColor: SharePerksColors.success,
+              labelColor: SharePerksColors.success,
             ),
           ],
           const SizedBox(height: 10),
@@ -1276,6 +1409,8 @@ class _PayableBreakdown extends StatelessWidget {
 class _WalletPayToggle extends StatelessWidget {
   const _WalletPayToggle({
     required this.balance,
+    required this.eligibleAmount,
+    required this.maxPayPercent,
     required this.enabled,
     required this.useWallet,
     required this.onChanged,
@@ -1283,6 +1418,8 @@ class _WalletPayToggle extends StatelessWidget {
   });
 
   final double balance;
+  final double eligibleAmount;
+  final double maxPayPercent;
   final bool enabled;
   final bool useWallet;
   final ValueChanged<bool> onChanged;
@@ -1290,6 +1427,13 @@ class _WalletPayToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final percentLabel = maxPayPercent % 1 == 0
+        ? maxPayPercent.toStringAsFixed(0)
+        : maxPayPercent.toStringAsFixed(1);
+    final upToLabel = eligibleAmount > 0
+        ? 'Use up to ${formatInr(eligibleAmount)} ($percentLabel%) from wallet'
+        : 'Wallet unavailable for this amount';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1315,7 +1459,7 @@ class _WalletPayToggle extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Available balance: ${formatInr(balance)}',
+                  upToLabel,
                   style: TextStyle(
                     color: enabled
                         ? SharePerksColors.textSecondaryLight
@@ -1325,6 +1469,18 @@ class _WalletPayToggle extends StatelessWidget {
                     fontSize: 12,
                     fontFamily: SharePerksFonts.inter,
                     fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Available balance: ${formatInr(balance)}',
+                  style: TextStyle(
+                    color: SharePerksColors.textSecondaryLight.withValues(
+                      alpha: 0.85,
+                    ),
+                    fontSize: 11,
+                    fontFamily: SharePerksFonts.inter,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dio/dio.dart';
@@ -274,12 +275,14 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: () async {
+          print(data?.data?.unlockedRewards?.toJson() ?? {});
           await Future.wait([loadData(), _refreshUnreadCount()]);
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             _homeSliverAppBar(context),
+
             if (_loading)
               const SliverFillRemaining(
                 hasScrollBody: false,
@@ -329,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.start,
-                            spacing: 10,
+                            spacing: 3,
                             children: [
                               Text(
                                 'Welcome back,',
@@ -410,16 +413,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   false))
                             RewardCountCard(
                               activePerks:
-                                  (data
-                                              ?.data
-                                              ?.unlockedRewards
-                                              ?.fullUnlockedCount ??
-                                          "0")
+                                  (data?.data?.unlockedRewards?.total ?? 0)
                                       .toString(),
                               newRewards:
                                   data?.data?.newRewards?.toString() ?? "0",
                               memberUnlocked:
-                                  data?.data?.unlockedRewards?.total ?? 0,
+                                  data
+                                      ?.data
+                                      ?.unlockedRewards
+                                      ?.fullUnlockedCount ??
+                                  0,
                             ),
                         ],
                       ),
@@ -645,7 +648,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       },
                                       isNew: brand.isNew ?? false,
                                       title: brand.name ?? "--",
-                                      ticker: brand.tickerName ?? "--",
                                       imageUrl: imageUrl(brand.image ?? ""),
                                     );
                                   },
@@ -860,96 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 30),
-                        BorderCard(
-                          width: MediaQuery.of(context).size.width,
-                          borderWidth: 1,
-                          borderRadius: 16,
-                          color: SharePerksColors.primary.withValues(
-                            alpha: 0.2,
-                          ),
-                          isGradientBackground: true,
-                          backgroundColor: SharePerksColors.primary.withValues(
-                            alpha: 0.4,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Image.asset(
-                                      Assets.ASSETS_ICONS_HAND_PNG,
-                                      width: 64,
-                                      height: 64,
-                                    ),
-                                    SizedBox(width: 16),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Text.rich(
-                                          TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: 'Refer & ',
-                                                style: TextStyle(
-                                                  color: AppColors.brand,
-                                                  fontSize: 20,
-                                                  fontFamily: 'Albert Sans',
-                                                  fontWeight: FontWeight.w600,
-                                                  height: 1.21,
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text: 'Earn',
-                                                style: TextStyle(
-                                                  color: const Color(
-                                                    0xFFFF4AA7,
-                                                  ),
-                                                  fontSize: 20,
-                                                  fontFamily: 'Albert Sans',
-                                                  fontWeight: FontWeight.w600,
-                                                  height: 1.21,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        SizedBox(
-                                          width:
-                                              MediaQuery.of(
-                                                context,
-                                              ).size.width -
-                                              110,
-                                          child: Text(
-                                            "Every time you invite your friends, you and your friend get ₹100 cash back from Shareparks. ",
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontFamily: SharePerksFonts.inter,
-                                              fontWeight: FontWeight.w400,
-                                              color: SharePerksColors
-                                                  .textSecondaryLight,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 16),
-                                CopyReferCode(),
-                                SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 30),
+                        SizedBox(height: 50),
 
                         Column(
                           children: [
@@ -1002,6 +915,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 horizontal: 10.0,
                               ),
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 spacing: 40,
                                 children: [
                                   OptionView(
@@ -1032,6 +947,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: 30),
                         VotingBrands(),
+                        SizedBox(height: 30),
+                        SortRefer(),
                         Copyright(),
                         SizedBox(height: 110),
                       ],
@@ -1043,6 +960,102 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBarComponent(),
+    );
+  }
+}
+
+class SortRefer extends StatelessWidget {
+  const SortRefer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BorderCard(
+      width: MediaQuery.of(context).size.width,
+      borderWidth: 1,
+      borderRadius: 16,
+      color: SharePerksColors.primary.withValues(alpha: 0.2),
+      isGradientBackground: true,
+      backgroundColor: SharePerksColors.primary.withValues(alpha: 0.4),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0).copyWith(bottom: 0.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Image.asset(
+                  Assets.ASSETS_ICONS_HAND_PNG,
+                  width: 64,
+                  height: 64,
+                ),
+                SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Refer & ',
+                            style: TextStyle(
+                              color: AppColors.brand,
+                              fontSize: 20,
+                              fontFamily: 'Albert Sans',
+                              fontWeight: FontWeight.w600,
+                              height: 1.21,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Earn',
+                            style: TextStyle(
+                              color: const Color(0xFFFF4AA7),
+                              fontSize: 20,
+                              fontFamily: 'Albert Sans',
+                              fontWeight: FontWeight.w600,
+                              height: 1.21,
+                            ),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 110,
+                      child: Text(
+                        "Every time you invite your friends, you and your friend get ₹100 cash back from Shareperks. ",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w400,
+                          color: SharePerksColors.textSecondaryLight,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            CopyReferCode(),
+            TextButton(
+              onPressed: () {},
+              child: Text(
+                'Terms & Conditions apply.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: SharePerksFonts.inter,
+                  fontWeight: FontWeight.w400,
+                  color: SharePerksColors.textSecondaryLight,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 }

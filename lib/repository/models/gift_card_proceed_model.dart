@@ -17,8 +17,8 @@ class GiftCardProceedRequest {
 
   /// Dual contract:
   /// - **No coupon:** SharePerks-discounted payable (legacy gateway-only).
-  /// - **With [couponCode]:** face amount; server does
-  ///   face → coupon → SharePerks → wallet → gateway.
+  /// - **With [couponCode]:** face amount; server quotes
+  ///   face → SharePerks → wallet → coupon → gateway.
   final double payAmount;
 
   /// Gift-card face / entered amount.
@@ -32,8 +32,7 @@ class GiftCardProceedRequest {
   final bool isBrokerageEligible;
   final String? journeyId;
 
-  /// When set, server stacks face → coupon → SharePerks (then wallet).
-  /// Apply/validate against face — never a client-reduced base.
+  /// When set, server quotes face → SharePerks → wallet → coupon.
   final String? couponCode;
 
   /// Opt into wallet tender. Server caps by balance and payable.
@@ -74,7 +73,7 @@ class GiftCardProceedPricing {
   final double couponDiscount;
   final double sharePerksDiscount;
 
-  /// Payable after coupon + SharePerks (before wallet split), when provided.
+  /// Payable after SharePerks (before wallet + coupon), when provided.
   final double chargeAmount;
   final double? walletAmount;
   final double? gatewayAmount;
@@ -127,6 +126,10 @@ class GiftCardProceedResponse {
     this.paymentMethod = 'GATEWAY',
     this.walletAmount = 0,
     this.gatewayAmount = 0,
+    this.walletMaxPercent,
+    this.walletCapAmount,
+    this.walletEligibleAmount,
+    this.walletBalance,
     this.paid,
     this.orderStatus,
     this.claimedId,
@@ -152,6 +155,19 @@ class GiftCardProceedResponse {
   final String paymentMethod;
   final double walletAmount;
   final double gatewayAmount;
+
+  /// Server `WALLET_MAX_PAY_PERCENT` (e.g. 70).
+  final double? walletMaxPercent;
+
+  /// Cap for this payable ignoring balance.
+  final double? walletCapAmount;
+
+  /// What this user can actually spend (cap ∩ balance).
+  final double? walletEligibleAmount;
+
+  /// Wallet balance at proceed time.
+  final double? walletBalance;
+
   final bool? paid;
   final String? orderStatus;
   final String? claimedId;
@@ -221,6 +237,18 @@ class GiftCardProceedResponse {
       paymentMethod: paymentMethod,
       walletAmount: walletAmount,
       gatewayAmount: gatewayAmount,
+      walletMaxPercent: parseJsonDouble(
+        data['walletMaxPercent'] ?? data['wallet_max_percent'],
+      ),
+      walletCapAmount: parseJsonDouble(
+        data['walletCapAmount'] ?? data['wallet_cap_amount'],
+      ),
+      walletEligibleAmount: parseJsonDouble(
+        data['walletEligibleAmount'] ?? data['wallet_eligible_amount'],
+      ),
+      walletBalance: parseJsonDouble(
+        data['walletBalance'] ?? data['wallet_balance'],
+      ),
       paid: data['paid'] as bool?,
       orderStatus: (data['orderStatus'] ?? data['order_status'])?.toString(),
       claimedId: (data['claimedId'] ?? data['claimed_id'])?.toString(),

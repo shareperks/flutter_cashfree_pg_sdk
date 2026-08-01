@@ -1,14 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shareperks/constants/assets.dart';
-import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/function/session_bootstrap.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
-import 'package:shareperks/repository/services/auth/auth_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Full-screen prompt when a newer app version is available.
@@ -28,12 +26,25 @@ class NewUpdateScreen extends StatefulWidget {
 }
 
 class _NewUpdateScreenState extends State<NewUpdateScreen> {
+  bool _continuing = false;
+
   @override
   void initState() {
     super.initState();
     AnalyticsService.instance.track(AnalyticsEvent.forceUpdateShown, {
       'is_force_update': widget.isForceUpdate,
     });
+  }
+
+  Future<void> _onNotNow() async {
+    if (_continuing) return;
+    setState(() => _continuing = true);
+    try {
+      // Same session restore as splash — profile must be loaded before Home.
+      await bootstrapLoggedInSession(context);
+    } finally {
+      if (mounted) setState(() => _continuing = false);
+    }
   }
 
   @override
@@ -77,26 +88,25 @@ class _NewUpdateScreenState extends State<NewUpdateScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () {
-                      // check platform
-                      if (Platform.isAndroid) {
-                        // open play store
-                        launchUrl(
-                          Uri.parse(
-                            'https://play.google.com/store/apps/details?id=com.shareperks',
-                          ),
-                          mode: LaunchMode.externalApplication,
-                        );
-                      } else if (Platform.isIOS) {
-                        // open app store
-                        launchUrl(
-                          Uri.parse(
-                            'https://apps.apple.com/in/app/shareperks/id6746847398',
-                          ),
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
+                    onPressed: _continuing
+                        ? null
+                        : () {
+                            if (Platform.isAndroid) {
+                              launchUrl(
+                                Uri.parse(
+                                  'https://play.google.com/store/apps/details?id=com.shareperks',
+                                ),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } else if (Platform.isIOS) {
+                              launchUrl(
+                                Uri.parse(
+                                  'https://apps.apple.com/in/app/shareperks/id6746847398',
+                                ),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                          },
                     icon: const Icon(Icons.system_update_alt_rounded, size: 22),
                     label: const Text('Update now'),
                     style: FilledButton.styleFrom(
@@ -114,21 +124,20 @@ class _NewUpdateScreenState extends State<NewUpdateScreen> {
                 const SizedBox(height: SharePerksSpacing.sm),
                 if (!widget.isForceUpdate)
                   TextButton(
-                    onPressed: () async {
-                      final isLoggedIn = await AuthService.isLoggedIn();
-                      if (isLoggedIn) {
-                        context.goNamed(RouteNames.HOME_SCREEN);
-                      } else {
-                        context.goNamed(RouteNames.LOGIN_SCREEN);
-                      }
-                    },
+                    onPressed: _continuing ? null : _onNotNow,
                     style: TextButton.styleFrom(
                       foregroundColor: SharePerksColors.primary,
                       padding: const EdgeInsets.symmetric(
                         vertical: SharePerksSpacing.sm,
                       ),
                     ),
-                    child: const Text('Not now'),
+                    child: _continuing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Not now'),
                   ),
               ],
             ),

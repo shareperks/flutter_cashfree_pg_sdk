@@ -210,10 +210,18 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                         spacing: 10,
                         children: [
                           PerkBasicInfo(
-                            onTickerTap: () {
+                            onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
                                 extra: {"companyId": data?.data?.company?.id},
+                              );
+                            },
+                            onBrandTap: () {
+                              final brandId = data?.data?.brand?.id;
+                              if (brandId == null || brandId.isEmpty) return;
+                              context.pushNamed(
+                                RouteNames.BRAND_SCREEN,
+                                extra: {"brandId": brandId},
                               );
                             },
                             data: PerkBasicInfoData(
@@ -221,18 +229,21 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                                   data?.data?.basicInfo?.bannerImage ?? '',
                               typeLabel: data?.data?.basicInfo?.type ?? '',
                               title: data?.data?.basicInfo?.title ?? '',
-                              tickerValue: data?.data?.basicInfo?.ticker ?? '',
-                              perkIdValue: data?.data?.basicInfo?.perkId ?? '',
+                              companyValue: data?.data?.company?.name ?? '',
+                              brandValue: data?.data?.brand?.name ?? '',
                               detailsBody:
                                   data?.data?.content?.description ?? '',
-                              eligibility: EligibilityCardsData(
-                                holdingPeriodDays:
-                                    data?.data?.eligibility?.days ?? 0,
-                                sharesRequired:
-                                    data?.data?.eligibility?.quantity ?? 0,
-                                // Not in this API response; keep a sane default.
-                                renewEveryDays: 0,
-                              ),
+                              eligibility: _listedOnExchange
+                                  ? EligibilityCardsData(
+                                      holdingPeriodDays:
+                                          data?.data?.eligibility?.days ?? 0,
+                                      sharesRequired:
+                                          data?.data?.eligibility?.quantity ??
+                                          0,
+                                      // Not in this API response; keep a sane default.
+                                      renewEveryDays: 0,
+                                    )
+                                  : null,
                             ),
                           ),
                           RewardRatesSection(
@@ -302,11 +313,11 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                         ],
                       ),
                     ),
-                    if ((data?.data?.relatedPerks ?? []).isNotEmpty)
-                      RelatedPerksCard(
-                        items: data?.data?.relatedPerks ?? [],
-                        title: "Perks from ${data?.data?.company?.name}",
-                      ),
+                    PerkRelatedSection(
+                      relatedPerks: data?.data?.relatedPerks ?? const [],
+                      categoryId: data?.data?.category?.id,
+                      currentRewardId: widget.rewardId,
+                    ),
                   ],
                 ),
               ),

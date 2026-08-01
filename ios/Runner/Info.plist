@@ -43,6 +43,9 @@
 		<string>kiwi</string>
 		<string>simplypayupi</string>
 		<string>whatsapp</string>
+		<string>fb</string>
+		<string>fbapi</string>
+		<string>fb-messenger-api</string>
 	</array>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>SharePerks requires access to your photo library to save data on your device.</string>

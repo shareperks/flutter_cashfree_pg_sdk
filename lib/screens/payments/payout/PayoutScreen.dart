@@ -71,7 +71,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
         leading: AppBackButton(),
         title: Text("Withdraw"),
         toolbarHeight: 40,
-        backgroundColor: SharePerksColors.info,
+        backgroundColor: SharePerksColors.primary,
         actions: [
           Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 17),
           const SizedBox(width: 20),
@@ -90,7 +90,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
                 'Withdraw',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: const Color(0xFF5182FE) /* Information */,
+                  color: SharePerksColors.primary,
                   fontSize: 22,
                   fontFamily: 'Albert Sans',
                   fontWeight: FontWeight.w600,
@@ -100,7 +100,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
                 'Withdraw money from your wallet',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: const Color(0xFF898989),
+                  color: SharePerksColors.textSecondaryLight,
                   fontSize: 14,
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w400,
@@ -125,7 +125,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
                           Text(
                             'Remaining Balance:',
                             style: TextStyle(
-                              color: const Color(0xFF898989),
+                              color: SharePerksColors.textSecondaryLight,
                               fontSize: 10,
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w400,
@@ -135,8 +135,8 @@ class _PayoutScreenState extends State<PayoutScreen> {
                             '₹ ${remaining.toStringAsFixed(2)}',
                             style: TextStyle(
                               color: remaining < 0
-                                  ? const Color(0xFFEB3939)
-                                  : const Color(0xFF333333),
+                                  ? SharePerksColors.error
+                                  : SharePerksColors.textPrimaryLight,
                               fontSize: 10,
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w400,
@@ -152,7 +152,7 @@ class _PayoutScreenState extends State<PayoutScreen> {
               ElevatedButton(
                 style: ButtonStyle(
                   backgroundColor: WidgetStatePropertyAll(
-                    SharePerksColors.info,
+                    SharePerksColors.primary,
                   ),
                 ),
                 onPressed: _onWithdrawPressed,

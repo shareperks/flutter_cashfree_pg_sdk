@@ -176,7 +176,6 @@ class _TopBrandsScreenState extends State<TopBrandsScreen> {
                             width: width,
                             isNew: brand.isNew ?? false,
                             title: brand.name ?? "--",
-                            ticker: brand.tickerName ?? "--",
                             imageUrl: imageUrl(brand.image ?? ""),
                             onTap: () {
                               context.pushNamed(

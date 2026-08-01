@@ -61,8 +61,7 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
       data?.data?.eligibility?.isBrokerageEligible ?? false;
   bool get _reqReimport =>
       data?.data?.eligibility?.isBrokerConnected?.reqReimport == true;
-  bool get _listedOnExchange =>
-      data?.data?.company?.listedOnExchange ?? true;
+  bool get _listedOnExchange => data?.data?.company?.listedOnExchange ?? true;
 
   RewardEligibilityTier get _tier => resolveRewardTier(
     isEligible: _isEligible,
@@ -77,9 +76,9 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
     if (_claiming) return;
 
     final label = switch (_tier) {
-      RewardEligibilityTier.fullyEligible => 'Reveal Discount Code',
+      RewardEligibilityTier.fullyEligible => 'Reveal Discount Coupon',
       RewardEligibilityTier.brokerageEligible =>
-        'Claim Brokerage Discount Code',
+        'Claim Brokerage Discount Coupon',
       RewardEligibilityTier.nonHolder => 'Claim Non-Shareholder Perk',
     };
     await trackButtonClick(label, {
@@ -95,9 +94,8 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
       reason: switch (_tier) {
         RewardEligibilityTier.fullyEligible => 'ok',
         RewardEligibilityTier.brokerageEligible => 'brokerage_eligible',
-        RewardEligibilityTier.nonHolder => _reqReimport
-            ? 'req_reimport'
-            : 'not_eligible',
+        RewardEligibilityTier.nonHolder =>
+          _reqReimport ? 'req_reimport' : 'not_eligible',
       },
       source: 'reward_detail',
       brandId: data?.data?.company?.id,
@@ -118,7 +116,7 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
       Fluttertoast.showToast(
         msg: claim.alreadyClaimed == true
             ? 'You already have this code.'
-            : 'Discount code unlocked!',
+            : 'Discount coupon unlocked!',
         backgroundColor: Colors.green,
         textColor: Colors.white,
       );
@@ -158,7 +156,7 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
     if (e is StateError) return e.message;
     final msg = e.toString();
     if (msg.startsWith('Exception: ')) return msg.substring(11);
-    return 'Could not claim discount code. Please try again.';
+    return 'Could not claim discount coupon. Please try again.';
   }
 
   bool get _hasClaimedCode {
@@ -214,13 +212,12 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                       reqReimport: _reqReimport,
                       withHolderRewardRate:
                           data?.data?.eligibility?.withHolderRewardRate,
-                      withAnyHoldingRewardRate: data
-                          ?.data
-                          ?.eligibility
-                          ?.withAnyHoldingRewardRate,
+                      withAnyHoldingRewardRate:
+                          data?.data?.eligibility?.withAnyHoldingRewardRate,
                       nonHolderRewardRate:
                           data?.data?.eligibility?.nonHolderRewardRate,
-                      rewardType: data?.data?.eligibility?.rewardType ??
+                      rewardType:
+                          data?.data?.eligibility?.rewardType ??
                           data?.data?.basicInfo?.type,
                       showStandardBanner: true,
                     ),
@@ -232,10 +229,18 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                         spacing: 10,
                         children: [
                           PerkBasicInfo(
-                            onTickerTap: () {
+                            onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
                                 extra: {"companyId": data?.data?.company?.id},
+                              );
+                            },
+                            onBrandTap: () {
+                              final brandId = data?.data?.brand?.id;
+                              if (brandId == null || brandId.isEmpty) return;
+                              context.pushNamed(
+                                RouteNames.BRAND_SCREEN,
+                                extra: {"brandId": brandId},
                               );
                             },
                             data: PerkBasicInfoData(
@@ -243,18 +248,21 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                                   data?.data?.basicInfo?.bannerImage ?? '',
                               typeLabel: data?.data?.basicInfo?.type ?? '',
                               title: data?.data?.basicInfo?.title ?? '',
-                              tickerValue: data?.data?.basicInfo?.ticker ?? '',
-                              perkIdValue: data?.data?.basicInfo?.perkId ?? '',
+                              companyValue: data?.data?.company?.name ?? '',
+                              brandValue: data?.data?.brand?.name ?? '',
                               detailsBody:
                                   data?.data?.content?.description ?? '',
-                              eligibility: EligibilityCardsData(
-                                holdingPeriodDays:
-                                    data?.data?.eligibility?.days ?? 0,
-                                sharesRequired:
-                                    data?.data?.eligibility?.quantity ?? 0,
-                                // Not in this API response; keep a sane default.
-                                renewEveryDays: 0,
-                              ),
+                              eligibility: _listedOnExchange
+                                  ? EligibilityCardsData(
+                                      holdingPeriodDays:
+                                          data?.data?.eligibility?.days ?? 0,
+                                      sharesRequired:
+                                          data?.data?.eligibility?.quantity ??
+                                          0,
+                                      // Not in this API response; keep a sane default.
+                                      renewEveryDays: 0,
+                                    )
+                                  : null,
                             ),
                           ),
                           RewardRatesSection(
@@ -270,7 +278,8 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                             isBrokerageEligible: _isBrokerageEligible,
                             listedOnExchange: _listedOnExchange,
                             reqReimport: _reqReimport,
-                            rewardType: data?.data?.eligibility?.rewardType ??
+                            rewardType:
+                                data?.data?.eligibility?.rewardType ??
                                 data?.data?.basicInfo?.type,
                           ),
                           if (_hasClaimedCode)
@@ -306,11 +315,11 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                         ],
                       ),
                     ),
-                    if ((data?.data?.relatedPerks ?? []).isNotEmpty)
-                      RelatedPerksCard(
-                        items: data?.data?.relatedPerks ?? [],
-                        title: "Perks from ${data?.data?.company?.name}",
-                      ),
+                    PerkRelatedSection(
+                      relatedPerks: data?.data?.relatedPerks ?? const [],
+                      categoryId: data?.data?.category?.id,
+                      currentRewardId: widget.rewardId,
+                    ),
                   ],
                 ),
               ),
@@ -340,7 +349,7 @@ class _MyPromoCodeViewState extends State<MyPromoCodeView> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              'Discount Code',
+              'Discount Coupon',
               style: TextStyle(
                 color: SharePerksColors.primary,
                 fontSize: 16,
@@ -520,9 +529,9 @@ class _ClaimPromoCodeCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = switch (tier) {
-      RewardEligibilityTier.fullyEligible => 'Reveal Discount Code',
+      RewardEligibilityTier.fullyEligible => 'Reveal Discount Coupon',
       RewardEligibilityTier.brokerageEligible =>
-        'Claim Brokerage Discount Code',
+        'Claim Brokerage Discount Coupon',
       RewardEligibilityTier.nonHolder => 'Claim Non-Shareholder Perk',
     };
 

@@ -1,6 +1,6 @@
 name: shareperks
 description: "A clone of the shareplus package."
-version: 1.0.57+51
+version: 1.0.60+53
 
 environment:
   sdk: ^3.11.4
@@ -46,6 +46,7 @@ dependencies:
     git:
       url: https://github.com/shareperks/scgateway_flutter_plugin.git
       ref: main
+  share_plus: ^12.0.2
 
 dev_dependencies:
   flutter_test:

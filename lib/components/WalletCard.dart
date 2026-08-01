@@ -16,7 +16,10 @@ class WalletCard extends StatelessWidget {
       decoration: ShapeDecoration(
         color: Colors.white,
         shape: RoundedRectangleBorder(
-          side: BorderSide(width: 1, color: const Color(0x3F5182FE)),
+          side: BorderSide(
+            width: 1,
+            color: SharePerksColors.primary.withValues(alpha: 0.25),
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
       ),
@@ -32,7 +35,7 @@ class WalletCard extends StatelessWidget {
               Text(
                 'Wallet Balance',
                 style: TextStyle(
-                  color: const Color(0xFF5182FE) /* Information */,
+                  color: SharePerksColors.primary,
                   fontSize: 16,
                   fontFamily: 'Albert Sans',
                   fontWeight: FontWeight.w500,
@@ -41,7 +44,7 @@ class WalletCard extends StatelessWidget {
               Text(
                 '₹ $amount',
                 style: TextStyle(
-                  color: const Color(0xFF333333),
+                  color: SharePerksColors.textPrimaryLight,
                   fontSize: 22,
                   fontFamily: SharePerksFonts.albertSans,
                   fontWeight: FontWeight.w600,
@@ -63,7 +66,7 @@ class WalletCard extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: ShapeDecoration(
-              color: const Color(0xFF5283FE),
+              color: SharePerksColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -120,13 +123,15 @@ class TransactionCard extends StatelessWidget {
                 ? HugeIconsSolid.arrowDown02
                 : HugeIconsSolid.arrowUp02,
             size: 30,
-            color: data.type == "CREDIT" ? Colors.green : Colors.red,
+            color: data.type == "CREDIT"
+                ? SharePerksColors.success
+                : SharePerksColors.error,
           ),
         ),
         title: Text(
           '₹ ${data.amount}',
           style: TextStyle(
-            color: const Color(0xFF333333),
+            color: SharePerksColors.textPrimaryLight,
             fontSize: 16,
             fontFamily: SharePerksFonts.albertSans,
             fontWeight: FontWeight.w700,
@@ -139,7 +144,7 @@ class TransactionCard extends StatelessWidget {
               Text(
                 data.label!.trim(),
                 style: TextStyle(
-                  color: const Color(0xFF333333),
+                  color: SharePerksColors.textPrimaryLight,
                   fontSize: 12,
                   fontFamily: SharePerksFonts.inter,
                   fontWeight: FontWeight.w500,
@@ -148,7 +153,7 @@ class TransactionCard extends StatelessWidget {
             Text(
               data.date,
               style: TextStyle(
-                color: const Color(0xFF898989),
+                color: SharePerksColors.textSecondaryLight,
                 fontSize: 12,
                 fontFamily: SharePerksFonts.inter,
                 fontWeight: FontWeight.w400,
@@ -165,7 +170,7 @@ class TransactionCard extends StatelessWidget {
               Text(
                 data.time,
                 style: TextStyle(
-                  color: const Color(0xFF898989),
+                  color: SharePerksColors.textSecondaryLight,
                   fontSize: 12,
                   fontFamily: SharePerksFonts.inter,
                   fontWeight: FontWeight.w400,

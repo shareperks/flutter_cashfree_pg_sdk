@@ -92,18 +92,18 @@ class _WalletScreenState extends State<WalletScreen> {
                     padding: EdgeInsets.all(16),
                     borderWidth: 1,
                     borderRadius: 18,
-                    color: SharePerksColors.info,
+                    color: SharePerksColors.primary,
                     child: Column(
                       spacing: 10,
                       children: [
                         CollapseCard(
                           initiallyCollapsed: false,
-                          color: SharePerksColors.info,
+                          color: SharePerksColors.primary,
 
                           title: Text(
                             'Earnings',
                             style: TextStyle(
-                              color: SharePerksColors.info /* Information */,
+                              color: SharePerksColors.primary,
                               fontSize: 16,
                               fontFamily: SharePerksFonts.albertSans,
                               fontWeight: FontWeight.w700,
@@ -118,7 +118,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           child: ElevatedButton(
                             style: ButtonStyle(
                               backgroundColor: WidgetStatePropertyAll(
-                                SharePerksColors.info,
+                                SharePerksColors.primary,
                               ),
                             ),
                             onPressed: () {
@@ -151,17 +151,17 @@ class _WalletScreenState extends State<WalletScreen> {
 
                   BorderCard(
                     borderWidth: 1,
-                    color: Color(0x3F333333),
+                    color: SharePerksColors.primary.withAlpha(50),
                     padding: EdgeInsets.all(16),
                     borderRadius: 16,
 
                     child: CollapseCard(
                       initiallyCollapsed: false,
-                      color: Color(0xFF333333),
+                      color: SharePerksColors.primary,
                       title: Text(
                         'Transaction History',
                         style: TextStyle(
-                          color: const Color(0xFF333333),
+                          color: SharePerksColors.primary,
                           fontSize: 16,
                           fontFamily: 'Albert Sans',
                           fontWeight: FontWeight.w700,
@@ -214,7 +214,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       title: Text(
                         'FAQs',
                         style: TextStyle(
-                          color: const Color(0xFF6400E0),
+                          color: SharePerksColors.primary,
                           fontSize: 16,
                           fontFamily: SharePerksFonts.albertSans,
                           fontWeight: FontWeight.w700,

@@ -128,7 +128,7 @@ class _WalletHistoryScreenState extends State<WalletHistoryScreen> {
         leading: AppBackButton(),
         title: Text('Wallet History'),
         toolbarHeight: 40,
-        backgroundColor: SharePerksColors.borderDark,
+        backgroundColor: SharePerksColors.primary,
         actions: [
           Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 17),
           const SizedBox(width: 20),

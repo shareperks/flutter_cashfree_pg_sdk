@@ -79,7 +79,7 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
     return SpScafold(
       appBar: AppBar(
         leading: AppBackButton(),
-        title: Text("Gift Card"),
+        title: Text("Gift Cards"),
         toolbarHeight: 40,
         actions: [
           Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 17),
@@ -121,7 +121,7 @@ class _GiftCardCodeViewScreenState extends State<GiftCardCodeViewScreen> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  PerkInfoBar(type: "CREDIT"),
+                                  PerkInfoBar(type: "GIFT CARD"),
                                   Text(
                                     data?.data?.info?.name ?? "",
                                     style: TextStyle(

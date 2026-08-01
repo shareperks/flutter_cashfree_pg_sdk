@@ -233,7 +233,6 @@ class _CompanyViewScreenState extends State<CompanyViewScreen> {
                                       },
                                       isNew: brand.isNew ?? false,
                                       title: brand.name ?? "--",
-                                      ticker: brand.tickerName ?? "--",
                                       imageUrl: imageUrl(brand.image ?? ""),
                                     );
                                   },

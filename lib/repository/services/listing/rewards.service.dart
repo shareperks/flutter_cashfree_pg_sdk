@@ -28,10 +28,14 @@ class RewardListingDataService {
     return GiftcardDetailResponse.fromJson(body);
   }
 
-  /// `POST /rewards/giftcard/coupon/apply` — validate coupon against payable.
+  /// `POST /rewards/giftcard/coupon/apply` — validate + quote checkout.
+  ///
+  /// Prefer sending `creditId` + `rewardAmount` (+ wallet flags) so the server
+  /// quotes face → SharePerks → wallet → coupon. Legacy `{ code, orderAmount }`
+  /// still works.
   ///
   /// Throws [ApiErrorResponse] on business errors (invalid / inactive /
-  /// expired / usage caps).
+  /// expired / usage caps / min order).
   static Future<GiftCardCouponApplyData> applyGiftcardCoupon(
     GiftCardCouponApplyRequest request,
   ) async {
@@ -51,14 +55,19 @@ class RewardListingDataService {
           message: result.message ?? 'Could not apply coupon',
         );
       }
-      if (result.data!.payableAfterDiscount <= 0 ||
-          result.data!.discountApplied < 0) {
+      final data = result.data!;
+      final discountOk = data.discountApplied >= 0;
+      final hasCharge =
+          data.payableAfterDiscount > 0 ||
+          (data.gatewayAmount != null && data.gatewayAmount! >= 0) ||
+          (data.totalPayable != null && data.totalPayable! > 0);
+      if (!discountOk || !hasCharge) {
         throw const ApiErrorResponse(
           success: false,
           message: 'Invalid coupon response',
         );
       }
-      return result.data!;
+      return data;
     } on DioException catch (e) {
       final body = e.response?.data;
       if (body is Map<String, dynamic>) {

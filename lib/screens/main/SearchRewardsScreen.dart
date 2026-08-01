@@ -128,7 +128,7 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
                     applyFilter();
                   },
                   layoutWidthInset: 44,
-                  items: ['All', 'CashBack', 'GiftCard', 'Discount Code'],
+                  items: ['All', 'CashBack', 'Gift Cards', 'Discount Coupons'],
                 ),
                 SizedBox(height: 16),
                 Builder(
@@ -177,7 +177,8 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
                             title: reward.title!,
                             imageUrl: imageUrl(reward.image ?? ''),
                             isEligible: reward.isEligible ?? false,
-                            isBrokerageEligible: reward.isBrokerageEligible ?? false,
+                            isBrokerageEligible:
+                                reward.isBrokerageEligible ?? false,
                             eligibility: reward.companyName ?? '--',
                           );
                         }),

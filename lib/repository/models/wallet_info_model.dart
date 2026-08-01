@@ -59,6 +59,7 @@ class WalletSummary {
     this.totalReferEarn,
     this.totalPendingAmount,
     this.totalPaidAmount,
+    this.maxPayPercent,
   });
 
   final double? balance;
@@ -68,6 +69,10 @@ class WalletSummary {
   final double? totalPendingAmount;
   final double? totalPaidAmount;
 
+  /// Max share of gift-card payable via wallet (e.g. 70).
+  /// From `WALLET_MAX_PAY_PERCENT`; app defaults to 70 when absent.
+  final double? maxPayPercent;
+
   factory WalletSummary.fromJson(Map<String, dynamic> json) {
     return WalletSummary(
       balance: parseJsonDouble(json['balance']),
@@ -76,6 +81,9 @@ class WalletSummary {
       totalReferEarn: parseJsonDouble(json['totalReferEarn']),
       totalPendingAmount: parseJsonDouble(json['totalPendingAmount']),
       totalPaidAmount: parseJsonDouble(json['totalPaidAmount']),
+      maxPayPercent: parseJsonDouble(
+        json['maxPayPercent'] ?? json['max_pay_percent'],
+      ),
     );
   }
 
@@ -86,6 +94,7 @@ class WalletSummary {
     'totalReferEarn': totalReferEarn,
     'totalPendingAmount': totalPendingAmount,
     'totalPaidAmount': totalPaidAmount,
+    if (maxPayPercent != null) 'maxPayPercent': maxPayPercent,
   };
 }
 

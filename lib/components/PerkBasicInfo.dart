@@ -15,11 +15,12 @@ class PerkBasicInfoData {
   final String imageUrl;
   final String typeLabel;
   final String title;
-  final String tickerLabel;
-  final String tickerValue;
-  final bool underlineTicker;
-  final String perkIdLabel;
-  final String perkIdValue;
+  final String companyLabel;
+  final String companyValue;
+  final bool underlineCompany;
+  final String brandLabel;
+  final String brandValue;
+  final bool underlineBrand;
   final String detailsTitle;
   final String? detailsBody;
   final EligibilityCardsData? eligibility;
@@ -28,11 +29,12 @@ class PerkBasicInfoData {
     required this.imageUrl,
     required this.typeLabel,
     required this.title,
-    this.tickerLabel = "Ticker",
-    required this.tickerValue,
-    this.underlineTicker = true,
-    this.perkIdLabel = "Perk ID",
-    required this.perkIdValue,
+    this.companyLabel = 'Company',
+    this.companyValue = '',
+    this.underlineCompany = true,
+    this.brandLabel = 'Brand',
+    this.brandValue = '',
+    this.underlineBrand = true,
     this.detailsTitle = 'Perk Details',
     required this.detailsBody,
     this.eligibility,
@@ -42,10 +44,8 @@ class PerkBasicInfoData {
     imageUrl: '',
     typeLabel: 'Credit',
     title: 'Reward Title on the given brand',
-    tickerLabel: 'Ticker',
-    tickerValue: 'Eternal Ltd.',
-    perkIdLabel: 'Perk ID',
-    perkIdValue: 'ZOM023',
+    companyValue: 'Eternal Ltd.',
+    brandValue: 'Zomato',
     detailsBody: 'Loading perk details…',
     eligibility: EligibilityCardsData.placeholder,
   );
@@ -55,11 +55,29 @@ class PerkBasicInfo extends StatelessWidget {
   const PerkBasicInfo({
     super.key,
     this.data = PerkBasicInfoData.placeholder,
-    this.onTickerTap,
+    this.onCompanyTap,
+    this.onBrandTap,
   });
 
   final PerkBasicInfoData data;
-  final VoidCallback? onTickerTap;
+  final VoidCallback? onCompanyTap;
+  final VoidCallback? onBrandTap;
+
+  TextStyle _labelStyle() => TextStyle(
+    color: const Color(0xFF898989),
+    fontSize: 12,
+    fontFamily: SharePerksFonts.inter,
+    fontWeight: FontWeight.w400,
+  );
+
+  TextStyle _linkStyle({required bool underline}) => TextStyle(
+    color: const Color(0xFF5182FE),
+    fontSize: 12,
+    fontFamily: SharePerksFonts.inter,
+    fontWeight: FontWeight.w400,
+    decoration: underline ? TextDecoration.underline : null,
+    decorationColor: const Color(0xFF5182FE),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -97,53 +115,28 @@ class PerkBasicInfo extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                KeyValueList(
-                  keyWidget: Text(
-                    data.tickerLabel,
-                    style: TextStyle(
-                      color: const Color(0xFF898989),
-                      fontSize: 12,
-                      fontFamily: SharePerksFonts.inter,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  valueWidget: InkWell(
-                    onTap: onTickerTap,
-                    child: Text(
-                      data.tickerValue,
-                      style: TextStyle(
-                        color: const Color(0xFF5182FE) /* Information */,
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w400,
-                        decoration: data.underlineTicker
-                            ? TextDecoration.underline
-                            : null,
-                        decorationColor: const Color(0xFF5182FE),
+                if (data.companyValue.trim().isNotEmpty)
+                  KeyValueList(
+                    keyWidget: Text(data.companyLabel, style: _labelStyle()),
+                    valueWidget: InkWell(
+                      onTap: onCompanyTap,
+                      child: Text(
+                        data.companyValue,
+                        style: _linkStyle(underline: data.underlineCompany),
                       ),
                     ),
                   ),
-                ),
-                KeyValueList(
-                  keyWidget: Text(
-                    data.perkIdLabel,
-                    style: TextStyle(
-                      color: const Color(0xFF898989),
-                      fontSize: 12,
-                      fontFamily: SharePerksFonts.inter,
-                      fontWeight: FontWeight.w400,
+                if (data.brandValue.trim().isNotEmpty)
+                  KeyValueList(
+                    keyWidget: Text(data.brandLabel, style: _labelStyle()),
+                    valueWidget: InkWell(
+                      onTap: onBrandTap,
+                      child: Text(
+                        data.brandValue,
+                        style: _linkStyle(underline: data.underlineBrand),
+                      ),
                     ),
                   ),
-                  valueWidget: Text(
-                    data.perkIdValue,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: SharePerksFonts.inter,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
 
                 Builder(
                   builder: (context) {
@@ -201,6 +194,30 @@ class PerkInfoBar extends StatelessWidget {
   final String type;
   const PerkInfoBar({super.key, required this.type});
 
+  static String badgeLabel(String type) {
+    switch (type.trim().toUpperCase()) {
+      case 'CREDIT':
+      case 'GIFTCARD':
+      case 'GIFT_CARD':
+      case 'GIFT CARD':
+        return 'GIFT CARD';
+      case 'OFFER':
+      case 'PROMOCODE':
+      case 'PROMO_CODE':
+      case 'PROMO CODE':
+      case 'DISCOUNT COUPON':
+      case 'DISCOUNT CODE':
+        return 'DISCOUNT CODE';
+      case 'BENEFIT':
+      case 'CASHBACK':
+      case 'CASH_BACK':
+      case 'CASH BACK':
+        return 'CASH BACK';
+      default:
+        return type.toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -225,7 +242,7 @@ class PerkInfoBar extends StatelessWidget {
             ),
           ),
           child: Text(
-            type,
+            badgeLabel(type),
             style: TextStyle(
               color: const Color(0xFF6400E0),
               fontSize: 10,

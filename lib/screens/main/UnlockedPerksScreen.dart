@@ -148,7 +148,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
                     });
                   },
                   layoutWidthInset: 44,
-                  items: ["CashBack", "GiftCard", "Discount Code"],
+                  items: ["Cashback", "Gift Cards", "Discount Coupons"],
                 ),
                 SizedBox(height: 12),
                 if (!_loading && !_isError)
