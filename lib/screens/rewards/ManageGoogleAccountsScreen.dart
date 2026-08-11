@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
@@ -27,6 +28,7 @@ class _ManageGoogleAccountsScreenState extends State<ManageGoogleAccountsScreen>
   bool _loading = true;
   bool _isError = false;
   bool _connecting = false;
+  String? _disconnectingId;
   List<LinkedGmailAccount> _accounts = const <LinkedGmailAccount>[];
   String? _accountId;
 
@@ -111,6 +113,66 @@ class _ManageGoogleAccountsScreenState extends State<ManageGoogleAccountsScreen>
       Fluttertoast.showToast(msg: 'Could not open Google sign-in');
     } finally {
       if (mounted) setState(() => _connecting = false);
+    }
+  }
+
+  String _disconnectErrorMessage(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['error'] is String) {
+        return data['error'] as String;
+      }
+      return e.message ?? 'Could not disconnect Google account';
+    }
+    return 'Could not disconnect Google account';
+  }
+
+  Future<void> _disconnectGoogle(LinkedGmailAccount account) async {
+    if (_disconnectingId != null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Disconnect Google'),
+        content: Text(
+          'Disconnect ${account.email}? SharePerks will stop scraping coupons from this inbox and remove stored email coupons for it.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: SharePerksColors.error,
+            ),
+            child: const Text('Disconnect'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    setState(() => _disconnectingId = account.id);
+    try {
+      final res = await GmailCouponService.disconnectAccount(account.id);
+      if (!mounted) return;
+      if (res.ok) {
+        setState(() {
+          _accounts = _accounts.where((a) => a.id != account.id).toList();
+          _disconnectingId = null;
+        });
+        Fluttertoast.showToast(msg: 'Disconnected ${account.email}');
+      } else {
+        setState(() => _disconnectingId = null);
+        Fluttertoast.showToast(msg: 'Could not disconnect Google account');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _disconnectingId = null);
+      Fluttertoast.showToast(msg: _disconnectErrorMessage(e));
     }
   }
 
@@ -260,6 +322,7 @@ class _ManageGoogleAccountsScreenState extends State<ManageGoogleAccountsScreen>
 
   Widget _accountTile(LinkedGmailAccount account) {
     final connectedOn = _formatDate(account.createdAt);
+    final disconnecting = _disconnectingId == account.id;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -268,65 +331,118 @@ class _ManageGoogleAccountsScreenState extends State<ManageGoogleAccountsScreen>
         borderRadius: BorderRadius.circular(SharePerksRadii.md),
         border: Border.all(color: SharePerksColors.borderLight),
       ),
-      child: Row(
+      child: Column(
         children: [
-          _Avatar(picture: account.picture, name: account.name ?? account.email),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  account.name?.trim().isNotEmpty == true
-                      ? account.name!.trim()
-                      : account.email,
+          Row(
+            children: [
+              _Avatar(
+                picture: account.picture,
+                name: account.name ?? account.email,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      account.name?.trim().isNotEmpty == true
+                          ? account.name!.trim()
+                          : account.email,
+                      style: TextStyle(
+                        color: SharePerksColors.textPrimaryLight,
+                        fontSize: 13,
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (account.name?.trim().isNotEmpty == true) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        account.email,
+                        style: TextStyle(
+                          color: SharePerksColors.textSecondaryLight,
+                          fontSize: 12,
+                          fontFamily: SharePerksFonts.inter,
+                        ),
+                      ),
+                    ],
+                    if (connectedOn.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Connected $connectedOn',
+                        style: TextStyle(
+                          color: SharePerksColors.textSecondaryLight.withValues(
+                            alpha: 0.85,
+                          ),
+                          fontSize: 10,
+                          fontFamily: SharePerksFonts.inter,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: SharePerksColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Connected',
                   style: TextStyle(
-                    color: SharePerksColors.textPrimaryLight,
-                    fontSize: 13,
-                    fontFamily: SharePerksFonts.albertSans,
+                    color: SharePerksColors.success,
+                    fontSize: 10,
+                    fontFamily: SharePerksFonts.inter,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (account.name?.trim().isNotEmpty == true) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    account.email,
-                    style: TextStyle(
-                      color: SharePerksColors.textSecondaryLight,
-                      fontSize: 12,
-                      fontFamily: SharePerksFonts.inter,
-                    ),
-                  ),
-                ],
-                if (connectedOn.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Connected $connectedOn',
-                    style: TextStyle(
-                      color: SharePerksColors.textSecondaryLight.withValues(
-                        alpha: 0.85,
-                      ),
-                      fontSize: 10,
-                      fontFamily: SharePerksFonts.inter,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: SharePerksColors.success.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Connected',
-              style: TextStyle(
-                color: SharePerksColors.success,
-                fontSize: 10,
-                fontFamily: SharePerksFonts.inter,
-                fontWeight: FontWeight.w700,
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: disconnecting || _disconnectingId != null
+                    ? null
+                    : () => _disconnectGoogle(account),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (disconnecting)
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else
+                        Icon(
+                          HugeIconsSolid.unlink02,
+                          size: 14,
+                          color: SharePerksColors.error,
+                        ),
+                      const SizedBox(width: 6),
+                      Text(
+                        disconnecting ? 'Disconnecting…' : 'Disconnect',
+                        style: TextStyle(
+                          color: SharePerksColors.error,
+                          fontSize: 12,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

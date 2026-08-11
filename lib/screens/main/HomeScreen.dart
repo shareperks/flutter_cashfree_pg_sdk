@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dio/dio.dart';
@@ -28,9 +27,9 @@ import 'package:shareperks/navigation/home_slide_navigation.dart';
 import 'package:shareperks/repository/models/HomeDataModel.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
+import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
 import 'package:shareperks/repository/services/notification/notification.service.dart';
-import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/utils/image_url.dart';
 import 'package:soui/elements/ImageBuilder.dart';
@@ -427,6 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
+                    // const EmailCouponsHomeSection(),
                     if (slides.isNotEmpty)
                       CarouselSlider(
                         options: CarouselOptions(

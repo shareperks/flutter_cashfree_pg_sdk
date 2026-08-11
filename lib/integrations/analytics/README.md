@@ -16,9 +16,15 @@ lib/integrations/analytics/
 ├── session_id.dart              One id per cold start.
 ├── consent_manager.dart         granted / denied / unknown flag.
 ├── route_observer.dart          AnalyticsRouteObserver — drop-in for routeObserver.
+├── campaign_attribution.dart    UTM / gclid last-touch store (Google Ads).
+├── install_attribution.dart     Play Install Referrer (Android deferred).
+├── deep_link_tracker.dart       app_links → deeplink_opened + UTM.
+├── google_conversions.dart      GA4 / Google Ads conversion event list.
 ├── sinks/
 │   ├── analytics_sink.dart      Sink interface.
 │   ├── debug_sink.dart          kDebugMode pretty printer.
+│   ├── firebase_sink.dart       Firebase Analytics (GA4) + Consent Mode.
+│   ├── meta_sink.dart           Meta App Events (Facebook SDK).
 │   └── server_sink.dart         POSTs to https://listing.shareperks.in/track/batch
 │                                with offline queue + retry + backoff.
 └── README.md                    This file.

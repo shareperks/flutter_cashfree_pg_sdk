@@ -50,6 +50,7 @@ class GmailCouponService {
     int limit = 20,
     String? brand,
     String? q,
+    EmailCouponUsedFilter usedFilter = EmailCouponUsedFilter.all,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/accounts/by-account/$accountId/coupons',
@@ -58,6 +59,7 @@ class GmailCouponService {
         'limit': limit,
         if (brand != null && brand.trim().isNotEmpty) 'brand': brand.trim(),
         if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
+        if (usedFilter.queryValue != null) 'used': usedFilter.queryValue,
       },
     );
     final body = response.data;
@@ -65,5 +67,63 @@ class GmailCouponService {
       throw StateError('Email coupons: empty response body');
     }
     return PaginatedEmailCouponsResponse.fromJson(body);
+  }
+
+  /// `PATCH /api/coupons/{id}/used` with `{ "used": true|false }`.
+  static Future<EmailCoupon> setCouponUsed(
+    String couponId, {
+    required bool used,
+    EmailCoupon? current,
+  }) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/api/coupons/$couponId/used',
+      data: <String, dynamic>{'used': used},
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('Mark coupon used: empty response body');
+    }
+
+    final nested = body['coupon'];
+    if (nested is Map) {
+      return EmailCoupon.fromJson(Map<String, dynamic>.from(nested));
+    }
+    if (body.containsKey('coupon_code') ||
+        body.containsKey('brand') ||
+        body.containsKey('source') ||
+        body.containsKey('name')) {
+      return EmailCoupon.fromJson(body);
+    }
+
+    final nextUsed = body['used'] == true;
+    final nextUsedAt = (body['used_at'] ?? body['usedAt'])?.toString();
+    if (current != null) {
+      return current.copyWith(
+        used: nextUsed,
+        usedAt: nextUsedAt,
+        clearUsedAt: !nextUsed,
+      );
+    }
+
+    return EmailCoupon(
+      id: couponId,
+      used: nextUsed,
+      usedAt: nextUsedAt,
+    );
+  }
+
+  /// `DELETE /api/accounts/{id}` — [gmailConnectionId] is the linked Gmail
+  /// user id (`LinkedGmailAccount.id`), not the SharePerks `accountId`.
+  static Future<GmailDisconnectResponse> disconnectAccount(
+    String gmailConnectionId,
+  ) async {
+    final response = await _dio.delete<Map<String, dynamic>>(
+      '/api/accounts/$gmailConnectionId',
+    );
+    final body = response.data;
+    if (body == null) {
+      throw StateError('Gmail disconnect: empty response body');
+    }
+    return GmailDisconnectResponse.fromJson(body);
   }
 }

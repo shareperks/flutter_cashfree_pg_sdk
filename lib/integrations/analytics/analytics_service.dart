@@ -7,6 +7,8 @@ import 'consent_manager.dart';
 import 'journey_context.dart';
 import 'sinks/analytics_sink.dart';
 import 'sinks/debug_sink.dart';
+import 'sinks/firebase_sink.dart';
+import 'sinks/meta_sink.dart';
 import 'sinks/server_sink.dart';
 
 /// Single public facade for analytics. Screens MUST NOT import vendor SDKs
@@ -56,6 +58,8 @@ class AnalyticsService {
 
     _sinks.addAll([
       if (kDebugMode) DebugSink(),
+      FirebaseSink(),
+      MetaSink(),
       server,
     ]);
 
@@ -77,11 +81,21 @@ class AnalyticsService {
     } catch (_) {
       _consentGiven = false;
     }
+    await _propagateConsent(_consentGiven);
   }
 
   /// Tell the service the user just granted (or denied) consent.
-  void onConsentChanged(bool granted) {
+  Future<void> onConsentChanged(bool granted) async {
     _consentGiven = granted;
+    await _propagateConsent(granted);
+  }
+
+  Future<void> _propagateConsent(bool granted) async {
+    for (final s in _sinks) {
+      try {
+        await s.onConsentChanged(granted);
+      } catch (_) {}
+    }
   }
 
   /// Called after OTP verify / session restore / profile completion.

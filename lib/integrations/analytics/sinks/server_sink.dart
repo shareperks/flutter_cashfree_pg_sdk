@@ -161,6 +161,12 @@ class ServerSink implements AnalyticsSink {
     await _safeFlush();
   }
 
+  @override
+  Future<void> onConsentChanged(bool granted) async {
+    // ServerSink respects AnalyticsService consent gating before track() is
+    // called; no extra header/flag needed today.
+  }
+
   /// Immediate best-effort flush. Safe to call from anywhere (e.g. lifecycle
   /// transitions). Never throws.
   Future<void> flush() => _safeFlush();

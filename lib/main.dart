@@ -1,17 +1,20 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shareperks/constants/keys.dart';
 import 'package:shareperks/constants/routes.dart';
+import 'package:shareperks/firebase_options.dart';
 import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/integrations/analytics/consent_manager.dart';
+import 'package:shareperks/integrations/analytics/deep_link_tracker.dart';
+import 'package:shareperks/integrations/analytics/install_attribution.dart';
 import 'package:shareperks/integrations/onesignal_push.dart';
 import 'package:shareperks/integrations/razorpay_payment.dart';
-import 'package:shareperks/integrations/smallcase_gateway.dart';
 import 'package:provider/provider.dart';
 import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
@@ -23,20 +26,35 @@ const _firstOpenKey = 'analytics_first_open_seen_v1';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalStorage.init();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e, st) {
+    debugPrint('[firebase] initializeApp failed: $e\n$st');
+  }
+
   RazorpayPayment.init();
   await OneSignalPush.init();
+
+  // Consent Mode v2: apply stored (or implicit) consent before first events.
+  if (await ConsentManager.read() == ConsentState.unknown) {
+    await ConsentManager.grant();
+  }
 
   await AnalyticsService.instance.init(
     trackingApiBaseUrl: Host.listingUrl,
     getAuthToken: () async => LocalStorage.getToken(),
   );
+  await AnalyticsService.instance.onConsentChanged(
+    await ConsentManager.isGranted(),
+  );
 
-  // Implicit-grant: first launch only. Existing users keep whatever they
-  // chose in the Settings → Share usage data toggle.
-  if (await ConsentManager.read() == ConsentState.unknown) {
-    await ConsentManager.grant();
-    AnalyticsService.instance.onConsentChanged(true);
-  }
+  // Play Install Referrer (Google Ads deferred attribution on Android).
+  unawaited(InstallAttribution.captureOnce());
+  // Direct deep links + UTM capture.
+  unawaited(DeepLinkTracker.instance.start());
 
   // is_first_open is true on the very first cold start of this install.
   final seenFirstOpen = LocalStorage.getString(_firstOpenKey) == '1';

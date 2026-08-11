@@ -40,4 +40,8 @@ abstract class AnalyticsSink {
 
   /// Called on logout — clear cached identity, flush pending queues.
   Future<void> reset();
+
+  /// Called when the user grants or denies analytics consent (CMP / settings).
+  /// Default is a no-op; Firebase / Ads sinks override to update Consent Mode.
+  Future<void> onConsentChanged(bool granted) async {}
 }

@@ -8,6 +8,8 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
+import 'package:shareperks/integrations/analytics/analytics_service.dart';
+import 'package:shareperks/integrations/analytics/consent_manager.dart';
 import 'package:shareperks/integrations/onesignal_push.dart';
 import 'package:shareperks/repository/models/user_settings_model.dart';
 import 'package:shareperks/repository/services/actions/Settings.service.dart';
@@ -30,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _perksUpdates = false;
   bool _walletUpdates = false;
   bool _mfaEnabled = false;
+  bool _shareUsageData = true;
 
   Future<void> _fetchSettings() async {
     setState(() {
@@ -43,6 +46,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _applySettings(s);
         _loading = false;
       });
+      final consent = await ConsentManager.isGranted();
+      if (!mounted) return;
+      setState(() => _shareUsageData = consent);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -171,6 +177,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       perksUpdates: _perksUpdates,
       walletUpdates: _walletUpdates,
     );
+  }
+
+  Future<void> _onShareUsageDataChanged(bool value) async {
+    setState(() => _shareUsageData = value);
+    if (value) {
+      await ConsentManager.grant();
+    } else {
+      await ConsentManager.deny();
+    }
+    await AnalyticsService.instance.onConsentChanged(value);
   }
 
   @override
@@ -380,6 +396,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onChanged: _saving
                             ? (e) {}
                             : (v) => _onNotificationsChanged(v),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          width: 1,
+                          color: SharePerksColors.borderLight,
+                        ),
+                      ),
+                    ),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.all(0),
+                      title: Text(
+                        'Share usage data',
+                        style: TextStyle(
+                          color: const Color(0xFF333333),
+                          fontSize: 14,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Helps us improve SharePerks via Google Analytics',
+                        style: TextStyle(
+                          color: SharePerksColors.textSecondaryLight,
+                          fontSize: 12,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      trailing: Switch(
+                        value: _shareUsageData,
+                        onChanged: (v) => _onShareUsageDataChanged(v),
                       ),
                     ),
                   ),

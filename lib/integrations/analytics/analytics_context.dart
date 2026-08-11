@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'anon_id.dart';
+import 'campaign_attribution.dart';
 import 'session_id.dart';
 
 /// Per-event context attached to every analytics payload. Server stores it as
@@ -41,6 +42,8 @@ class AnalyticsContext {
     try {
       _locale = Platform.localeName;
     } catch (_) {}
+
+    await CampaignAttribution.boot();
   }
 
   /// Returns the `ctx` object to attach to every event.
@@ -53,6 +56,7 @@ class AnalyticsContext {
       'anon_id': anon,
       'session_id': SessionId.value,
       'ts_client_ms': DateTime.now().millisecondsSinceEpoch,
+      ...CampaignAttribution.asEventProps(),
     };
     if (_appVersion != null) ctx['app_version'] = _appVersion;
     if (_buildNumber != null) ctx['build_number'] = _buildNumber;

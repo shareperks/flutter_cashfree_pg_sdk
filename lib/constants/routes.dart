@@ -54,6 +54,7 @@ import 'package:shareperks/screens/refer/MyReferralsListScreen.dart';
 import 'package:shareperks/screens/refer/ReferAndEarnCodeScreen.dart';
 import 'package:shareperks/screens/rewards/CashBackRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ClaimedPerksScreen.dart';
+import 'package:shareperks/screens/rewards/EmailCouponDetailScreen.dart';
 import 'package:shareperks/screens/rewards/EmailCouponsScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardCodeViewScreen.dart';
 import 'package:shareperks/screens/rewards/GiftCardRewardScreen.dart';
@@ -63,6 +64,7 @@ import 'package:shareperks/screens/rewards/PromoCodeRewardScreen.dart';
 import 'package:shareperks/screens/rewards/ReadRewardTermScreen.dart';
 import 'package:shareperks/screens/rewards/giftcard/GiftCardAmountScreen.dart';
 import 'package:shareperks/screens/rewards/giftcard/PaymentSucessScreen.dart';
+import 'package:shareperks/repository/models/email_coupon_model.dart';
 
 // Routes names
 class RouteNames {
@@ -113,6 +115,7 @@ class RouteNames {
   static const String CLAIMED_PERKS_SCREEN = 'ClaimedPerkScreen';
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
   static const String MY_EMAIL_COUPONS_SCREEN = 'MyEmailCouponsScreen';
+  static const String EMAIL_COUPON_DETAIL_SCREEN = 'EmailCouponDetailScreen';
   static const String MANAGE_GOOGLE_ACCOUNTS_SCREEN = 'ManageGoogleAccountsScreen';
   static const String HOW_TO_CLAIM_SCREEN = 'HowToClaimScreen';
   static const String GIFTCARD_AMOUNT_SCREEN = 'GiftCardAmountScreen';
@@ -454,6 +457,18 @@ final List<GoRoute> routes = [
     path: RouteNames.path(RouteNames.MY_EMAIL_COUPONS_SCREEN),
     builder: (BuildContext context, GoRouterState state) =>
         const EmailCouponsScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.EMAIL_COUPON_DETAIL_SCREEN,
+    path: RouteNames.path(RouteNames.EMAIL_COUPON_DETAIL_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final coupon = extra is EmailCoupon ? extra : null;
+      if (coupon == null) {
+        return const NotFoundScreen();
+      }
+      return EmailCouponDetailScreen(coupon: coupon);
+    },
   ),
   GoRoute(
     name: RouteNames.MANAGE_GOOGLE_ACCOUNTS_SCREEN,

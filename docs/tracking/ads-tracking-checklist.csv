@@ -1,0 +1,20 @@
+Requirement,Google Ads,Meta Ads,Status
+Agency Ad Account Access,NA,Done,WIP
+MMP Access (AppsFlyer/Adjust/Branch/Singular),Not started,Not started,Pending
+Firebase Project Access,"shareperks-8269f | GA4: G-WVB4HMKPXX | Android App ID: 1:681535457811:android:01aed961d05e9a801e0de6 | iOS App ID: 1:681535457811:ios:db01d9b8a2fc92921e0de6",App package com.shareperks linked via Meta App ID 1558786092457844,Done
+App ID (Android/iOS),com.shareperks,com.shareperks,Done
+Google Play Store URL,https://play.google.com/store/apps/details?id=com.shareperks,https://play.google.com/store/apps/details?id=com.shareperks,Done
+Apple App Store URL,https://apps.apple.com/in/app/shareperks/id6746847398,https://apps.apple.com/in/app/shareperks/id6746847398,Done
+Google Ads Link with MMP,Pending (needs MMP),NA,Pending
+Meta Ads Link with MMP,NA,Pending (needs MMP),Pending
+SKAdNetwork configured (iOS),Done (Google SKAdNetwork IDs in app),Done (Meta SKAdNetwork IDs in app),Done
+Android Install Referrer,Done (Play Install Referrer + first_open / install_attributed),Done (install mapped to Activate App),Done
+Consent Mode / CMP,Done (Consent Mode v2 + Share usage data toggle),Done (Meta advertiser tracking follows same toggle),Done
+Deep Links / Deferred Deep Links,"Done (shareperks:// + https://shareperks.in + Play Install Referrer for deferred)","Done (same deep links + fb1558786092457844; Meta App ID 1558786092457844)",Done
+In-app Events mapped,Done (events flowing to GA4 / Firebase),Done (events flowing to Meta Events Manager — App ID 1558786092457844),Done
+Install Event,first_open,fb_mobile_activate_app (Activate App),Done
+First Open Event,first_open | sp_first_open,fb_mobile_activate_app (Activate App),Done
+Registration Event,sign_up,fb_mobile_complete_registration (Complete Registration),Done
+Login Event,login,Login,Done
+Custom Conversion Mapping,"Mark in GA4/Google Ads: first_open | sp_first_open | sign_up | login | purchase","Mark in Meta Events Manager: Activate App | Complete Registration | Login | Purchase (App ID 1558786092457844)",Done (app ready — mark conversions in dashboards)
+UTM Parameters,"utm_source | utm_medium | utm_campaign | utm_content | utm_term | gclid",Same UTM params sent to Meta,Done

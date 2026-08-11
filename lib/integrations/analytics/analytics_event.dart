@@ -78,6 +78,11 @@ class AnalyticsEvent {
     'deeplink_opened',
     EventCategory.lifecycle,
   );
+  static const installAttributed = AnalyticsEvent._(
+    'install_attributed',
+    EventCategory.lifecycle,
+    requiresConsent: false,
+  );
   static const forceUpdateShown = AnalyticsEvent._(
     'force_update_shown',
     EventCategory.lifecycle,

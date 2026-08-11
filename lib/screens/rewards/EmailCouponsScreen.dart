@@ -43,6 +43,7 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
   int _page = 1;
   bool _hasMore = false;
   String? _accountId;
+  EmailCouponUsedFilter _usedFilter = EmailCouponUsedFilter.all;
 
   @override
   void initState() {
@@ -116,6 +117,7 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
         page: 1,
         limit: _pageSize,
         q: _searchController.text,
+        usedFilter: _usedFilter,
       );
       if (!mounted) return;
       setState(() {
@@ -146,6 +148,7 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
           page: 1,
           limit: _pageSize,
           q: _searchController.text,
+          usedFilter: _usedFilter,
         ),
         GmailCouponService.listAccounts(accountId),
       ]);
@@ -180,6 +183,7 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
         page: nextPage,
         limit: _pageSize,
         q: _searchController.text,
+        usedFilter: _usedFilter,
       );
       if (!mounted) return;
       setState(() {
@@ -198,6 +202,30 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
     _searchTimer?.cancel();
     _searchTimer = Timer(const Duration(milliseconds: 500), () {
       unawaited(_loadInitial());
+    });
+  }
+
+  void _onUsedFilterChanged(EmailCouponUsedFilter filter) {
+    if (_usedFilter == filter) return;
+    setState(() => _usedFilter = filter);
+    unawaited(_loadInitial());
+  }
+
+  void _onCouponUsedChanged(EmailCoupon updated) {
+    setState(() {
+      final matchesFilter = switch (_usedFilter) {
+        EmailCouponUsedFilter.all => true,
+        EmailCouponUsedFilter.unused => !updated.used,
+        EmailCouponUsedFilter.used => updated.used,
+      };
+      if (!matchesFilter) {
+        _items = _items.where((c) => c.id != updated.id).toList();
+      } else {
+        _items = [
+          for (final c in _items)
+            if (c.id == updated.id) updated else c,
+        ];
+      }
     });
   }
 
@@ -256,15 +284,31 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: Row(
+              children: [
+                for (final filter in EmailCouponUsedFilter.values) ...[
+                  if (filter != EmailCouponUsedFilter.values.first)
+                    const SizedBox(width: 6),
+                  _UsedFilterChip(
+                    label: filter.label,
+                    selected: _usedFilter == filter,
+                    onTap: () => _onUsedFilterChanged(filter),
+                  ),
+                ],
+              ],
+            ),
+          ),
           if (!_gmailConnected && !_initialLoading)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: Material(
                 color: SharePerksColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(SharePerksRadii.md),
+                borderRadius: BorderRadius.circular(SharePerksRadii.lg),
                 child: InkWell(
                   onTap: _openManageAccounts,
-                  borderRadius: BorderRadius.circular(SharePerksRadii.md),
+                  borderRadius: BorderRadius.circular(SharePerksRadii.lg),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -316,7 +360,7 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        children: List.generate(6, (_) => const _EmailCouponShimmer()),
+        children: List.generate(5, (_) => const _EmailCouponShimmer()),
       );
     }
 
@@ -357,12 +401,14 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
           _EmptyCouponsState(
             searching: searching,
             gmailConnected: _gmailConnected,
+            usedFilter: _usedFilter,
             onRefresh: _refresh,
             onManageAccounts: _openManageAccounts,
             onClearSearch: () {
               _searchController.clear();
               _onSearchChanged('');
             },
+            onShowAll: () => _onUsedFilterChanged(EmailCouponUsedFilter.all),
           ),
         ],
       );
@@ -372,9 +418,9 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
       itemCount: _items.length + (_loadingMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         if (index >= _items.length) {
           return const Padding(
@@ -388,8 +434,61 @@ class _EmailCouponsScreenState extends State<EmailCouponsScreen> {
             ),
           );
         }
-        return EmailCouponCard(coupon: _items[index]);
+        return EmailCouponCard(
+          coupon: _items[index],
+          onUsedChanged: _onCouponUsedChanged,
+        );
       },
+    );
+  }
+}
+
+class _UsedFilterChip extends StatelessWidget {
+  const _UsedFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(SharePerksRadii.md),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(SharePerksRadii.md),
+            color: selected
+                ? SharePerksColors.primary
+                : SharePerksColors.surfaceLight,
+            border: Border.all(
+              color: selected
+                  ? SharePerksColors.primary
+                  : SharePerksColors.borderLight,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected
+                    ? Colors.white
+                    : SharePerksColors.textSecondaryLight,
+                fontSize: 12,
+                fontFamily: SharePerksFonts.inter,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -398,16 +497,20 @@ class _EmptyCouponsState extends StatelessWidget {
   const _EmptyCouponsState({
     required this.searching,
     required this.gmailConnected,
+    required this.usedFilter,
     required this.onRefresh,
     required this.onManageAccounts,
     required this.onClearSearch,
+    required this.onShowAll,
   });
 
   final bool searching;
   final bool gmailConnected;
+  final EmailCouponUsedFilter usedFilter;
   final Future<void> Function() onRefresh;
   final VoidCallback onManageAccounts;
   final VoidCallback onClearSearch;
+  final VoidCallback onShowAll;
 
   @override
   Widget build(BuildContext context) {
@@ -418,6 +521,22 @@ class _EmptyCouponsState extends StatelessWidget {
         body: 'Try a different brand, offer, or coupon code.',
         primaryLabel: 'Clear search',
         onPrimary: onClearSearch,
+      );
+    }
+
+    if (usedFilter != EmailCouponUsedFilter.all) {
+      return _EmptyCard(
+        icon: usedFilter == EmailCouponUsedFilter.used
+            ? HugeIconsSolid.tick02
+            : HugeIconsSolid.couponPercent,
+        title: usedFilter == EmailCouponUsedFilter.used
+            ? 'No used coupons'
+            : 'No unused coupons',
+        body: usedFilter == EmailCouponUsedFilter.used
+            ? 'Coupons you mark as used will show up here.'
+            : 'You’re all caught up — switch to All to see every coupon.',
+        primaryLabel: 'Show all',
+        onPrimary: onShowAll,
       );
     }
 
@@ -505,89 +624,81 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
-        border: Border.all(color: SharePerksColors.borderLight),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  SharePerksColors.primary.withValues(alpha: 0.14),
-                  SharePerksColors.accent.withValues(alpha: 0.10),
-                ],
+    return Material(
+      color: SharePerksColors.surfaceLight,
+      borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 22),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: SharePerksColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
-              shape: BoxShape.circle,
+              child: Icon(icon, size: 28, color: SharePerksColors.primary),
             ),
-            child: Icon(icon, size: 32, color: SharePerksColors.primary),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: SharePerksColors.textPrimaryLight,
-              fontSize: 17,
-              fontFamily: SharePerksFonts.albertSans,
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: 18),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: SharePerksColors.textPrimaryLight,
+                fontSize: 17,
+                fontFamily: SharePerksFonts.albertSans,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: SharePerksColors.textSecondaryLight,
-              fontSize: 13,
-              fontFamily: SharePerksFonts.inter,
-              fontWeight: FontWeight.w400,
-              height: 1.45,
+            const SizedBox(height: 8),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: SharePerksColors.textSecondaryLight,
+                fontSize: 13,
+                fontFamily: SharePerksFonts.inter,
+                fontWeight: FontWeight.w400,
+                height: 1.45,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onPrimary,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SharePerksColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                textStyle: TextStyle(
-                  fontFamily: SharePerksFonts.inter,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onPrimary,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SharePerksColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  textStyle: TextStyle(
+                    fontFamily: SharePerksFonts.inter,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                child: Text(primaryLabel),
+              ),
+            ),
+            if (secondaryLabel != null && onSecondary != null) ...[
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: onSecondary,
+                child: Text(
+                  secondaryLabel!,
+                  style: TextStyle(
+                    color: SharePerksColors.primary,
+                    fontFamily: SharePerksFonts.inter,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-              child: Text(primaryLabel),
-            ),
-          ),
-          if (secondaryLabel != null && onSecondary != null) ...[
-            const SizedBox(height: 4),
-            TextButton(
-              onPressed: onSecondary,
-              child: Text(
-                secondaryLabel!,
-                style: TextStyle(
-                  color: SharePerksColors.primary,
-                  fontFamily: SharePerksFonts.inter,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -600,67 +711,64 @@ class _HowItWorksCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-      decoration: BoxDecoration(
-        color: SharePerksColors.surfaceLight,
-        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
-        border: Border.all(color: SharePerksColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'How it works',
-            style: TextStyle(
-              color: SharePerksColors.textPrimaryLight,
-              fontSize: 13,
-              fontFamily: SharePerksFonts.albertSans,
-              fontWeight: FontWeight.w700,
+    return Material(
+      color: SharePerksColors.surfaceLight,
+      borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'How it works',
+              style: TextStyle(
+                color: SharePerksColors.textPrimaryLight,
+                fontSize: 13,
+                fontFamily: SharePerksFonts.albertSans,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          for (var i = 0; i < steps.length; i++) ...[
-            if (i > 0) const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: SharePerksColors.borderLight),
+            const SizedBox(height: 14),
+            for (var i = 0; i < steps.length; i++) ...[
+              if (i > 0) const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      steps[i].icon,
+                      size: 14,
+                      color: SharePerksColors.primary,
+                    ),
                   ),
-                  child: Icon(
-                    steps[i].icon,
-                    size: 14,
-                    color: SharePerksColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 5),
-                    child: Text(
-                      steps[i].text,
-                      style: TextStyle(
-                        color: SharePerksColors.textSecondaryLight,
-                        fontSize: 12,
-                        fontFamily: SharePerksFonts.inter,
-                        fontWeight: FontWeight.w500,
-                        height: 1.35,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Text(
+                        steps[i].text,
+                        style: TextStyle(
+                          color: SharePerksColors.textSecondaryLight,
+                          fontSize: 12,
+                          fontFamily: SharePerksFonts.inter,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -672,11 +780,11 @@ class _EmailCouponShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      height: 110,
+      margin: const EdgeInsets.only(bottom: 12),
+      height: 118,
       decoration: BoxDecoration(
         color: SharePerksColors.surfaceLight,
-        borderRadius: BorderRadius.circular(SharePerksRadii.md),
+        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
       ),
     );
   }

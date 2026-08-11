@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SharePerks Tracking Setup Guide</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #1a1a1a;
+      font-size: 11pt;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 26pt;
+      margin: 0 0 6pt 0;
+      color: #6400E0;
+      letter-spacing: -0.5px;
+    }
+    h2 {
+      font-size: 15pt;
+      color: #6400E0;
+      border-bottom: 2px solid #6400E0;
+      padding-bottom: 4pt;
+      margin: 22pt 0 10pt 0;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 12pt;
+      color: #333;
+      margin: 14pt 0 6pt 0;
+      page-break-after: avoid;
+    }
+    p { margin: 0 0 8pt 0; }
+    .subtitle { color: #555; font-size: 12pt; margin-bottom: 4pt; }
+    .meta { color: #777; font-size: 9.5pt; margin-bottom: 18pt; }
+    .badge {
+      display: inline-block;
+      background: #f0e6ff;
+      color: #6400E0;
+      font-size: 9pt;
+      font-weight: 700;
+      padding: 2pt 8pt;
+      border-radius: 4pt;
+      margin-right: 6pt;
+    }
+    .callout {
+      background: #f7f4ff;
+      border-left: 4px solid #6400E0;
+      padding: 10pt 12pt;
+      margin: 12pt 0;
+      page-break-inside: avoid;
+    }
+    .warn {
+      background: #fff8e8;
+      border-left: 4px solid #e6a100;
+      padding: 10pt 12pt;
+      margin: 12pt 0;
+      page-break-inside: avoid;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8pt 0 14pt 0;
+      font-size: 9.5pt;
+      page-break-inside: auto;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6pt 7pt;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #6400E0;
+      color: #fff;
+      font-weight: 600;
+    }
+    tr:nth-child(even) td { background: #faf8ff; }
+    code, .mono {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9pt;
+      background: #f3f3f3;
+      padding: 1pt 4pt;
+      border-radius: 3pt;
+    }
+    ol, ul { margin: 6pt 0 10pt 18pt; padding: 0; }
+    li { margin-bottom: 4pt; }
+    .step-num {
+      display: inline-block;
+      width: 18pt;
+      height: 18pt;
+      background: #6400E0;
+      color: #fff;
+      border-radius: 50%;
+      text-align: center;
+      font-size: 10pt;
+      font-weight: 700;
+      line-height: 18pt;
+      margin-right: 6pt;
+    }
+    .section { page-break-inside: avoid; }
+    .page-break { page-break-before: always; }
+    .footer-note {
+      margin-top: 20pt;
+      padding-top: 10pt;
+      border-top: 1px solid #ddd;
+      font-size: 9pt;
+      color: #777;
+    }
+    .two-col {
+      display: flex;
+      gap: 12pt;
+    }
+    .two-col > div {
+      flex: 1;
+      background: #fafafa;
+      border: 1px solid #eee;
+      padding: 10pt;
+      border-radius: 6pt;
+    }
+    .two-col h3 { margin-top: 0; }
+    a { color: #6400E0; }
+  </style>
+</head>
+<body>
+
+  <h1>SharePerks Tracking Setup Guide</h1>
+  <p class="subtitle">Google Analytics · Google Ads · Meta Ads</p>
+  <p class="meta">
+    <span class="badge">SharePerks</span>
+    Version 1.0 · August 2026 · For Marketing & Growth teams
+  </p>
+
+  <div class="callout">
+    <strong>Purpose of this guide</strong><br />
+    The SharePerks mobile app already sends tracking events. This document tells you
+    <em>what is ready</em>, <em>which IDs and event names to use</em>, and
+    <em>exactly what to configure</em> in Google Ads and Meta so campaigns can optimize on installs, sign-ups, logins, and purchases.
+  </div>
+
+  <!-- ========== 1 ========== -->
+  <h2>1. Quick status</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Area</th>
+        <th>Status</th>
+        <th>Who acts</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Events inside the app (Google Analytics + Meta)</td>
+        <td><strong>Ready</strong></td>
+        <td>Product (done)</td>
+      </tr>
+      <tr>
+        <td>App IDs, store links, deep links, consent, UTMs</td>
+        <td><strong>Ready</strong></td>
+        <td>Product (done)</td>
+      </tr>
+      <tr>
+        <td>Mark / import conversions in Google Ads &amp; Meta</td>
+        <td><strong>Action needed</strong></td>
+        <td>Marketing</td>
+      </tr>
+      <tr>
+        <td>Link GA4 / Firebase to Google Ads</td>
+        <td><strong>Action needed</strong></td>
+        <td>Marketing</td>
+      </tr>
+      <tr>
+        <td>Connect Meta App to Meta Ad Account</td>
+        <td><strong>Action needed</strong></td>
+        <td>Marketing</td>
+      </tr>
+      <tr>
+        <td>MMP (AppsFlyer / Adjust / Branch / Singular)</td>
+        <td>Pending</td>
+        <td>Marketing + Product</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 2 ========== -->
+  <h2>2. App &amp; store details (copy these)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Android App ID (package name)</td><td class="mono">com.shareperks</td></tr>
+      <tr><td>iOS Bundle ID</td><td class="mono">com.shareperks</td></tr>
+      <tr>
+        <td>Google Play Store</td>
+        <td><a href="https://play.google.com/store/apps/details?id=com.shareperks">https://play.google.com/store/apps/details?id=com.shareperks</a></td>
+      </tr>
+      <tr>
+        <td>Apple App Store</td>
+        <td><a href="https://apps.apple.com/in/app/shareperks/id6746847398">https://apps.apple.com/in/app/shareperks/id6746847398</a> (Apple ID: 6746847398)</td>
+      </tr>
+      <tr><td>Deep link (custom)</td><td class="mono">shareperks://…</td></tr>
+      <tr><td>Deep link (web)</td><td class="mono">https://shareperks.in/…</td> or <span class="mono">https://www.shareperks.in/…</span></tr>
+    </tbody>
+  </table>
+
+  <h3>Google Analytics / Firebase</h3>
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Firebase project</td><td class="mono">shareperks-8269f</td></tr>
+      <tr><td>GA4 Measurement ID</td><td class="mono">G-WVB4HMKPXX</td></tr>
+      <tr><td>Android Firebase App ID</td><td class="mono">1:681535457811:android:01aed961d05e9a801e0de6</td></tr>
+      <tr><td>iOS Firebase App ID</td><td class="mono">1:681535457811:ios:db01d9b8a2fc92921e0de6</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Meta Ads</h3>
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Meta App ID</td><td class="mono">1558786092457844</td></tr>
+      <tr><td>Meta Client Token</td><td class="mono">2648bf4715f176d02dcbf821f682e558</td></tr>
+    </tbody>
+  </table>
+  <div class="warn">
+    <strong>Confidential:</strong> Treat the Meta Client Token as internal. Share only with ads / ops team members who need it. Do not post it in public docs or social channels.
+  </div>
+
+  <!-- ========== 3 ========== -->
+  <div class="page-break"></div>
+  <h2>3. Conversion events to use</h2>
+  <p>The app already sends these events. Marketing must mark them as conversions so campaigns can bid on them.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Business goal</th>
+        <th>Google Ads / GA4 event</th>
+        <th>Meta Events Manager event</th>
+        <th>Recommended?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Install / First open</td>
+        <td class="mono">first_open</td>
+        <td>Activate App<br /><span class="mono">fb_mobile_activate_app</span></td>
+        <td><strong>Yes</strong> — primary for app installs</td>
+      </tr>
+      <tr>
+        <td>First open (extra)</td>
+        <td class="mono">sp_first_open</td>
+        <td>Activate App (same as above)</td>
+        <td>Optional</td>
+      </tr>
+      <tr>
+        <td>Registration (new user completes profile)</td>
+        <td class="mono">sign_up</td>
+        <td>Complete Registration<br /><span class="mono">fb_mobile_complete_registration</span></td>
+        <td><strong>Yes</strong></td>
+      </tr>
+      <tr>
+        <td>Login (returning user)</td>
+        <td class="mono">login</td>
+        <td class="mono">Login</td>
+        <td>Optional</td>
+      </tr>
+      <tr>
+        <td>Purchase (gift card payment)</td>
+        <td class="mono">purchase</td>
+        <td class="mono">Purchase</td>
+        <td><strong>Yes</strong> — for value / ROAS bidding</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Purchase note:</strong> When available, purchase events include amount and currency <span class="mono">INR</span>. Use them for value-based bidding in Google Ads and Meta.
+  </div>
+
+  <!-- ========== 4 ========== -->
+  <h2>4. Google Ads — step-by-step</h2>
+
+  <h3><span class="step-num">1</span> Open Google Analytics (GA4)</h3>
+  <ol>
+    <li>Go to <a href="https://analytics.google.com">analytics.google.com</a> and open the SharePerks property linked to Firebase project <span class="mono">shareperks-8269f</span> (Measurement ID <span class="mono">G-WVB4HMKPXX</span>).</li>
+    <li>Confirm you can see recent app data under <strong>Reports → Realtime</strong> after a test install (may take a few minutes).</li>
+  </ol>
+
+  <h3><span class="step-num">2</span> Mark key events in GA4</h3>
+  <ol>
+    <li>In GA4 go to <strong>Admin → Data display → Events</strong>.</li>
+    <li>Find each event below and turn on <strong>Mark as key event</strong>:</li>
+  </ol>
+  <ul>
+    <li><span class="mono">first_open</span></li>
+    <li><span class="mono">sp_first_open</span> (optional)</li>
+    <li><span class="mono">sign_up</span></li>
+    <li><span class="mono">login</span> (optional)</li>
+    <li><span class="mono">purchase</span></li>
+  </ul>
+
+  <h3><span class="step-num">3</span> Link GA4 / Firebase to Google Ads</h3>
+  <ol>
+    <li>In Google Ads go to <strong>Tools → Data Manager / Linked accounts</strong> (or <strong>Tools → Setup → Linked accounts</strong>).</li>
+    <li>Link <strong>Google Analytics (GA4)</strong> / Firebase to your Google Ads account using property <span class="mono">G-WVB4HMKPXX</span>.</li>
+    <li>Allow import of site/app metrics and conversions.</li>
+  </ol>
+
+  <h3><span class="step-num">4</span> Import conversions into Google Ads</h3>
+  <ol>
+    <li>In Google Ads go to <strong>Goals → Conversions → Summary</strong>.</li>
+    <li>Click <strong>New conversion action → Import → Google Analytics 4 properties</strong>.</li>
+    <li>Select and import: <span class="mono">first_open</span>, <span class="mono">sign_up</span>, <span class="mono">purchase</span> (and optionally <span class="mono">login</span> / <span class="mono">sp_first_open</span>).</li>
+    <li>Set primary conversions for bidding (recommended primary: <span class="mono">first_open</span> for install campaigns; <span class="mono">purchase</span> or <span class="mono">sign_up</span> for engagement / value campaigns).</li>
+  </ol>
+
+  <h3><span class="step-num">5</span> Create App campaigns</h3>
+  <ol>
+    <li>Create a Google Ads <strong>App campaign</strong>.</li>
+    <li>Android package: <span class="mono">com.shareperks</span></li>
+    <li>iOS app: use store URL / Apple ID <span class="mono">6746847398</span></li>
+    <li>Choose the imported conversion goals from step 4.</li>
+  </ol>
+
+  <!-- ========== 5 ========== -->
+  <div class="page-break"></div>
+  <h2>5. Meta Ads — step-by-step</h2>
+
+  <h3><span class="step-num">1</span> Confirm the Meta app</h3>
+  <ol>
+    <li>Open <a href="https://developers.facebook.com">Meta for Developers</a>.</li>
+    <li>Select app ID <span class="mono">1558786092457844</span>.</li>
+    <li>Under settings, confirm Android package <span class="mono">com.shareperks</span> and iOS bundle <span class="mono">com.shareperks</span> are added.</li>
+  </ol>
+
+  <h3><span class="step-num">2</span> Connect to Events Manager / Ad Account</h3>
+  <ol>
+    <li>Open <a href="https://business.facebook.com/events_manager">Meta Events Manager</a>.</li>
+    <li>Select the SharePerks app (<span class="mono">1558786092457844</span>).</li>
+    <li>Confirm the app is linked to the correct Meta Ad Account (agency access is already granted).</li>
+  </ol>
+
+  <h3><span class="step-num">3</span> Verify events are arriving</h3>
+  <ol>
+    <li>Install a release or internal test build of SharePerks.</li>
+    <li>Open the app, complete OTP login / signup, and (optionally) a test purchase flow.</li>
+    <li>In Events Manager → <strong>Test events</strong> / Overview, look for:
+      <ul>
+        <li>Activate App</li>
+        <li>Complete Registration</li>
+        <li>Login</li>
+        <li>Purchase</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h3><span class="step-num">4</span> Mark conversions</h3>
+  <ol>
+    <li>In Events Manager, open each event above.</li>
+    <li>Set as <strong>conversion</strong> for your Ad Account.</li>
+    <li>Recommended for bidding: <strong>Activate App</strong>, <strong>Complete Registration</strong>, <strong>Purchase</strong>.</li>
+  </ol>
+
+  <h3><span class="step-num">5</span> Create Meta App campaigns</h3>
+  <ol>
+    <li>In Ads Manager create an <strong>App</strong> campaign / advantage+ app campaign.</li>
+    <li>Select app <span class="mono">1558786092457844</span> / SharePerks.</li>
+    <li>Choose the conversion events you marked in step 4.</li>
+    <li>Use the Play Store and App Store URLs from Section 2.</li>
+  </ol>
+
+  <!-- ========== 6 ========== -->
+  <h2>6. How to write campaign links (UTMs)</h2>
+  <p>Always add UTM parameters on landing pages and deep links so reports show which campaign drove the user.</p>
+
+  <p><strong>Supported parameters</strong></p>
+  <ul>
+    <li class="mono">utm_source</li>
+    <li class="mono">utm_medium</li>
+    <li class="mono">utm_campaign</li>
+    <li class="mono">utm_content</li>
+    <li class="mono">utm_term</li>
+    <li class="mono">gclid</li> (Google click ID — usually added automatically by Google Ads)
+  </ul>
+
+  <p><strong>Example links</strong></p>
+  <table>
+    <thead>
+      <tr><th>Use case</th><th>Example</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Web / landing</td>
+        <td class="mono">https://shareperks.in/?utm_source=google&amp;utm_medium=cpc&amp;utm_campaign=android_install_q3</td>
+      </tr>
+      <tr>
+        <td>Deep link</td>
+        <td class="mono">shareperks://home?utm_source=meta&amp;utm_medium=paid&amp;utm_campaign=ios_signup</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    The app stores these UTM values and attaches them to later events (including sign-up and purchase), so you can see full-funnel performance by campaign.
+  </div>
+
+  <!-- ========== 7 ========== -->
+  <div class="page-break"></div>
+  <h2>7. How to verify tracking is working</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Google</h3>
+      <ol>
+        <li>Install the app from an internal track or Play/TestFlight build.</li>
+        <li>Open Firebase Console → Analytics → <strong>DebugView</strong> (or GA4 Realtime).</li>
+        <li>Confirm you see <span class="mono">first_open</span> / <span class="mono">app_opened</span>.</li>
+        <li>Complete signup → look for <span class="mono">sign_up</span>.</li>
+        <li>Complete a purchase → look for <span class="mono">purchase</span>.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Meta</h3>
+      <ol>
+        <li>Open the same test build.</li>
+        <li>In Events Manager use <strong>Test events</strong>.</li>
+        <li>Confirm Activate App on launch.</li>
+        <li>Confirm Complete Registration after profile setup.</li>
+        <li>Confirm Purchase after a successful gift-card payment.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="warn" style="margin-top:14pt;">
+    <strong>Timing tip:</strong> Debug / Test streams show events within seconds. Full standard reports in GA4 and Meta can take 24–48 hours to populate.
+  </div>
+
+  <!-- ========== 8 ========== -->
+  <h2>8. Consent &amp; privacy (for awareness)</h2>
+  <ul>
+    <li>Users can turn off <strong>Share usage data</strong> in the SharePerks Settings screen.</li>
+    <li>When off, Google Consent Mode and Meta advertiser tracking are restricted.</li>
+    <li>No action needed from marketing unless Legal requests a different CMP later.</li>
+  </ul>
+
+  <!-- ========== 9 ========== -->
+  <h2>9. Still pending (not blocking launch)</h2>
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Status</th><th>Next step</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>MMP (AppsFlyer / Adjust / Branch / Singular)</td>
+        <td>Not started</td>
+        <td>Marketing picks a partner → Product integrates → Link Google Ads &amp; Meta inside the MMP</td>
+      </tr>
+      <tr>
+        <td>Verified Universal Links / App Links hosting</td>
+        <td>App ready; domain files may be needed</td>
+        <td>Hosting team publishes <span class="mono">assetlinks.json</span> and Apple <span class="mono">apple-app-site-association</span> on shareperks.in</td>
+      </tr>
+      <tr>
+        <td>Agency Google Ads account access</td>
+        <td>Confirm if needed</td>
+        <td>Share Google Ads access with agency (Meta agency access already done)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 10 ========== -->
+  <h2>10. Marketing checklist (print &amp; tick)</h2>
+  <table>
+    <thead>
+      <tr><th style="width:8%">Done</th><th>Task</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>☐</td><td>Confirm access to GA4 property <span class="mono">G-WVB4HMKPXX</span> / Firebase <span class="mono">shareperks-8269f</span></td></tr>
+      <tr><td>☐</td><td>Mark key events in GA4: first_open, sign_up, purchase</td></tr>
+      <tr><td>☐</td><td>Link GA4/Firebase to Google Ads</td></tr>
+      <tr><td>☐</td><td>Import conversions into Google Ads</td></tr>
+      <tr><td>☐</td><td>Confirm Meta App <span class="mono">1558786092457844</span> linked to Ad Account</td></tr>
+      <tr><td>☐</td><td>Mark Meta conversions: Activate App, Complete Registration, Purchase</td></tr>
+      <tr><td>☐</td><td>Run a device test and confirm events in GA4 DebugView + Meta Test events</td></tr>
+      <tr><td>☐</td><td>Add UTM parameters on all campaign URLs</td></tr>
+      <tr><td>☐</td><td>Launch first App campaign (Google and/or Meta) using store URLs above</td></tr>
+      <tr><td>☐</td><td>(Later) Decide MMP partner and request product integration</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    <strong>SharePerks Tracking Setup Guide</strong> · August 2026<br />
+    Companion spreadsheet: <span class="mono">docs/tracking/ads-tracking-checklist.csv</span><br />
+    For questions about missing events in DebugView / Events Manager, contact the product engineering team with the device time of the test and platform (Android / iOS).
+  </div>
+
+</body>
+</html>
