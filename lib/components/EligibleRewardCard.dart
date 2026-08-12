@@ -127,6 +127,14 @@ class RewardEligibilityBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!RewardRateUi.hasAnyRate(
+      withHolderRewardRate,
+      withAnyHoldingRewardRate,
+      nonHolderRewardRate,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     final tier = resolveRewardTier(
       isEligible: isEligible,
       isBrokerageEligible: isBrokerageEligible,

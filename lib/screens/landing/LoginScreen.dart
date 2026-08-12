@@ -129,6 +129,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 hintStyle: TextStyle(
                   color: SharePerksColors.textSecondaryLight,
                 ),
+                prefixText: '+91  ',
+                prefixStyle: TextStyle(
+                  color: SharePerksColors.textPrimaryLight,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             Spacer(),

@@ -184,7 +184,22 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                               brandValue: data?.data?.brand?.name ?? '',
                               detailsBody:
                                   data?.data?.content?.description ?? '',
-                              eligibility: _listedOnExchange
+                              eligibility:
+                                  (_listedOnExchange &&
+                                      RewardRateUi.hasAnyRate(
+                                        data
+                                            ?.data
+                                            ?.eligibility
+                                            ?.withHolderRewardRate,
+                                        data
+                                            ?.data
+                                            ?.eligibility
+                                            ?.withAnyHoldingRewardRate,
+                                        data
+                                            ?.data
+                                            ?.eligibility
+                                            ?.nonHolderRewardRate,
+                                      ))
                                   ? EligibilityCardsData(
                                       holdingPeriodDays:
                                           data?.data?.eligibility?.days ?? 0,
