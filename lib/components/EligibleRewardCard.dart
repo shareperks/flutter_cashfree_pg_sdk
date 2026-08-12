@@ -61,6 +61,9 @@ abstract final class RewardRateUi {
 
   static bool hasRate(num? rate) => rate != null && rate > 0;
 
+  static bool hasAnyRate(num? shareholderRate, num? brokerageRate, num? nonShareholderRate) =>
+      hasRate(shareholderRate) || hasRate(brokerageRate) || hasRate(nonShareholderRate);
+
   /// Explains which tier applies.
   ///
   /// Shareholder = maximum · Member = any holding · Standard = no holding.
@@ -295,6 +298,10 @@ class RewardRatesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!RewardRateUi.hasAnyRate(shareholderRate, brokerageRate, nonShareholderRate)) {
+      return const SizedBox.shrink();
+    }
+
     final kind = RewardRateUi.kindFor(rewardType);
     final suffix = RewardRateUi.rateSuffix(kind);
     final tier = resolveRewardTier(

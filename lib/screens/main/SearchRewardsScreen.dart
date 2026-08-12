@@ -30,7 +30,7 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
   List<RewardItem> rewardItems = [];
 
   /// Index 0 = All (omit type). Rest map to API type enums.
-  final List<String?> tabOption = [null, 'BENEFIT', 'CREDIT', 'OFFER'];
+  final List<String?> tabOption = [null, 'CREDIT', 'BENEFIT', 'OFFER'];
 
   final TextEditingController _searchController = TextEditingController();
   Timer? _filterTimer;
@@ -128,7 +128,7 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
                     applyFilter();
                   },
                   layoutWidthInset: 44,
-                  items: ['All', 'CashBack', 'Gift Cards', 'Discount Coupons'],
+                  items: ['All', 'Gift Cards', 'CashBack', 'Discount Coupons'],
                 ),
                 SizedBox(height: 16),
                 Builder(

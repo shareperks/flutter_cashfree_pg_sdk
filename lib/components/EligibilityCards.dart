@@ -23,6 +23,9 @@ class EligibilityCardsData {
   );
 }
 
+String _pluralize(int count, String singular) =>
+    count == 1 ? singular : '${singular}s';
+
 class EligibilityCards extends StatelessWidget {
   const EligibilityCards({
     super.key,
@@ -78,7 +81,7 @@ class EligibilityCards extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Days',
+                        _pluralize(data.holdingPeriodDays, 'Day'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: const Color(0xFF333333),
@@ -124,7 +127,7 @@ class EligibilityCards extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Shares\nRequired',
+                    '${_pluralize(data.sharesRequired, 'Share')}\nRequired',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: SharePerksColors.accent,
@@ -194,7 +197,7 @@ class EligibilityCards extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Days',
+                            _pluralize(data.renewEveryDays, 'Day'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: const Color(0xFF333333),

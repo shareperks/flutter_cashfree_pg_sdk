@@ -246,23 +246,30 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                                   : null,
                             ),
                           ),
-                          RewardRatesSection(
-                            shareholderRate:
-                                data?.data?.eligibility?.withHolderRewardRate,
-                            brokerageRate: data
-                                ?.data
-                                ?.eligibility
-                                ?.withAnyHoldingRewardRate,
-                            nonShareholderRate:
-                                data?.data?.eligibility?.nonHolderRewardRate,
-                            isEligible: _isEligible,
-                            isBrokerageEligible: _isBrokerageEligible,
-                            listedOnExchange: _listedOnExchange,
-                            reqReimport: _reqReimport,
-                            rewardType:
-                                data?.data?.eligibility?.rewardType ??
-                                data?.data?.basicInfo?.type,
-                          ),
+                          if (RewardRateUi.hasAnyRate(
+                            data?.data?.eligibility?.withHolderRewardRate,
+                            data?.data?.eligibility?.withAnyHoldingRewardRate,
+                            data?.data?.eligibility?.nonHolderRewardRate,
+                          ))
+                            RewardRatesSection(
+                              shareholderRate: data
+                                  ?.data
+                                  ?.eligibility
+                                  ?.withHolderRewardRate,
+                              brokerageRate: data
+                                  ?.data
+                                  ?.eligibility
+                                  ?.withAnyHoldingRewardRate,
+                              nonShareholderRate:
+                                  data?.data?.eligibility?.nonHolderRewardRate,
+                              isEligible: _isEligible,
+                              isBrokerageEligible: _isBrokerageEligible,
+                              listedOnExchange: _listedOnExchange,
+                              reqReimport: _reqReimport,
+                              rewardType:
+                                  data?.data?.eligibility?.rewardType ??
+                                  data?.data?.basicInfo?.type,
+                            ),
                           Center(
                             child: ElevatedButton(
                               onPressed: _opening ? null : _openTrackingLink,

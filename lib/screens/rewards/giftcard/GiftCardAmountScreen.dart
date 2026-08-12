@@ -1109,24 +1109,32 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                               detailsBody: null,
                             ),
                           ),
-                          RewardRatesSection(
-                            shareholderRate:
-                                data?.data?.eligibility?.withHolderRewardRate,
-                            brokerageRate: data
-                                ?.data
-                                ?.eligibility
-                                ?.withAnyHoldingRewardRate,
-                            nonShareholderRate:
-                                data?.data?.eligibility?.nonHolderRewardRate,
-                            isEligible: _isEligible,
-                            isBrokerageEligible: _isBrokerageEligible,
-                            listedOnExchange:
-                                data?.data?.company?.listedOnExchange ?? true,
-                            reqReimport: _reqReimport,
-                            rewardType:
-                                data?.data?.eligibility?.rewardType ??
-                                data?.data?.basicInfo?.type,
-                          ),
+                          if (RewardRateUi.hasAnyRate(
+                            data?.data?.eligibility?.withHolderRewardRate,
+                            data?.data?.eligibility?.withAnyHoldingRewardRate,
+                            data?.data?.eligibility?.nonHolderRewardRate,
+                          ))
+                            RewardRatesSection(
+                              shareholderRate: data
+                                  ?.data
+                                  ?.eligibility
+                                  ?.withHolderRewardRate,
+                              brokerageRate: data
+                                  ?.data
+                                  ?.eligibility
+                                  ?.withAnyHoldingRewardRate,
+                              nonShareholderRate:
+                                  data?.data?.eligibility?.nonHolderRewardRate,
+                              isEligible: _isEligible,
+                              isBrokerageEligible: _isBrokerageEligible,
+                              listedOnExchange:
+                                  data?.data?.company?.listedOnExchange ??
+                                  true,
+                              reqReimport: _reqReimport,
+                              rewardType:
+                                  data?.data?.eligibility?.rewardType ??
+                                  data?.data?.basicInfo?.type,
+                            ),
                           BorderCard(
                             padding: EdgeInsets.all(18),
                             isGradientBackground: false,

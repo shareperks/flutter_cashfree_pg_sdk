@@ -80,23 +80,6 @@ class RewardCard extends StatelessWidget {
                   height: 121,
                   fit: BoxFit.cover,
                 ),
-                // Shareholder unlocked badge (maximum).
-                if (isEligible)
-                  Positioned(
-                    top: -1,
-                    left: 0,
-                    child: SvgPicture.asset(
-                      Assets.ASSETS_ICONS_ELIGIBLEREWARD_SVG,
-                    ),
-                  )
-                else if (isBrokerageEligible)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: SvgPicture.asset(
-                      Assets.ASSETS_ICONS_MEMBERREWARD_SVG,
-                    ),
-                  ),
                 if (isNew)
                   Positioned(
                     bottom: 0,
@@ -131,6 +114,22 @@ class RewardCard extends StatelessWidget {
                       color: SharePerksColors.textPrimaryLight,
                     ),
                   ),
+                ),
+                // Shareholder unlocked badge (maximum) / broker-linked badge (member).
+                // Fixed height slot so cards stay the same height whether or not a badge shows.
+                SizedBox(
+                  height: 22,
+                  child: isEligible
+                      ? _EligibilityBadge(
+                          label: 'Shareholder',
+                          color: SharePerksColors.accent,
+                        )
+                      : isBrokerageEligible
+                      ? _EligibilityBadge(
+                          label: 'Broker Linked',
+                          color: SharePerksColors.success,
+                        )
+                      : null,
                 ),
                 Row(
                   children: [
@@ -207,6 +206,32 @@ class RewardCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EligibilityBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _EligibilityBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: 10,
+        ),
       ),
     );
   }

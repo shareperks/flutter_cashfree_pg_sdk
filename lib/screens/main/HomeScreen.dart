@@ -11,6 +11,7 @@ import 'package:shareperks/components/BottomNavBar.dart';
 import 'package:shareperks/components/BrandCard.dart';
 import 'package:shareperks/components/CategoryView.dart';
 import 'package:shareperks/components/CopyRight.dart';
+import 'package:shareperks/components/EligibleRewardCard.dart';
 import 'package:shareperks/components/OptionView.dart';
 import 'package:shareperks/components/RewardCard.dart';
 import 'package:shareperks/components/WelcomeCard.dart';
@@ -162,6 +163,42 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _homeProvider?.removeListener(_onHomeProviderChanged);
     super.dispose();
+  }
+
+  /// Gift cards first, then cashback, then discount coupons.
+  /// A stable partition (rather than `sort`) keeps each type's relative order.
+  List<RewardItem> _sortedTopRewards(List<RewardItem>? rewards) {
+    if (rewards == null) return const [];
+    bool isKind(RewardItem r, RewardRateKind kind) =>
+        RewardRateUi.kindFor(r.type) == kind;
+    return [
+      ...rewards.where((r) => isKind(r, RewardRateKind.giftCard)),
+      ...rewards.where((r) => isKind(r, RewardRateKind.cashback)),
+      ...rewards.where((r) => isKind(r, RewardRateKind.promoCode)),
+    ];
+  }
+
+  List<Widget> _topPerksCards() {
+    final topRewards = _sortedTopRewards(data?.data?.topRewards);
+    return List.generate(topRewards.length, (index) {
+      final reward = topRewards[index];
+      return RewardCard(
+        rewardId: reward.id!,
+        type: reward.type!,
+        typeName: reward.type,
+        title: reward.title ?? "--",
+        imageUrl: imageUrl(reward.image ?? ""),
+        isEligible: reward.isEligible ?? false,
+        isBrokerageEligible: reward.isBrokerageEligible ?? false,
+        eligibility: reward.companyName ?? "--",
+        onTap: () => navigateRewardScreen(
+          reward.type!,
+          reward.id!,
+          source: 'home_top_perks',
+          position: index,
+        ),
+      );
+    });
   }
 
   Widget _homeSearchField(BuildContext context) {
@@ -557,30 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   SizedBox(width: 6),
-                                  ...List.generate(
-                                    data?.data?.topRewards?.length ?? 0,
-                                    (index) {
-                                      RewardItem reward =
-                                          data!.data!.topRewards![index];
-                                      return RewardCard(
-                                        rewardId: reward.id!,
-                                        type: reward.type!,
-                                        typeName: reward.type,
-                                        title: reward.title ?? "--",
-                                        imageUrl: imageUrl(reward.image ?? ""),
-                                        isEligible: reward.isEligible ?? false,
-                                        isBrokerageEligible:
-                                            reward.isBrokerageEligible ?? false,
-                                        eligibility: reward.companyName ?? "--",
-                                        onTap: () => navigateRewardScreen(
-                                          reward.type!,
-                                          reward.id!,
-                                          source: 'home_top_perks',
-                                          position: index,
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                  ..._topPerksCards(),
                                   SizedBox(width: 6),
                                 ],
                               ),
@@ -928,17 +942,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   OptionView(
                                     onTap: () => context.pushNamed(
-                                      RouteNames.PROMOOCODE_PERK_SCREEN,
-                                    ),
-                                    image: Assets.ASSETS_ICONS_DISCOUNT_PNG,
-                                    title: "Discount\nCoupons",
-                                  ),
-                                  OptionView(
-                                    onTap: () => context.pushNamed(
                                       RouteNames.CASHBACK_PERK_SCREEN,
                                     ),
                                     image: Assets.ASSETS_ICONS_CASHBACK_PNG,
                                     title: "Cashback",
+                                  ),
+                                  OptionView(
+                                    onTap: () => context.pushNamed(
+                                      RouteNames.PROMOOCODE_PERK_SCREEN,
+                                    ),
+                                    image: Assets.ASSETS_ICONS_DISCOUNT_PNG,
+                                    title: "Discount\nCoupons",
                                   ),
                                 ],
                               ),

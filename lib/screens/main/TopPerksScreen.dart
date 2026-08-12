@@ -29,7 +29,7 @@ class _TopPerksScreenState extends State<TopPerksScreen> {
   RewardListResponse? perks;
 
   List<RewardItem> rewardItems = [];
-  List<String> tabOption = ["BENEFIT", "CREDIT", "OFFER"];
+  List<String> tabOption = ["CREDIT", "BENEFIT", "OFFER"];
 
   final TextEditingController _searchController = TextEditingController();
   Timer? _filterTimer;
@@ -127,7 +127,7 @@ class _TopPerksScreenState extends State<TopPerksScreen> {
                     applyFilter();
                   },
                   layoutWidthInset: 44,
-                  items: ["Cashback", "Gift Cards", "Discount Coupons"],
+                  items: ["Gift Cards", "Cashback", "Discount Coupons"],
                 ),
                 SizedBox(height: 16),
                 Builder(

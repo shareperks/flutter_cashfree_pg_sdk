@@ -65,7 +65,7 @@ class HowShowPerkScreen extends StatelessWidget {
               ),
             ),
             Text(
-              'This is a description, this is a description, this is a description This is a description, this is a description, this is a description.',
+              'Shareperks offers different types of shareholder rewards across participating brands. Here’s how each reward works.',
               style: TextStyle(
                 color: SharePerksColors.textSecondaryLight,
                 fontSize: 12,

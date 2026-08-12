@@ -170,7 +170,7 @@ class _UnlockedCountChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
-        '$count $label Perks',
+        '$count $label Perk${count == 1 ? '' : 's'}',
         style: TextStyle(
           color: color,
           fontSize: 14,

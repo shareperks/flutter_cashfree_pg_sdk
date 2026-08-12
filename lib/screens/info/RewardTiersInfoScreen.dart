@@ -39,7 +39,7 @@ class RewardTiersInfoScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your reward rate depends on your holdings. We apply the best tier you qualify for, from highest to lowest.',
+              'Every perk on SharePerks can pay out at up to three levels. We always apply the highest tier you qualify for — automatically, with no extra steps.',
               style: TextStyle(
                 color: SharePerksColors.textSecondaryLight,
                 fontSize: 13,
@@ -53,27 +53,27 @@ class RewardTiersInfoScreen extends StatelessWidget {
               accent: SharePerksColors.accent,
               icon: HugeIconsSolid.starCircle,
               title: 'Shareholder Reward',
-              subtitle: 'Maximum reward',
+              subtitle: 'Top tier – maximum payout',
               body:
-                  'You meet this perk’s specific holding criteria (quantity, days, or other rules). This is the highest reward rate available for the perk.',
+                  'Awarded when you meet a perk’s specific holding criteria — like a minimum share quantity or holding period. This unlocks the maximum reward rate for that perk.',
             ),
             const SizedBox(height: 12),
             _TierCard(
               accent: SharePerksColors.primary,
               icon: HugeIconsSolid.analyticsUp,
               title: 'Brokerage Reward',
-              subtitle: 'Any-holding reward',
+              subtitle: 'Mid tier – for any shareholder',
               body:
-                  'Your broker is connected and you have holdings, but you don’t meet the full shareholder criteria for this perk. You still unlock a mid-tier reward rate.',
+                  'Awarded when your broker is linked and you hold shares, but don’t meet the specific criteria for a perk’s top tier. You still earn a better-than-base rate.',
             ),
             const SizedBox(height: 12),
             _TierCard(
               accent: SharePerksColors.textSecondaryLight,
               icon: HugeIconsSolid.giftCard,
               title: 'Standard Reward',
-              subtitle: 'No holding reward for this perk',
+              subtitle: 'Base tier – open to everyone',
               body:
-                  'You don’t hold (or don’t qualify for) this perk’s holdings. You can still claim it at the base standard reward rate.',
+                  'Available to everyone, even without qualifying holdings. It’s the baseline reward rate for any perk.',
             ),
             const SizedBox(height: 20),
             Container(

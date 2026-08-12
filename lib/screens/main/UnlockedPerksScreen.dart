@@ -70,8 +70,8 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
         search: _searchController.text.trim(),
         sort: _sortBy,
       );
-      rewardItems[0] = perks?.data?.benefitRewardsEligibly ?? [];
-      rewardItems[1] = perks?.data?.creditRewardsEligibly ?? [];
+      rewardItems[0] = perks?.data?.creditRewardsEligibly ?? [];
+      rewardItems[1] = perks?.data?.benefitRewardsEligibly ?? [];
       rewardItems[2] = perks?.data?.offerRewardsEligibly ?? [];
     } catch (e) {
       _isError = true;
@@ -148,7 +148,7 @@ class _UnlockedPerksScreenState extends State<UnlockedPerksScreen> {
                     });
                   },
                   layoutWidthInset: 44,
-                  items: ["Cashback", "Gift Cards", "Discount Coupons"],
+                  items: ["Gift Cards", "Cashback", "Discount Coupons"],
                 ),
                 SizedBox(height: 12),
                 if (!_loading && !_isError)
