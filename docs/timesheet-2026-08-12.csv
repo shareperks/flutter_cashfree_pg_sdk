@@ -1,0 +1,15 @@
+Date,Start Time,End Time,Total Hours,Task Worked On,Work Description (What was done)
+2026-08-12,10:00,11:00,1.0,,
+2026-08-12,11:00,12:00,1.0,,
+2026-08-12,12:00,13:00,1.0,,
+2026-08-12,13:00,14:00,1.0,,
+2026-08-12,14:00,15:00,1.0,,
+2026-08-12,15:00,16:00,1.0,,
+2026-08-12,16:00,17:00,1.0,,
+2026-08-12,17:00,18:00,1.0,,
+2026-08-12,18:00,19:00,1.0,,
+2026-08-12,19:00,19:30,0.5,,
+2026-08-12,19:30,20:27,0.95,Reward eligibility display and pluralization,"Updated EligibilityCards to pluralize days/shares required, added _EligibilityBadge to RewardCard for shareholder/brokerage eligibility, made RewardRatesSection conditionally render, and revised eligibility copy in HowShowPerkScreen and RewardTiersInfoScreen."
+2026-08-12,20:27,20:43,0.25,Reward eligibility check refactor,"Added conditional rendering to EligibleRewardCard to hide when no reward rates are available; applied the new eligibility check logic to CashBackRewardScreen, GiftCardRewardScreen, and PromoCodeRewardScreen; added phone number prefix on the login screen."
+2026-08-12,20:43,21:00,0.28,,
+2026-08-12,21:00,22:00,1.0,iOS App Store Connect release blocker (1.0.63),"Diagnosed ""Unable to Add for Review"" error on iOS version 1.0.63 caused by NSUserTrackingUsageDescription vs App Privacy mismatch. Confirmed via code that Facebook SDK (FacebookAdvertiserIDCollectionEnabled) and Firebase Analytics are configured for ad tracking with no ATT (AppTrackingTransparency) consent prompt implemented in-app. Provided App Store Connect App Privacy > Data Used to Track You resolution steps; troubleshooting still in progress pending confirmation from App Privacy page."
