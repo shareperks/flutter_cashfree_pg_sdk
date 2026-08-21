@@ -60,6 +60,18 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
         'is_brokerage_eligible': _isBrokerageEligible,
         'source': 'reward_detail',
       });
+      trackAction(AnalyticsEvent.viewContent, {
+        'label': 'View Content',
+        'content_type': 'giftcard',
+        'perk_type': 'giftcard',
+        'item_id': widget.rewardId,
+        'reward_id': widget.rewardId,
+        'item_name': data?.data?.basicInfo?.title ?? '',
+        'gift_card_name': data?.data?.basicInfo?.title ?? '',
+        'brand_name': data?.data?.company?.name ?? '',
+        'is_eligible': _isEligible,
+        'source': 'reward_detail',
+      });
       await _trackEligibilityFromData();
     } catch (e) {
       _errorMessage = e.toString();

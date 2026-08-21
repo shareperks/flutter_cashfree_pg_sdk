@@ -51,6 +51,15 @@ class _BrandViewScreenState extends State<BrandViewScreen> {
         'brand_name': brandName ?? '',
         'source': 'brand_screen',
       });
+      trackAction(AnalyticsEvent.viewContent, {
+        'label': 'View Content',
+        'content_type': 'brand',
+        'item_id': widget.brandId,
+        'brand_id': widget.brandId,
+        'item_name': brandName ?? '',
+        'brand_name': brandName ?? '',
+        'source': 'brand_screen',
+      });
     } catch (e) {
       _error = true;
     } finally {

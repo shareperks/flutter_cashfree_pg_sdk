@@ -133,6 +133,11 @@ class _OtpScreenState extends State<OtpScreen> {
         'is_profile_complete': response.isProfileComplete == true,
       });
       if (response.isProfileComplete == true) {
+        trackAction(AnalyticsEvent.login, {
+          'label': 'Login',
+          'method': 'otp',
+          'source': 'otp_screen',
+        });
         final user = await AuthService.verifySession();
         await LocalStorage.setString("userId", user.user?.id ?? "");
         if (user.user?.id != null) {

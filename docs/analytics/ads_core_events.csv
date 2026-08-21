@@ -1,0 +1,6 @@
+event_name,parameters,google_analytics,meta_ads,when_fired
+login,"label, method, source, screen_name",login (GA4 recommended),Login,OTP or MFA verified for returning user with complete profile
+new_user,"label, method, has_referral, screen_name",sign_up (GA4) + new_user (custom),fb_mobile_complete_registration (Complete Registration) + new_user,Profile setup completed on SetupScreen
+search,"label, search_term, query, result_count, sort_by, filter_type, source, screen_name",search (GA4 recommended),fb_mobile_search,Non-empty query on SearchRewardsScreen after debounce
+view_content,"label, content_type, perk_type, item_id, reward_id, brand_id, item_name, gift_card_name, brand_name, is_eligible, source, screen_name",view_item (GA4) + view_content (custom),fb_mobile_content_view (View Content),Brand detail or giftcard/cashback/promocode perk detail
+logout,"(auto context only)",logout,Logout,UserProvider.clearUser on logout

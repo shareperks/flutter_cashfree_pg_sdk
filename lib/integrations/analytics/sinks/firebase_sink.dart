@@ -12,6 +12,8 @@ import 'analytics_sink.dart';
 /// Strips raw PII (`mobile`, `email`, `phone`) before sending.
 class FirebaseSink implements AnalyticsSink {
   FirebaseAnalytics? _ga;
+  bool _consentGranted = false;
+  bool _trackingAuthorized = false;
 
   static const _piiKeys = {
     'mobile',
@@ -82,11 +84,13 @@ class FirebaseSink implements AnalyticsSink {
         ...ctx,
         ...props,
       });
-      await _emitRecommended(ga, event, params);
-      await ga.logEvent(
-        name: _eventName(event.name),
-        parameters: params,
-      );
+      final skipCustom = await _emitRecommended(ga, event, params);
+      if (!skipCustom) {
+        await ga.logEvent(
+          name: _eventName(event.name),
+          parameters: params,
+        );
+      }
     } catch (e) {
       debugPrint('[analytics] FirebaseSink.track failed: $e');
     }
@@ -127,19 +131,34 @@ class FirebaseSink implements AnalyticsSink {
 
   @override
   Future<void> onConsentChanged(bool granted) async {
+    _consentGranted = granted;
+    await _applyPrivacyFlags();
+  }
+
+  @override
+  Future<void> onTrackingAuthorizationChanged(bool authorized) async {
+    _trackingAuthorized = authorized;
+    await _applyPrivacyFlags();
+  }
+
+  Future<void> _applyPrivacyFlags() async {
     final ga = _ga;
     if (ga == null) return;
     try {
-      // Google Consent Mode v2 — set before Ads / Analytics use of storage.
+      final ads = _consentGranted && _trackingAuthorized;
       await ga.setConsent(
-        analyticsStorageConsentGranted: granted,
-        adStorageConsentGranted: granted,
-        adUserDataConsentGranted: granted,
-        adPersonalizationSignalsConsentGranted: granted,
+        analyticsStorageConsentGranted: _consentGranted,
+        adStorageConsentGranted: ads,
+        adUserDataConsentGranted: ads,
+        adPersonalizationSignalsConsentGranted: ads,
       );
-      await ga.setAnalyticsCollectionEnabled(granted);
+      await ga.setAnalyticsCollectionEnabled(_consentGranted);
+      debugPrint(
+        '[analytics] FirebaseSink privacy consent=$_consentGranted '
+        'att=$_trackingAuthorized ads=$ads',
+      );
     } catch (e) {
-      debugPrint('[analytics] FirebaseSink.onConsentChanged failed: $e');
+      debugPrint('[analytics] FirebaseSink privacy flags failed: $e');
     }
   }
 
@@ -156,21 +175,69 @@ class FirebaseSink implements AnalyticsSink {
   }
 
   /// Maps key funnel events onto GA4 recommended events used for Ads conversions.
-  Future<void> _emitRecommended(
+  ///
+  /// Returns `true` when the recommended event already uses the same GA4 name
+  /// as [event] (so the caller should skip a duplicate custom `logEvent`).
+  Future<bool> _emitRecommended(
     FirebaseAnalytics ga,
     AnalyticsEvent event,
     Map<String, Object> params,
   ) async {
     switch (event.name) {
-      case 'signup_completed':
-        await ga.logSignUp(signUpMethod: 'otp');
-        break;
-      case 'otp_verified':
-        if (params['is_profile_complete'] == true ||
-            params['is_profile_complete'] == 'true') {
-          await ga.logLogin(loginMethod: 'otp');
+      case 'new_user':
+        await ga.logSignUp(
+          signUpMethod: _string(params['method']) ?? 'otp',
+          parameters: params,
+        );
+        return false;
+      case 'login':
+        await ga.logLogin(
+          loginMethod: _string(params['method']) ?? 'otp',
+          parameters: params,
+        );
+        return true;
+      case 'logout':
+        await ga.logEvent(name: 'logout', parameters: params);
+        return true;
+      case 'search':
+        final term = _string(params['search_term'] ?? params['query']) ?? '';
+        if (term.isNotEmpty) {
+          await ga.logSearch(searchTerm: term, parameters: params);
+          return true;
         }
-        break;
+        return false;
+      case 'view_content':
+        await ga.logViewItem(
+          currency: _string(params['currency']) ?? 'INR',
+          value: _num(params['value'] ?? params['amount']),
+          parameters: {
+            ...params,
+            if (_string(params['item_id'] ??
+                    params['reward_id'] ??
+                    params['brand_id']) !=
+                null)
+              'item_id': _string(params['item_id'] ??
+                  params['reward_id'] ??
+                  params['brand_id'])!,
+            if (_string(params['item_name'] ??
+                    params['reward_name'] ??
+                    params['gift_card_name'] ??
+                    params['brand_name']) !=
+                null)
+              'item_name': _string(params['item_name'] ??
+                  params['reward_name'] ??
+                  params['gift_card_name'] ??
+                  params['brand_name'])!,
+            if (_string(params['item_category'] ??
+                    params['content_type'] ??
+                    params['perk_type']) !=
+                null)
+              'item_category': _string(params['item_category'] ??
+                  params['content_type'] ??
+                  params['perk_type'])!,
+          },
+        );
+        return false;
       case 'giftcard_payment_succeeded':
         await ga.logPurchase(
           currency: _string(params['currency']) ?? 'INR',
@@ -183,20 +250,22 @@ class FirebaseSink implements AnalyticsSink {
               params['transaction_id']),
           parameters: params,
         );
-        break;
+        return false;
       case 'app_opened':
         if (params['is_first_open'] == true ||
             params['is_first_open'] == 'true') {
           await ga.logEvent(name: 'sp_first_open', parameters: params);
         }
-        break;
+        return false;
       case 'install_attributed':
         await ga.logEvent(name: 'campaign_details', parameters: params);
-        break;
+        return false;
       case 'deeplink_opened':
         // Refresh sticky UTM defaults when a campaign deep link arrives.
         await _pushDefaultCampaignParams();
-        break;
+        return false;
+      default:
+        return false;
     }
   }
 

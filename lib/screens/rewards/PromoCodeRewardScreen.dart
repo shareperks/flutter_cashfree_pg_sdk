@@ -177,6 +177,14 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
       'reward_id': widget.rewardId,
       'source': 'reward_detail',
     });
+    trackAction(AnalyticsEvent.viewContent, {
+      'label': 'View Content',
+      'content_type': 'promocode',
+      'perk_type': 'promocode',
+      'item_id': widget.rewardId,
+      'reward_id': widget.rewardId,
+      'source': 'reward_detail',
+    });
     loadData();
   }
 

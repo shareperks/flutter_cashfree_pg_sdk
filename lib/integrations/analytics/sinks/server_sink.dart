@@ -167,6 +167,11 @@ class ServerSink implements AnalyticsSink {
     // called; no extra header/flag needed today.
   }
 
+  @override
+  Future<void> onTrackingAuthorizationChanged(bool authorized) async {
+    // First-party /track API is not Apple ATT tracking.
+  }
+
   /// Immediate best-effort flush. Safe to call from anywhere (e.g. lifecycle
   /// transitions). Never throws.
   Future<void> flush() => _safeFlush();

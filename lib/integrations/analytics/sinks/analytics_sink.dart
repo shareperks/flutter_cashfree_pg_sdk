@@ -44,4 +44,9 @@ abstract class AnalyticsSink {
   /// Called when the user grants or denies analytics consent (CMP / settings).
   /// Default is a no-op; Firebase / Ads sinks override to update Consent Mode.
   Future<void> onConsentChanged(bool granted) async {}
+
+  /// Called after App Tracking Transparency resolves (iOS) or immediately on
+  /// Android. [authorized] is true only when advertising identifiers may be
+  /// used. Default is a no-op.
+  Future<void> onTrackingAuthorizationChanged(bool authorized) async {}
 }

@@ -108,6 +108,11 @@ class _SetupScreenState extends State<SetupScreen> {
         'label': 'Complete Signup',
         'has_referral': _referralCodeIfProvided() != null,
       });
+      trackAction(AnalyticsEvent.newUser, {
+        'label': 'New User',
+        'method': 'otp',
+        'has_referral': _referralCodeIfProvided() != null,
+      });
       context.read<UserProvider>().setUser(response.user!);
       context.goNamed(RouteNames.PROFILE_SUCCESS_SCREEN);
     } catch (e) {

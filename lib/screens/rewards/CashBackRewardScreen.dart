@@ -173,6 +173,14 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
       'reward_id': widget.rewardId,
       'source': 'reward_detail',
     });
+    trackAction(AnalyticsEvent.viewContent, {
+      'label': 'View Content',
+      'content_type': 'cashback',
+      'perk_type': 'cashback',
+      'item_id': widget.rewardId,
+      'reward_id': widget.rewardId,
+      'source': 'reward_detail',
+    });
     loadData();
   }
 

@@ -108,11 +108,21 @@
 	<key>FacebookDisplayName</key>
 	<string>SharePerks</string>
 	<key>FacebookAutoLogAppEventsEnabled</key>
-	<true/>
+	<false/>
 	<key>FacebookAdvertiserIDCollectionEnabled</key>
-	<true/>
+	<false/>
+	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
+	<false/>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>SharePerks uses this identifier to measure ad performance and improve offers relevant to you.</string>
+	<string>Your permission allows SharePerks to measure advertising performance and show you more relevant offers.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<!-- Meta / Facebook -->

@@ -7,6 +7,8 @@ import 'package:shareperks/components/RewardCard.dart';
 import 'package:shareperks/components/category_search_sort_bar.dart';
 import 'package:shareperks/components/loader/rewardloader.dart';
 import 'package:shareperks/constants/assets.dart';
+import 'package:shareperks/integrations/analytics/analytics_event.dart';
+import 'package:shareperks/integrations/analytics/tracked_action.dart';
 import 'package:shareperks/repository/models/home_common_models.dart';
 import 'package:shareperks/repository/models/reward_list_model.dart';
 import 'package:shareperks/repository/services/listing/data.service.dart';
@@ -35,6 +37,7 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _filterTimer;
   String _sortBy = 'a-z';
+  String? _lastTrackedSearchTerm;
 
   bool isEmpty() => rewardItems.isEmpty;
 
@@ -51,6 +54,7 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
         type: tabOption[_index],
       );
       rewardItems = perks?.data ?? [];
+      _trackSearchIfNeeded(query);
     } catch (e) {
       _isError = true;
     } finally {
@@ -60,6 +64,22 @@ class _SearchRewardsScreenState extends State<SearchRewardsScreen> {
         });
       }
     }
+  }
+
+  void _trackSearchIfNeeded(String query) {
+    if (query.isEmpty) return;
+    if (query == _lastTrackedSearchTerm) return;
+    _lastTrackedSearchTerm = query;
+    final type = tabOption[_index];
+    trackAction(AnalyticsEvent.search, {
+      'label': 'Search',
+      'search_term': query,
+      'query': query,
+      'result_count': rewardItems.length,
+      'sort_by': _sortBy,
+      'filter_type': ?type,
+      'source': 'search_rewards_screen',
+    });
   }
 
   Future<void> applyFilter() async {

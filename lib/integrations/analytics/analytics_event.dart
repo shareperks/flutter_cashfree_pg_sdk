@@ -122,6 +122,18 @@ class AnalyticsEvent {
     'signup_completed',
     EventCategory.auth,
   );
+  /// Ads-facing "New User" — first successful profile completion.
+  /// Maps to GA4 `sign_up` and Meta Complete Registration.
+  static const newUser = AnalyticsEvent._(
+    'new_user',
+    EventCategory.auth,
+  );
+  /// Returning user session after OTP / MFA when profile is already complete.
+  /// Maps to GA4 `login` and Meta `Login`.
+  static const login = AnalyticsEvent._(
+    'login',
+    EventCategory.auth,
+  );
   static const logout = AnalyticsEvent._(
     'logout',
     EventCategory.auth,
@@ -131,6 +143,18 @@ class AnalyticsEvent {
   // ——— Discovery ———
   static const homeLoaded = AnalyticsEvent._(
     'home_loaded',
+    EventCategory.discovery,
+  );
+  /// Global / list search (SearchRewardsScreen and similar).
+  /// Maps to GA4 `search` and Meta `fb_mobile_search`.
+  static const search = AnalyticsEvent._(
+    'search',
+    EventCategory.discovery,
+  );
+  /// Brand or perk detail content view.
+  /// Maps to GA4 `view_item` and Meta View Content.
+  static const viewContent = AnalyticsEvent._(
+    'view_content',
     EventCategory.discovery,
   );
   static const categoryViewed = AnalyticsEvent._(

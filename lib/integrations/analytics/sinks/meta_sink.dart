@@ -10,6 +10,8 @@ import 'analytics_sink.dart';
 /// Screens must never import `facebook_app_events` — only this sink does.
 class MetaSink implements AnalyticsSink {
   FacebookAppEvents? _fb;
+  bool _consentGranted = false;
+  bool _trackingAuthorized = false;
 
   static const _piiKeys = {
     'mobile',
@@ -28,9 +30,9 @@ class MetaSink implements AnalyticsSink {
   Future<void> init() async {
     try {
       _fb = FacebookAppEvents();
-      // Auto events are gated by consent via [onConsentChanged].
-      await _fb!.setAutoLogAppEventsEnabled(true);
-      await _fb!.activateApp();
+      // Advertiser ID / auto-log stay off until ATT + consent are applied.
+      await _fb!.setAutoLogAppEventsEnabled(false);
+      await _fb!.setAdvertiserIdCollectionEnabled(false);
       if (kDebugMode) {
         final id = await _fb!.getApplicationId();
         debugPrint('[analytics] MetaSink ready appId=$id');
@@ -120,21 +122,45 @@ class MetaSink implements AnalyticsSink {
 
   @override
   Future<void> onConsentChanged(bool granted) async {
+    _consentGranted = granted;
+    await _applyPrivacyFlags();
+  }
+
+  @override
+  Future<void> onTrackingAuthorizationChanged(bool authorized) async {
+    _trackingAuthorized = authorized;
+    await _applyPrivacyFlags();
     final fb = _fb;
     if (fb == null) return;
     try {
-      await fb.setAutoLogAppEventsEnabled(granted);
-      await fb.setAdvertiserIdCollectionEnabled(granted);
-      // When denied, limit usage beyond analytics/conversions.
-      await fb.setLimitEventAndDataUsage(!granted);
-      if (granted) {
-        // Empty options = standard processing (not Limited Data Use unless set).
+      // SKAN / aggregated measurement is allowed after the ATT decision,
+      // including when the user taps "Ask App Not to Track".
+      await fb.activateApp();
+    } catch (e) {
+      debugPrint('[analytics] MetaSink.activateApp failed: $e');
+    }
+  }
+
+  Future<void> _applyPrivacyFlags() async {
+    final fb = _fb;
+    if (fb == null) return;
+    try {
+      await fb.setAutoLogAppEventsEnabled(_consentGranted);
+      await fb.setAdvertiserIdCollectionEnabled(
+        _consentGranted && _trackingAuthorized,
+      );
+      await fb.setLimitEventAndDataUsage(!_trackingAuthorized);
+      if (_trackingAuthorized && _consentGranted) {
         await fb.setDataProcessingOptions([]);
       } else {
         await fb.setDataProcessingOptions(['LDU'], country: 0, state: 0);
       }
+      debugPrint(
+        '[analytics] MetaSink privacy consent=$_consentGranted '
+        'att=$_trackingAuthorized',
+      );
     } catch (e) {
-      debugPrint('[analytics] MetaSink.onConsentChanged failed: $e');
+      debugPrint('[analytics] MetaSink privacy flags failed: $e');
     }
   }
 
@@ -144,17 +170,44 @@ class MetaSink implements AnalyticsSink {
     Map<String, dynamic> params,
   ) async {
     switch (event.name) {
-      case 'signup_completed':
+      case 'new_user':
         await fb.logCompletedRegistration(
-          registrationMethod: 'otp',
+          registrationMethod: _string(params['method']) ?? 'otp',
           parameters: params,
         );
         break;
-      case 'otp_verified':
-        if (params['is_profile_complete'] == true ||
-            params['is_profile_complete'] == 'true') {
-          await fb.logEvent(name: 'Login', parameters: params);
+      case 'login':
+        await fb.logEvent(name: 'Login', parameters: params);
+        break;
+      case 'logout':
+        await fb.logEvent(name: 'Logout', parameters: params);
+        break;
+      case 'search':
+        final term = _string(params['search_term'] ?? params['query']);
+        if (term != null && term.isNotEmpty) {
+          await fb.logEvent(
+            name: FacebookAppEvents.eventNameSearched,
+            parameters: {
+              ...params,
+              FacebookAppEvents.paramNameSearchString: term,
+            },
+          );
         }
+        break;
+      case 'view_content':
+        await fb.logViewContent(
+          id: _string(params['item_id'] ??
+              params['content_id'] ??
+              params['reward_id'] ??
+              params['brand_id']),
+          type: _string(params['content_type'] ??
+              params['item_category'] ??
+              params['perk_type']) ??
+              'product',
+          currency: _string(params['currency']) ?? 'INR',
+          price: _num(params['value'] ?? params['amount']),
+          parameters: params,
+        );
         break;
       case 'giftcard_payment_succeeded':
         final amount = _num(params['amount'] ??

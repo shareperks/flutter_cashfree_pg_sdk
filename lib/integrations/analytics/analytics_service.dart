@@ -29,7 +29,8 @@ class AnalyticsService {
   /// Returns the live consent state for UI (settings screen toggle).
   bool get consentGiven => _consentGiven;
 
-  /// Call once from `main()` BEFORE `runApp`.
+  /// Call once at startup AFTER App Tracking Transparency has resolved
+  /// (see [bootstrapTracking]). Safe to call before `runApp` on Android.
   ///
   /// [trackingApiBaseUrl] is the SharePerks data_service origin (no trailing
   /// slash), e.g. `https://listing.shareperks.in`.
@@ -88,6 +89,16 @@ class AnalyticsService {
   Future<void> onConsentChanged(bool granted) async {
     _consentGiven = granted;
     await _propagateConsent(granted);
+  }
+
+  /// Apply ATT / advertising-identifier authorization to every sink.
+  /// Denied and restricted must not break first-party analytics.
+  Future<void> onTrackingAuthorizationChanged(bool authorized) async {
+    for (final s in _sinks) {
+      try {
+        await s.onTrackingAuthorizationChanged(authorized);
+      } catch (_) {}
+    }
   }
 
   Future<void> _propagateConsent(bool granted) async {

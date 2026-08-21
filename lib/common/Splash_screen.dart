@@ -5,6 +5,7 @@ import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/function/initCheck.dart';
 import 'package:shareperks/function/session_bootstrap.dart';
+import 'package:shareperks/function/tracking_bootstrap.dart';
 import 'package:shareperks/repository/services/auth/auth_service.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,7 +31,9 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _goNextAfterSplash() async {
+    final tracking = bootstrapTracking();
     await Future<void>.delayed(const Duration(seconds: 2));
+    await tracking;
     if (!mounted) return;
     final online = await checkInternetConnection();
     if (!mounted) return;

@@ -90,6 +90,11 @@ class _LoginMfaScreenState extends State<LoginMfaScreen> {
 
       if (!mounted) return;
       if (response.isProfileComplete == true) {
+        trackAction(AnalyticsEvent.login, {
+          'label': 'Login',
+          'method': 'mfa',
+          'source': 'mfa_screen',
+        });
         final user = await AuthService.verifySession();
         await LocalStorage.setString('userId', user.user?.id ?? '');
         if (user.user?.id != null) {

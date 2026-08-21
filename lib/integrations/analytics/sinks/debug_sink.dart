@@ -60,6 +60,12 @@ class DebugSink implements AnalyticsSink {
     debugPrint('[analytics] consent=${granted ? 'granted' : 'denied'}');
   }
 
+  @override
+  Future<void> onTrackingAuthorizationChanged(bool authorized) async {
+    if (!kDebugMode) return;
+    debugPrint('[analytics] att=${authorized ? 'authorized' : 'not_authorized'}');
+  }
+
   Map<String, Object?> _short(Map<String, Object?> ctx) {
     return {
       'anon_id': ctx['anon_id'],

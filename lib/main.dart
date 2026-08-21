@@ -10,18 +10,12 @@ import 'package:shareperks/firebase_options.dart';
 import 'package:shareperks/function/localstorage.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
-import 'package:shareperks/integrations/analytics/consent_manager.dart';
-import 'package:shareperks/integrations/analytics/deep_link_tracker.dart';
-import 'package:shareperks/integrations/analytics/install_attribution.dart';
 import 'package:shareperks/integrations/onesignal_push.dart';
 import 'package:shareperks/integrations/razorpay_payment.dart';
 import 'package:provider/provider.dart';
-import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/providers/home-data.provider.dart';
 import 'package:shareperks/repository/providers/user.provider.dart';
 import 'constants/theme_data.dart';
-
-const _firstOpenKey = 'analytics_first_open_seen_v1';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,34 +32,9 @@ void main() async {
   RazorpayPayment.init();
   await OneSignalPush.init();
 
-  // Consent Mode v2: apply stored (or implicit) consent before first events.
-  if (await ConsentManager.read() == ConsentState.unknown) {
-    await ConsentManager.grant();
-  }
-
-  await AnalyticsService.instance.init(
-    trackingApiBaseUrl: Host.listingUrl,
-    getAuthToken: () async => LocalStorage.getToken(),
-  );
-  await AnalyticsService.instance.onConsentChanged(
-    await ConsentManager.isGranted(),
-  );
-
-  // Play Install Referrer (Google Ads deferred attribution on Android).
-  unawaited(InstallAttribution.captureOnce());
-  // Direct deep links + UTM capture.
-  unawaited(DeepLinkTracker.instance.start());
-
-  // is_first_open is true on the very first cold start of this install.
-  final seenFirstOpen = LocalStorage.getString(_firstOpenKey) == '1';
-  if (!seenFirstOpen) {
-    await LocalStorage.setString(_firstOpenKey, '1');
-  }
-  unawaited(
-    AnalyticsService.instance.track(AnalyticsEvent.appOpened, {
-      'is_first_open': !seenFirstOpen,
-    }),
-  );
+  // Tracking SDKs (Meta, Firebase Analytics / Ads) start after ATT in
+  // [bootstrapTracking], called from the splash screen once the UI can
+  // present Apple's system permission dialog.
 
   runApp(
     MultiProvider(
