@@ -117,8 +117,7 @@ class _MfaBackupCodesScreenState extends State<MfaBackupCodesScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFF4E5),
-                        borderRadius:
-                            BorderRadius.circular(SharePerksRadii.md),
+                        borderRadius: BorderRadius.circular(SharePerksRadii.md),
                         border: Border.all(color: const Color(0xFFFFD9A8)),
                       ),
                       child: Row(
@@ -175,8 +174,7 @@ class _MfaBackupCodesScreenState extends State<MfaBackupCodesScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: SharePerksColors.surfaceLight,
-                        borderRadius:
-                            BorderRadius.circular(SharePerksRadii.lg),
+                        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
                         border: Border.all(color: SharePerksColors.borderLight),
                       ),
                       child: codes.isEmpty
@@ -218,8 +216,7 @@ class _MfaBackupCodesScreenState extends State<MfaBackupCodesScreen> {
                                             _BackupCodeTile(
                                               index: i + 1,
                                               code: left[i],
-                                              onCopy: () =>
-                                                  _copyOne(left[i]),
+                                              onCopy: () => _copyOne(left[i]),
                                             ),
                                         ],
                                       ),
@@ -228,14 +225,11 @@ class _MfaBackupCodesScreenState extends State<MfaBackupCodesScreen> {
                                     Expanded(
                                       child: Column(
                                         children: [
-                                          for (var i = 0;
-                                              i < right.length;
-                                              i++)
+                                          for (var i = 0; i < right.length; i++)
                                             _BackupCodeTile(
                                               index: mid + i + 1,
                                               code: right[i],
-                                              onCopy: () =>
-                                                  _copyOne(right[i]),
+                                              onCopy: () => _copyOne(right[i]),
                                             ),
                                         ],
                                       ),
@@ -264,8 +258,7 @@ class _MfaBackupCodesScreenState extends State<MfaBackupCodesScreen> {
                   children: [
                     InkWell(
                       onTap: () => setState(() => _saved = !_saved),
-                      borderRadius:
-                          BorderRadius.circular(SharePerksRadii.md),
+                      borderRadius: BorderRadius.circular(SharePerksRadii.md),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(

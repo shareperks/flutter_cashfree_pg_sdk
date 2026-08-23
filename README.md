@@ -41,3 +41,5 @@ Built the SharePerks app flow against `https://link-account.shareperks.in`:
 - on search page list email coupons.
 - In Admin panel need to add option max percent wallet amount allow used.
 - Admin manage in payout amount or max payout amount.
+
+https://brandfetch.com/developers/pricing

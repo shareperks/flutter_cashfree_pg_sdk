@@ -5,6 +5,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
+import 'package:shareperks/components/NetworkLogo.dart';
 import 'package:shareperks/components/holding/InvestmentAmountCard.dart';
 import 'package:shareperks/components/holding/NoBrokerConnected.dart';
 import 'package:shareperks/components/loader/HoldingsPageShimmer.dart';
@@ -18,7 +19,6 @@ import 'package:shareperks/repository/services/holding/holding.service.dart';
 import 'package:shareperks/repository/services/holding/holding_builder.dart';
 import 'package:shareperks/repository/services/holding/holding_model.dart';
 import 'package:shareperks/utils/currency_format.dart';
-import 'package:soui/elements/ImageBuilder.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/theme.dart';
@@ -677,7 +677,7 @@ class _MyHoldingScreenState extends State<MyHoldingScreen> {
                                             child: ListTile(
                                               dense: true,
                                               contentPadding: EdgeInsets.all(0),
-                                              leading: ImageBuilder(
+                                              leading: NetworkLogo(
                                                 imageUrl: holding?.logo ?? "",
                                                 width: 40,
                                                 height: 40,

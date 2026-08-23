@@ -240,7 +240,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                           isEligible:
                                               reward.isEligible ?? false,
                                           isBrokerageEligible:
-                                              reward.isBrokerageEligible ?? false,
+                                              reward.isBrokerageEligible ??
+                                              false,
 
                                           eligibility:
                                               reward.companyName ?? "--",

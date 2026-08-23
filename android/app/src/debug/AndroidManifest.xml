@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds talk to services on the dev machine over plain HTTP
+         (e.g. company-data-service on :4003). Android 9+ blocks cleartext by
+         default; this override is debug-only and never ships in release. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

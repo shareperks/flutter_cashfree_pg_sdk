@@ -15,6 +15,7 @@ import 'package:shareperks/components/EligibleRewardCard.dart';
 import 'package:shareperks/components/OptionView.dart';
 import 'package:shareperks/components/RewardCard.dart';
 import 'package:shareperks/components/WelcomeCard.dart';
+import 'package:shareperks/components/company/company_research_card.dart';
 import 'package:shareperks/components/holding/ImportProgressSection.dart';
 import 'package:shareperks/components/loader/homepageLoader.dart';
 import 'package:shareperks/constants/assets.dart';
@@ -786,6 +787,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                       child: Image.asset(Assets.ASSETS_CARDS_DATA_SAFETY_PNG),
                     ),
+                    SizedBox(height: 20),
+                    CompanyResearchCard(),
                     SizedBox(height: 20),
                     Column(
                       children: [

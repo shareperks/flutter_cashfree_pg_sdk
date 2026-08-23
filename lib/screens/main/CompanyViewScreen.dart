@@ -315,7 +315,8 @@ class _CompanyViewScreenState extends State<CompanyViewScreen> {
                                         title: reward.title ?? "--",
                                         imageUrl: imageUrl(reward.image ?? ""),
                                         isEligible: reward.isEligible ?? false,
-                                        isBrokerageEligible: reward.isBrokerageEligible ?? false,
+                                        isBrokerageEligible:
+                                            reward.isBrokerageEligible ?? false,
                                         eligibility: reward.companyName ?? "--",
                                       );
                                     },

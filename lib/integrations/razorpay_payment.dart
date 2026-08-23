@@ -70,7 +70,46 @@ class RazorpayPayment {
     _razorpay?.clear();
   }
 
+  /// Restricts Checkout to UPI.
+  ///
+  /// Two switches are needed and they do different jobs. `method` turns the
+  /// other payment methods off, so Checkout will not accept a card or a
+  /// netbanking payment even if one were reached. `config.display` controls
+  /// what is *drawn*: `show_default_blocks: false` suppresses Razorpay's
+  /// standard method list, and the single UPI block plus the sequence naming
+  /// it means UPI is the only thing offered. Setting only `method` still
+  /// renders the other options greyed out, which reads as broken.
+  static const Map<String, dynamic> _upiOnlyOptions = {
+    'method': {
+      'upi': true,
+      'card': false,
+      'netbanking': false,
+      'wallet': false,
+      'emi': false,
+      'cardless_emi': false,
+      'paylater': false,
+      'app': false,
+      'bank_transfer': false,
+    },
+    'config': {
+      'display': {
+        'blocks': {
+          'upi': {
+            'name': 'Pay using UPI',
+            'instruments': [
+              {'method': 'upi'},
+            ],
+          },
+        },
+        'sequence': ['block.upi'],
+        'preferences': {'show_default_blocks': false},
+      },
+    },
+  };
+
   /// Opens Razorpay Checkout for a server-created order.
+  ///
+  /// Checkout is UPI-only — see [_upiOnlyOptions].
   static void openCheckout({
     required String razorpayOrderId,
     required int amountPaise,
@@ -102,6 +141,7 @@ class RazorpayPayment {
       if (description != null && description.isNotEmpty)
         'description': description,
       if (prefill != null && prefill.isNotEmpty) 'prefill': prefill,
+      ..._upiOnlyOptions,
     };
 
     _razorpay!.open(options);

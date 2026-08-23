@@ -151,8 +151,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _onNotificationsChanged(bool value) async {
     if (value) {
-      final granted =
-          await OneSignalPush.requestPermissionIfNeeded(force: true);
+      final granted = await OneSignalPush.requestPermissionIfNeeded(
+        force: true,
+      );
       if (!granted) {
         if (!mounted) return;
         setState(() => _notifications = false);
@@ -240,228 +241,230 @@ class _SettingsScreenState extends State<SettingsScreen> {
             )
           : SingleChildScrollView(
               child: Container(
-              width: MediaQuery.of(context).size.width,
-              padding: EdgeInsets.all(18),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Notification Settings',
-                    style: TextStyle(
-                      color: const Color(0xFF6400E0),
-                      fontSize: 18,
-                      fontFamily: SharePerksFonts.albertSans,
-                      fontWeight: FontWeight.w600,
+                width: MediaQuery.of(context).size.width,
+                padding: EdgeInsets.all(18),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Notification Settings',
+                      style: TextStyle(
+                        color: const Color(0xFF6400E0),
+                        fontSize: 18,
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 5),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          width: 1,
-                          color: SharePerksColors.borderLight,
+                    SizedBox(height: 5),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            width: 1,
+                            color: SharePerksColors.borderLight,
+                          ),
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(0),
+                        title: Text(
+                          'Perk Updates',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 14,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: _perksUpdates,
+                          onChanged: _saving
+                              ? (e) {}
+                              : (v) => _onPerksChanged(v),
                         ),
                       ),
                     ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(0),
-                      title: Text(
-                        'Perk Updates',
-                        style: TextStyle(
-                          color: const Color(0xFF333333),
-                          fontSize: 14,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w700,
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            width: 1,
+                            color: SharePerksColors.borderLight,
+                          ),
                         ),
                       ),
-                      trailing: Switch(
-                        value: _perksUpdates,
-                        onChanged: _saving ? (e) {} : (v) => _onPerksChanged(v),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          width: 1,
-                          color: SharePerksColors.borderLight,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(0),
+                        title: Text(
+                          'Wallet Updates',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 14,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                    ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(0),
-                      title: Text(
-                        'Wallet Updates',
-                        style: TextStyle(
-                          color: const Color(0xFF333333),
-                          fontSize: 14,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      trailing: Switch(
-                        value: _walletUpdates,
-                        onChanged: _saving
-                            ? (e) {}
-                            : (v) => _onWalletChanged(v),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 25),
-                  Text(
-                    'Security',
-                    style: TextStyle(
-                      color: const Color(0xFF6400E0),
-                      fontSize: 18,
-                      fontFamily: SharePerksFonts.albertSans,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          width: 1,
-                          color: SharePerksColors.borderLight,
+                        trailing: Switch(
+                          value: _walletUpdates,
+                          onChanged: _saving
+                              ? (e) {}
+                              : (v) => _onWalletChanged(v),
                         ),
                       ),
                     ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(0),
-                      title: Text(
-                        'Two-factor authentication',
-                        style: TextStyle(
-                          color: const Color(0xFF333333),
-                          fontSize: 14,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      subtitle: Text(
-                        _mfaEnabled
-                            ? 'On — Google Authenticator'
-                            : 'Off — protect your account with an authenticator app',
-                        style: TextStyle(
-                          color: SharePerksColors.textSecondaryLight,
-                          fontSize: 12,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      trailing: TextButton(
-                        onPressed: _mfaEnabled
-                            ? _showDisableMfaDialog
-                            : _openMfaSetup,
-                        child: Text(_mfaEnabled ? 'Disable' : 'Enable'),
+                    SizedBox(height: 25),
+                    Text(
+                      'Security',
+                      style: TextStyle(
+                        color: const Color(0xFF6400E0),
+                        fontSize: 18,
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  SizedBox(height: 25),
-                  Text(
-                    'App Permissions',
-                    style: TextStyle(
-                      color: const Color(0xFF6400E0),
-                      fontSize: 18,
-                      fontFamily: SharePerksFonts.albertSans,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          width: 1,
-                          color: SharePerksColors.borderLight,
+                    SizedBox(height: 5),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            width: 1,
+                            color: SharePerksColors.borderLight,
+                          ),
                         ),
                       ),
-                    ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(0),
-                      title: Text(
-                        'Notifications',
-                        style: TextStyle(
-                          color: const Color(0xFF333333),
-                          fontSize: 14,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w700,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(0),
+                        title: Text(
+                          'Two-factor authentication',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 14,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      trailing: Switch(
-                        value: _notifications,
-                        onChanged: _saving
-                            ? (e) {}
-                            : (v) => _onNotificationsChanged(v),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          width: 1,
-                          color: SharePerksColors.borderLight,
+                        subtitle: Text(
+                          _mfaEnabled
+                              ? 'On — Google Authenticator'
+                              : 'Off — protect your account with an authenticator app',
+                          style: TextStyle(
+                            color: SharePerksColors.textSecondaryLight,
+                            fontSize: 12,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        trailing: TextButton(
+                          onPressed: _mfaEnabled
+                              ? _showDisableMfaDialog
+                              : _openMfaSetup,
+                          child: Text(_mfaEnabled ? 'Disable' : 'Enable'),
                         ),
                       ),
                     ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(0),
-                      title: Text(
-                        'Share usage data',
-                        style: TextStyle(
-                          color: const Color(0xFF333333),
-                          fontSize: 14,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Helps us improve SharePerks via Google Analytics',
-                        style: TextStyle(
-                          color: SharePerksColors.textSecondaryLight,
-                          fontSize: 12,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      trailing: Switch(
-                        value: _shareUsageData,
-                        onChanged: (v) => _onShareUsageDataChanged(v),
+                    SizedBox(height: 25),
+                    Text(
+                      'App Permissions',
+                      style: TextStyle(
+                        color: const Color(0xFF6400E0),
+                        fontSize: 18,
+                        fontFamily: SharePerksFonts.albertSans,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  SizedBox(height: 32),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        'Delete Account',
-                        style: TextStyle(
-                          color: const Color(0xFFEB3939),
-                          fontSize: 15,
-                          fontFamily: SharePerksFonts.inter,
-                          fontWeight: FontWeight.w700,
+                    SizedBox(height: 5),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            width: 1,
+                            color: SharePerksColors.borderLight,
+                          ),
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(0),
+                        title: Text(
+                          'Notifications',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 14,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: _notifications,
+                          onChanged: _saving
+                              ? (e) {}
+                              : (v) => _onNotificationsChanged(v),
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 15),
-                  GestureDetector(
-                    onTap: () {
-                      context.pushNamed(RouteNames.HELP_AND_SUPPORT_SCREEN);
-                    },
-                    child: Image.asset(
-                      Assets.ASSETS_CARDS_SUPPORTCARD_PNG,
-                      width: MediaQuery.of(context).size.width,
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            width: 1,
+                            color: SharePerksColors.borderLight,
+                          ),
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(0),
+                        title: Text(
+                          'Share usage data',
+                          style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: 14,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Helps us improve SharePerks via Google Analytics',
+                          style: TextStyle(
+                            color: SharePerksColors.textSecondaryLight,
+                            fontSize: 12,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: _shareUsageData,
+                          onChanged: (v) => _onShareUsageDataChanged(v),
+                        ),
+                      ),
                     ),
-                  ),
-                  Copyright(),
-                ],
-              ),
+                    SizedBox(height: 32),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {},
+                        child: Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            color: const Color(0xFFEB3939),
+                            fontSize: 15,
+                            fontFamily: SharePerksFonts.inter,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () {
+                        context.pushNamed(RouteNames.HELP_AND_SUPPORT_SCREEN);
+                      },
+                      child: Image.asset(
+                        Assets.ASSETS_CARDS_SUPPORTCARD_PNG,
+                        width: MediaQuery.of(context).size.width,
+                      ),
+                    ),
+                    Copyright(),
+                  ],
+                ),
               ),
             ),
     );
@@ -574,4 +577,3 @@ class _DisableMfaDialogState extends State<_DisableMfaDialog> {
     );
   }
 }
-

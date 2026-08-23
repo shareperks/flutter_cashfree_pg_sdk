@@ -217,9 +217,9 @@ class CashbackEligibility {
   bool? isEligible;
   bool? isBrokerageEligible;
   String? rewardType;
-  int? withHolderRewardRate;
-  int? withAnyHoldingRewardRate;
-  int? nonHolderRewardRate;
+  double? withHolderRewardRate;
+  double? withAnyHoldingRewardRate;
+  double? nonHolderRewardRate;
   RewardBrokerConnected? isBrokerConnected;
 
   CashbackEligibility({
@@ -240,9 +240,9 @@ class CashbackEligibility {
     isEligible = json['isEligible'] as bool?;
     isBrokerageEligible = json['isBrokerageEligible'] as bool?;
     rewardType = json['rewardType'] as String?;
-    withHolderRewardRate = parseJsonInt(json['withHolderRewardRate']);
-    withAnyHoldingRewardRate = parseJsonInt(json['withAnyHoldingRewardRate']);
-    nonHolderRewardRate = parseJsonInt(json['nonHolderRewardRate']);
+    withHolderRewardRate = parseJsonDouble(json['withHolderRewardRate']);
+    withAnyHoldingRewardRate = parseJsonDouble(json['withAnyHoldingRewardRate']);
+    nonHolderRewardRate = parseJsonDouble(json['nonHolderRewardRate']);
 
     final bc = json['isBrokerConnected'];
     if (bc is Map<String, dynamic>) {

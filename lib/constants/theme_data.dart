@@ -56,6 +56,16 @@ abstract final class SharePerksRadii {
   static const double xl = 24;
 }
 
+/// Corner radii for the company research screens: the app scale plus 10px.
+///
+/// Kept separate from [SharePerksRadii] so the softer corners stay scoped to
+/// the company pages instead of restyling every other screen in the app.
+abstract final class CompanyRadii {
+  static const double sm = SharePerksRadii.sm + 10; // 16
+  static const double md = SharePerksRadii.md + 10; // 20
+  static const double lg = SharePerksRadii.lg + 10; // 26
+}
+
 abstract final class SharePerksShadows {
   static List<BoxShadow> sm = [
     BoxShadow(

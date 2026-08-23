@@ -11,6 +11,7 @@ import 'package:shareperks/function/initCheck.dart';
 import 'package:shareperks/integrations/analytics/analytics_event.dart';
 import 'package:shareperks/integrations/analytics/analytics_service.dart';
 import 'package:shareperks/integrations/analytics/route_observer.dart';
+import 'package:shareperks/repository/models/company_data_model.dart';
 import 'package:shareperks/screens/Status/EmailSuccessStatusScreen.dart';
 import 'package:shareperks/screens/forms/RequestPerkScreen.dart';
 import 'package:shareperks/screens/forms/UpdateProfileScreen.dart';
@@ -32,6 +33,10 @@ import 'package:shareperks/screens/landing/ProfileSuccessScreen.dart';
 import 'package:shareperks/screens/landing/SetupScreen.dart';
 import 'package:shareperks/screens/main/BrandViewScreen.dart';
 import 'package:shareperks/screens/main/CategotyScreen.dart';
+import 'package:shareperks/screens/main/CompanyChartScreen.dart';
+import 'package:shareperks/screens/main/CompanyDetailsScreen.dart';
+import 'package:shareperks/screens/main/CompanySearchScreen.dart';
+import 'package:shareperks/screens/main/CompanySectorScreen.dart';
 import 'package:shareperks/screens/main/CompanyViewScreen.dart';
 import 'package:shareperks/screens/main/HomeScreen.dart';
 import 'package:shareperks/screens/main/MenuListScreen.dart';
@@ -95,6 +100,10 @@ class RouteNames {
   static const String TOP_BRANDS_SCREEN = 'TopBrandScreen';
   static const String BRAND_SCREEN = 'BrandScreen';
   static const String COMPANY_SCREEN = 'CompanyScreen';
+  static const String COMPANY_CHART_SCREEN = 'CompanyChartScreen';
+  static const String COMPANY_DETAILS_SCREEN = 'CompanyDetailsScreen';
+  static const String COMPANY_SEARCH_SCREEN = 'CompanySearchScreen';
+  static const String COMPANY_SECTOR_SCREEN = 'CompanySectorScreen';
   static const String MENU_SCREEN = 'MenuScreen';
   static const String HELP_AND_SUPPORT_SCREEN = 'HelpAndSupportScreen';
   static const String FAQS_SCREEN = 'FAQsScreen';
@@ -116,7 +125,8 @@ class RouteNames {
   static const String CLAIMED_GIFTCARD_SCREEN = 'ClaimedGiftCardScreen';
   static const String MY_EMAIL_COUPONS_SCREEN = 'MyEmailCouponsScreen';
   static const String EMAIL_COUPON_DETAIL_SCREEN = 'EmailCouponDetailScreen';
-  static const String MANAGE_GOOGLE_ACCOUNTS_SCREEN = 'ManageGoogleAccountsScreen';
+  static const String MANAGE_GOOGLE_ACCOUNTS_SCREEN =
+      'ManageGoogleAccountsScreen';
   static const String HOW_TO_CLAIM_SCREEN = 'HowToClaimScreen';
   static const String GIFTCARD_AMOUNT_SCREEN = 'GiftCardAmountScreen';
   static const String GIFTCARD_PAYMENT_SUCCESS_SCREEN = 'PaymentSuccessScreen';
@@ -349,6 +359,54 @@ final List<GoRoute> routes = [
           ? extra['companyId'] as String?
           : null;
       return CompanyViewScreen(companyId: companyId!);
+    },
+  ),
+  GoRoute(
+    name: RouteNames.COMPANY_SEARCH_SCREEN,
+    path: RouteNames.path(RouteNames.COMPANY_SEARCH_SCREEN),
+    builder: (BuildContext context, GoRouterState state) =>
+        const CompanySearchScreen(),
+  ),
+  GoRoute(
+    name: RouteNames.COMPANY_CHART_SCREEN,
+    path: RouteNames.path(RouteNames.COMPANY_CHART_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final Map<String, dynamic> args = extra is Map<String, dynamic>
+          ? extra
+          : const {};
+      return CompanyChartScreen(
+        symbol: args['symbol'] as String? ?? '',
+        name: args['name'] as String?,
+        initial: args['chart'] as CompanyChart?,
+        initialYears: args['years'] as int?,
+      );
+    },
+  ),
+  GoRoute(
+    name: RouteNames.COMPANY_SECTOR_SCREEN,
+    path: RouteNames.path(RouteNames.COMPANY_SECTOR_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final Map<String, dynamic> args = extra is Map<String, dynamic>
+          ? extra
+          : const {};
+      return CompanySectorScreen(
+        group:
+            args['group'] as ClassificationGroup? ?? ClassificationGroup.sector,
+        value: args['value'] as String? ?? '',
+      );
+    },
+  ),
+  GoRoute(
+    name: RouteNames.COMPANY_DETAILS_SCREEN,
+    path: RouteNames.path(RouteNames.COMPANY_DETAILS_SCREEN),
+    builder: (BuildContext context, GoRouterState state) {
+      final extra = state.extra;
+      final String? symbol = extra is Map<String, dynamic>
+          ? extra['symbol'] as String?
+          : null;
+      return CompanyDetailsScreen(symbol: symbol!);
     },
   ),
   GoRoute(
