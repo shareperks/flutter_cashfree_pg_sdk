@@ -248,7 +248,7 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
             SizedBox(height: 5),
             ResendOtp(
-              seconds: 120,
+              seconds: 60,
               onResend: () {
                 resendOtp();
               },

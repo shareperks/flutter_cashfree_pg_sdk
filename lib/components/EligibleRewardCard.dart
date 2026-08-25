@@ -35,34 +35,51 @@ abstract final class RewardRateUi {
     }
   }
 
-  static String rateSuffix(RewardRateKind kind) {
+  static String rateSuffix(RewardRateKind kind, {bool isFixed = false}) {
     switch (kind) {
       case RewardRateKind.cashback:
-        return 'cashback';
+        return isFixed ? 'flat cashback' : 'cashback';
       case RewardRateKind.promoCode:
       case RewardRateKind.giftCard:
-        return 'off';
+        return isFixed ? 'flat off' : 'off';
     }
   }
 
-  static String formatRate(num? rate) {
+  /// `eligibility.rewardType` is `FIXED` (or `FLAT`) when the rate is a rupee
+  /// amount rather than a percentage.
+  static bool isFixedRate(String? rewardType) {
+    final v = (rewardType ?? '').trim().toUpperCase();
+    return v == 'FIXED' || v == 'FLAT';
+  }
+
+  static String formatRate(num? rate, {bool isFixed = false}) {
     if (rate == null) return '—';
     final value = rate.toDouble();
-    if (value == value.truncateToDouble()) {
-      return '${value.toInt()}%';
-    }
-    return '${value.toStringAsFixed(1)}%';
+    final numStr = value == value.truncateToDouble()
+        ? '${value.toInt()}'
+        : value.toStringAsFixed(1);
+    return isFixed ? '₹$numStr' : '$numStr%';
   }
 
-  static String formatRateLine(num? rate, String suffix) {
+  static String formatRateLine(
+    num? rate,
+    String suffix, {
+    bool isFixed = false,
+  }) {
     if (rate == null) return '—';
-    return '${formatRate(rate)} $suffix';
+    return '${formatRate(rate, isFixed: isFixed)} $suffix';
   }
 
   static bool hasRate(num? rate) => rate != null && rate > 0;
 
-  static bool hasAnyRate(num? shareholderRate, num? brokerageRate, num? nonShareholderRate) =>
-      hasRate(shareholderRate) || hasRate(brokerageRate) || hasRate(nonShareholderRate);
+  static bool hasAnyRate(
+    num? shareholderRate,
+    num? brokerageRate,
+    num? nonShareholderRate,
+  ) =>
+      hasRate(shareholderRate) ||
+      hasRate(brokerageRate) ||
+      hasRate(nonShareholderRate);
 
   /// Explains which tier applies.
   ///
@@ -108,6 +125,10 @@ class RewardEligibilityBanner extends StatelessWidget {
   final num? nonHolderRewardRate;
   final String? rewardType;
 
+  /// When true, rates are rupee amounts (`eligibility.rewardType == FIXED`)
+  /// and render with a `₹` prefix instead of a `%` suffix.
+  final bool isFixedRate;
+
   /// When false, Standard tier shows no banner (detail screens).
   /// Claim screens may set true to always show the active tier.
   final bool showStandardBanner;
@@ -122,6 +143,7 @@ class RewardEligibilityBanner extends StatelessWidget {
     this.withAnyHoldingRewardRate,
     this.nonHolderRewardRate,
     this.rewardType,
+    this.isFixedRate = false,
     this.showStandardBanner = false,
   });
 
@@ -161,6 +183,7 @@ class RewardEligibilityBanner extends StatelessWidget {
       label: label,
       rewardRatePercent: rate,
       rewardType: rewardType,
+      isFixedRate: isFixedRate,
       listedOnExchange: listedOnExchange,
     );
   }
@@ -171,21 +194,26 @@ class _RewardTierBanner extends StatelessWidget {
   final RewardRateLabel label;
   final num? rewardRatePercent;
   final String? rewardType;
+  final bool isFixedRate;
   final bool listedOnExchange;
 
   const _RewardTierBanner({
     required this.label,
     required this.rewardRatePercent,
     this.rewardType,
+    this.isFixedRate = false,
     this.listedOnExchange = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final kind = RewardRateUi.kindFor(rewardType);
-    final rateText = RewardRateUi.formatRate(rewardRatePercent);
+    final rateText = RewardRateUi.formatRate(
+      rewardRatePercent,
+      isFixed: isFixedRate,
+    );
     final hasRate = RewardRateUi.hasRate(rewardRatePercent);
-    final rateSuffix = RewardRateUi.rateSuffix(kind);
+    final rateSuffix = RewardRateUi.rateSuffix(kind, isFixed: isFixedRate);
 
     final Color accent;
     final IconData icon;
@@ -292,6 +320,10 @@ class RewardRatesSection extends StatelessWidget {
   final bool reqReimport;
   final String? rewardType;
 
+  /// When true, rates are rupee amounts (`eligibility.rewardType == FIXED`)
+  /// and render with a `₹` prefix instead of a `%` suffix.
+  final bool isFixedRate;
+
   const RewardRatesSection({
     super.key,
     required this.shareholderRate,
@@ -302,16 +334,21 @@ class RewardRatesSection extends StatelessWidget {
     this.listedOnExchange = true,
     this.reqReimport = false,
     this.rewardType,
+    this.isFixedRate = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (!RewardRateUi.hasAnyRate(shareholderRate, brokerageRate, nonShareholderRate)) {
+    if (!RewardRateUi.hasAnyRate(
+      shareholderRate,
+      brokerageRate,
+      nonShareholderRate,
+    )) {
       return const SizedBox.shrink();
     }
 
     final kind = RewardRateUi.kindFor(rewardType);
-    final suffix = RewardRateUi.rateSuffix(kind);
+    final suffix = RewardRateUi.rateSuffix(kind, isFixed: isFixedRate);
     final tier = resolveRewardTier(
       isEligible: isEligible,
       isBrokerageEligible: isBrokerageEligible,
@@ -376,7 +413,11 @@ class RewardRatesSection extends StatelessWidget {
               if (showShareholder)
                 _RateLine(
                   label: RewardRateLabel.shareholder.title,
-                  value: RewardRateUi.formatRateLine(shareholderRate, suffix),
+                  value: RewardRateUi.formatRateLine(
+                    shareholderRate,
+                    suffix,
+                    isFixed: isFixedRate,
+                  ),
                   isActive: activeLabel == RewardRateLabel.shareholder,
                   accent: SharePerksColors.accent,
                   showDivider: true,
@@ -384,7 +425,11 @@ class RewardRatesSection extends StatelessWidget {
               if (showMember)
                 _RateLine(
                   label: RewardRateLabel.member.title,
-                  value: RewardRateUi.formatRateLine(memberRate, suffix),
+                  value: RewardRateUi.formatRateLine(
+                    memberRate,
+                    suffix,
+                    isFixed: isFixedRate,
+                  ),
                   isActive: activeLabel == RewardRateLabel.member,
                   accent: listedOnExchange
                       ? SharePerksColors.primary
@@ -393,7 +438,11 @@ class RewardRatesSection extends StatelessWidget {
                 ),
               _RateLine(
                 label: RewardRateLabel.standard.title,
-                value: RewardRateUi.formatRateLine(nonShareholderRate, suffix),
+                value: RewardRateUi.formatRateLine(
+                  nonShareholderRate,
+                  suffix,
+                  isFixed: isFixedRate,
+                ),
                 isActive: activeLabel == RewardRateLabel.standard,
                 accent: SharePerksColors.primary,
                 showDivider: false,

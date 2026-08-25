@@ -5,6 +5,7 @@ import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/utils/company_format.dart';
+import 'package:soui/elements/border_card.dart';
 
 /// Card shell every company section sits in — title, optional caption, body.
 class CompanySection extends StatelessWidget {
@@ -28,14 +29,15 @@ class CompanySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return BorderCard(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: SharePerksColors.backgroundLight,
-        borderRadius: BorderRadius.circular(CompanyRadii.lg),
-        border: Border.all(color: SharePerksColors.borderLight),
-      ),
+      borderRadius: CompanyRadii.lg,
+      borderWidth: 1,
+      color: SharePerksColors.primary.withAlpha(20),
+      backgroundColor: SharePerksColors.backgroundLight,
+      // boxShadow: SharePerksShadows.sm,
       padding: padding,
+      isGradientBackground: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

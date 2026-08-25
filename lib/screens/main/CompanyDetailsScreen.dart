@@ -350,6 +350,11 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
         metrics: page.overview.metrics,
         onTapClassification: _openClassification,
       ),
+      if (about != null)
+        (context) => CompanySection(
+          title: 'About',
+          child: CompanyAboutText(about: about),
+        ),
       (context) => CompanySection(
         title: 'Key Metrics',
         caption: 'Figures in ₹ crore unless noted',
@@ -374,11 +379,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
           cons: page.overview.cons,
         ),
       ),
-      if (about != null)
-        (context) => CompanySection(
-          title: 'About',
-          child: CompanyAboutText(about: about),
-        ),
+
       if (page.overview.metrics.lastTradedAt != null)
         (context) => Center(
           child: Text(

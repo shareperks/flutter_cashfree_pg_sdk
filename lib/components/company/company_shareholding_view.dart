@@ -3,6 +3,7 @@ import 'package:shareperks/components/company/company_section.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/company_data_model.dart';
 import 'package:shareperks/utils/company_format.dart';
+import 'package:soui/elements/border_card.dart';
 
 /// Shareholding pattern, with each category's holders folded away until asked
 /// for, plus the latest promoter pledge.
@@ -146,14 +147,13 @@ class _CompanyShareholdingViewState extends State<CompanyShareholdingView> {
         ],
         if (_latestPledge != null) ...[
           const SizedBox(height: SharePerksSpacing.md),
-          Container(
+          BorderCard(
             width: double.infinity,
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: SharePerksColors.surfaceLight,
-              borderRadius: BorderRadius.circular(CompanyRadii.md),
-              border: Border.all(color: SharePerksColors.borderLight),
-            ),
+            borderRadius: CompanyRadii.md,
+            borderWidth: 1,
+            color: SharePerksColors.primary.withAlpha(20),
+            backgroundColor: SharePerksColors.surfaceLight,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -12,6 +12,7 @@ import 'package:shareperks/utils/support_contact.dart';
 import 'package:soui/elements/SpScafold.dart';
 import 'package:soui/elements/border_card.dart';
 import 'package:soui/elements/collaps_card.dart';
+import 'package:soui/theme.dart';
 
 class HelpAndSupportScreen extends StatelessWidget {
   const HelpAndSupportScreen({super.key});
@@ -79,7 +80,7 @@ class HelpAndSupportScreen extends StatelessWidget {
               BorderCard(
                 width: MediaQuery.of(context).size.width,
                 borderWidth: 1,
-                color: Color(0xFFEB3838),
+                color: AppColors.accent,
                 borderRadius: 16,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -93,7 +94,7 @@ class HelpAndSupportScreen extends StatelessWidget {
                       Text(
                         'Contact Support',
                         style: TextStyle(
-                          color: const Color(0xFFEB3838) /* Error-2 */,
+                          color: AppColors.accent,
                           fontSize: 16,
                           fontFamily: 'Albert Sans',
                           fontWeight: FontWeight.w700,

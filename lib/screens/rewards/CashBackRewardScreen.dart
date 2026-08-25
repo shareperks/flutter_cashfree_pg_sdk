@@ -38,8 +38,7 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
       data?.data?.eligibility?.isBrokerageEligible ?? false;
   bool get _reqReimport =>
       data?.data?.eligibility?.isBrokerConnected?.reqReimport == true;
-  bool get _listedOnExchange =>
-      data?.data?.company?.listedOnExchange ?? true;
+  bool get _listedOnExchange => data?.data?.company?.listedOnExchange ?? true;
 
   RewardEligibilityTier get _tier => resolveRewardTier(
     isEligible: _isEligible,
@@ -74,8 +73,7 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
 
     final label = switch (_tier) {
       RewardEligibilityTier.fullyEligible => 'Shop Now & Earn Cashback',
-      RewardEligibilityTier.brokerageEligible =>
-        'Shop Now at Brokerage Rate',
+      RewardEligibilityTier.brokerageEligible => 'Shop Now at Brokerage Rate',
       RewardEligibilityTier.nonHolder => 'Verify Eligibility',
     };
     await trackButtonClick(label, {
@@ -91,9 +89,8 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
       reason: switch (_tier) {
         RewardEligibilityTier.fullyEligible => 'ok',
         RewardEligibilityTier.brokerageEligible => 'brokerage_eligible',
-        RewardEligibilityTier.nonHolder => _reqReimport
-            ? 'req_reimport'
-            : 'not_eligible',
+        RewardEligibilityTier.nonHolder =>
+          _reqReimport ? 'req_reimport' : 'not_eligible',
       },
       source: 'reward_detail',
       brandId: data?.data?.company?.id,
@@ -144,8 +141,14 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
   }
 
   Widget _tierBanner() {
-    final rewardType =
-        data?.data?.eligibility?.rewardType ?? data?.data?.basicInfo?.type;
+    // `basicInfo.type` is the perk category (CASHBACK/BENEFIT) used to pick the
+    // rate suffix; `eligibility.rewardType` is FIXED/PERCENT and tells us
+    // whether to render a rupee amount or a percentage.
+    final perkType =
+        data?.data?.basicInfo?.type ?? data?.data?.eligibility?.rewardType;
+    final isFixed = RewardRateUi.isFixedRate(
+      data?.data?.eligibility?.rewardType,
+    );
     return RewardEligibilityBanner(
       isEligible: _isEligible,
       isBrokerageEligible: _isBrokerageEligible,
@@ -155,7 +158,8 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
       withAnyHoldingRewardRate:
           data?.data?.eligibility?.withAnyHoldingRewardRate,
       nonHolderRewardRate: data?.data?.eligibility?.nonHolderRewardRate,
-      rewardType: rewardType,
+      rewardType: perkType,
+      isFixedRate: isFixed,
       showStandardBanner: true,
     );
   }
@@ -275,10 +279,8 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                             data?.data?.eligibility?.nonHolderRewardRate,
                           ))
                             RewardRatesSection(
-                              shareholderRate: data
-                                  ?.data
-                                  ?.eligibility
-                                  ?.withHolderRewardRate,
+                              shareholderRate:
+                                  data?.data?.eligibility?.withHolderRewardRate,
                               brokerageRate: data
                                   ?.data
                                   ?.eligibility
@@ -290,8 +292,11 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                               listedOnExchange: _listedOnExchange,
                               reqReimport: _reqReimport,
                               rewardType:
-                                  data?.data?.eligibility?.rewardType ??
-                                  data?.data?.basicInfo?.type,
+                                  data?.data?.basicInfo?.type ??
+                                  data?.data?.eligibility?.rewardType,
+                              isFixedRate: RewardRateUi.isFixedRate(
+                                data?.data?.eligibility?.rewardType,
+                              ),
                             ),
                           Center(
                             child: ElevatedButton(
@@ -305,17 +310,14 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : Text(
-                                      switch (_tier) {
-                                        RewardEligibilityTier.fullyEligible =>
-                                          'Shop Now & Earn Cashback',
-                                        RewardEligibilityTier
-                                            .brokerageEligible =>
-                                          'Shop Now at Brokerage Rate',
-                                        RewardEligibilityTier.nonHolder =>
-                                          'Verify Eligibility',
-                                      },
-                                    ),
+                                  : Text(switch (_tier) {
+                                      RewardEligibilityTier.fullyEligible =>
+                                        'Shop Now & Earn Cashback',
+                                      RewardEligibilityTier.brokerageEligible =>
+                                        'Shop Now at Brokerage Rate',
+                                      RewardEligibilityTier.nonHolder =>
+                                        'Verify Eligibility',
+                                    }),
                             ),
                           ),
                           if (_tier != RewardEligibilityTier.fullyEligible)
@@ -331,9 +333,7 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                               onViewAll: () {
                                 context.pushNamed(
                                   RouteNames.REWARD_TERM_VIEW_SCREEN,
-                                  extra: {
-                                    "contentId": data?.data?.content?.id,
-                                  },
+                                  extra: {"contentId": data?.data?.content?.id},
                                 );
                               },
                               termsAndConditions:

@@ -56,14 +56,39 @@ abstract final class SharePerksRadii {
   static const double xl = 24;
 }
 
-/// Corner radii for the company research screens: the app scale plus 10px.
+/// Corner radii for the company research screens.
 ///
-/// Kept separate from [SharePerksRadii] so the softer corners stay scoped to
-/// the company pages instead of restyling every other screen in the app.
+/// Aliases [SharePerksRadii] directly so company pages share the exact same
+/// corner rounding as every other screen in the app (Settings, Menu, Reward
+/// cards) instead of the previously separate, softer scale.
 abstract final class CompanyRadii {
-  static const double sm = SharePerksRadii.sm + 10; // 16
-  static const double md = SharePerksRadii.md + 10; // 20
-  static const double lg = SharePerksRadii.lg + 10; // 26
+  static const double sm = SharePerksRadii.sm;
+  static const double md = SharePerksRadii.md;
+  static const double lg = SharePerksRadii.lg;
+}
+
+/// Surface tints for the company research screens.
+///
+/// A three-level hierarchy so brand colour reads as emphasis instead of a
+/// wash: the hero identity card carries the strongest tint, section shells a
+/// faint one, and tiles nested *inside* a section stay neutral — stacking a
+/// second tint over a tinted card is what turns a page purple and costs the
+/// figures their contrast.
+abstract final class CompanyTints {
+  /// Hero card (identity / price header).
+  static Color get hero => SharePerksColors.primary.withAlpha(28);
+
+  /// Section card shells — barely-there brand hint.
+  static Color get section => SharePerksColors.primary.withAlpha(10);
+
+  /// Tiles nested inside a section: neutral, never brand-tinted.
+  static const Color nested = SharePerksColors.borderLight;
+
+  /// Background for nested tiles — keeps figures on a clean surface.
+  static const Color nestedFill = SharePerksColors.surfaceLight;
+
+  /// The one nested surface that *is* highlighted: "this company" in peers.
+  static Color get selfHighlight => SharePerksColors.primary.withAlpha(45);
 }
 
 abstract final class SharePerksShadows {

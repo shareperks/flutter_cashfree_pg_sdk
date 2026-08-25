@@ -3,6 +3,7 @@ import 'package:shareperks/components/company/company_section.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/company_data_model.dart';
 import 'package:shareperks/utils/company_format.dart';
+import 'package:soui/elements/border_card.dart';
 
 /// One comparable figure, and how it should be shown and ranked.
 class _PeerMetric {
@@ -182,19 +183,16 @@ class _CompanyPeersViewState extends State<CompanyPeersView> {
   }
 
   Widget _peerCard(PeerRow row, {required bool isSelf, required int? rank}) {
-    return Container(
+    return BorderCard(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-      decoration: BoxDecoration(
-        color: isSelf
-            ? SharePerksColors.primary.withValues(alpha: 0.06)
-            : SharePerksColors.backgroundLight,
-        borderRadius: BorderRadius.circular(CompanyRadii.md),
-        border: Border.all(
-          color: isSelf
-              ? SharePerksColors.primary.withValues(alpha: 0.30)
-              : SharePerksColors.borderLight,
-        ),
-      ),
+      borderRadius: CompanyRadii.md,
+      borderWidth: 1,
+      color: isSelf
+          ? SharePerksColors.primary.withAlpha(60)
+          : SharePerksColors.primary.withAlpha(20),
+      backgroundColor: isSelf
+          ? SharePerksColors.primary.withValues(alpha: 0.06)
+          : SharePerksColors.backgroundLight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

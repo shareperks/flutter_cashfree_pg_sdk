@@ -15,6 +15,7 @@ import 'package:shareperks/repository/models/user_settings_model.dart';
 import 'package:shareperks/repository/services/actions/Settings.service.dart';
 import 'package:shareperks/repository/services/auth/mfa_service.dart';
 import 'package:soui/elements/SpScafold.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -440,7 +441,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SizedBox(height: 32),
                     Center(
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          launchUrl(
+                            Uri.parse(
+                              'https://admin.shareperks.in/delete-account',
+                            ),
+                            mode: LaunchMode.inAppBrowserView,
+                          );
+                        },
                         child: Text(
                           'Delete Account',
                           style: TextStyle(

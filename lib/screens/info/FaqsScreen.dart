@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
 import 'package:shareperks/components/ClickToHelp.dart';
@@ -6,6 +7,7 @@ import 'package:shareperks/components/FaqItem.dart';
 import 'package:shareperks/components/loader/FaqListShimmer.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
+import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/repository/models/information_faq_model.dart';
 import 'package:shareperks/repository/services/listing/informations.service.dart';
 import 'package:soui/elements/SpScafold.dart';
@@ -129,9 +131,16 @@ class _FAQsScreenState extends State<FAQsScreen> {
                   child: _buildFaqList(),
                 ),
                 SizedBox(height: 10),
-                Image.asset(
-                  Assets.ASSETS_CARDS_SHOW_WE_SHOW_PERKS_PNG,
-                  width: MediaQuery.of(context).size.width,
+                GestureDetector(
+                  onTap: () {
+                    context.pushNamed(RouteNames.HOW_SHOW_PERK_SCREEN);
+
+                    // TODO: Navigate to show we show perks screen
+                  },
+                  child: Image.asset(
+                    Assets.ASSETS_CARDS_SHOW_WE_SHOW_PERKS_PNG,
+                    width: MediaQuery.of(context).size.width,
+                  ),
                 ),
                 SizedBox(height: 10),
                 ClickToHelp(),

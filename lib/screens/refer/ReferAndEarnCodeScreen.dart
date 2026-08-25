@@ -214,7 +214,9 @@ class ReferCodeCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: code.isEmpty ? null : () => _shareViaSystem(code),
+                    onPressed: code.isEmpty
+                        ? null
+                        : () => _shareViaSystem(code),
                     icon: Icon(
                       HugeIconsSolid.share08,
                       size: 28,
@@ -284,7 +286,7 @@ class CopyReferCode extends StatelessWidget {
                   'referral_code': code,
                 });
                 Fluttertoast.showToast(
-                  msg: 'Referral code copied',
+                  msg: 'Referred Code copied to clipboard',
                   backgroundColor: Colors.green,
                   textColor: Colors.white,
                 );

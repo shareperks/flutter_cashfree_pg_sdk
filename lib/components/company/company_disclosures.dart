@@ -4,6 +4,8 @@ import 'package:shareperks/components/company/company_section.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/company_data_model.dart';
 import 'package:shareperks/utils/company_format.dart';
+import 'package:soui/elements/border_card.dart';
+import 'package:soui/elements/gredent_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// A titled, bordered block of filings or actions with its own count and
@@ -45,108 +47,112 @@ class _DisclosureGroupState extends State<_DisclosureGroup> {
               : _collapsedCount);
     final hidden = widget.itemCount - visible;
 
-    return Container(
-      decoration: BoxDecoration(
+    return BorderCard(
+      borderRadius: CompanyRadii.md,
+      borderWidth: 1,
+      color: SharePerksColors.primary.withAlpha(20),
+      padding: EdgeInsets.zero,
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(CompanyRadii.md),
-        border: Border.all(color: SharePerksColors.borderLight),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9),
-              border: Border(
-                bottom: BorderSide(color: SharePerksColors.borderLight),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+                border: Border(
+                  bottom: BorderSide(color: SharePerksColors.borderLight),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Icon(widget.icon, size: 15, color: SharePerksColors.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: SharePerksColors.textPrimaryLight,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: SharePerksColors.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${widget.itemCount}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: SharePerksColors.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          for (var i = 0; i < visible; i++)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: i == visible - 1
-                    ? null
-                    : const Border(
-                        bottom: BorderSide(
-                          color: SharePerksColors.borderLight,
-                          width: 0.5,
-                        ),
-                      ),
-              ),
-              child: widget.itemBuilder(context, i),
-            ),
-          if (hidden > 0 || _expanded)
-            InkWell(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFAFBFD),
-                  border: Border(
-                    top: BorderSide(color: SharePerksColors.borderLight),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _expanded ? 'Show less' : 'Show all ${widget.itemCount}',
+              child: Row(
+                children: [
+                  Icon(widget.icon, size: 15, color: SharePerksColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.title,
                       style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: SharePerksColors.textPrimaryLight,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: SharePerksColors.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${widget.itemCount}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                         color: SharePerksColors.primary,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _expanded
-                          ? HugeIconsStroke.arrowUp01
-                          : HugeIconsStroke.arrowDown01,
-                      size: 13,
-                      color: SharePerksColors.primary,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-        ],
+            for (var i = 0; i < visible; i++)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  border: i == visible - 1
+                      ? null
+                      : const Border(
+                          bottom: BorderSide(
+                            color: SharePerksColors.borderLight,
+                            width: 0.5,
+                          ),
+                        ),
+                ),
+                child: widget.itemBuilder(context, i),
+              ),
+            if (hidden > 0 || _expanded)
+              InkWell(
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFAFBFD),
+                    border: Border(
+                      top: BorderSide(color: SharePerksColors.borderLight),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _expanded
+                            ? 'Show less'
+                            : 'Show all ${widget.itemCount}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: SharePerksColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _expanded
+                            ? HugeIconsStroke.arrowUp01
+                            : HugeIconsStroke.arrowDown01,
+                        size: 13,
+                        color: SharePerksColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -206,95 +212,88 @@ class CompanyDocumentsView extends StatelessWidget {
 
   Widget _item(DocumentItem item) {
     final linked = item.url != null;
-    return InkWell(
+    return GredentListTile(
+      enabled: linked,
       onTap: linked ? () => _open(item.url) : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      color: SharePerksColors.primary,
+      style: GredentListTileStyle(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        border: const Border(),
+        isThreeLine: item.date != null || item.category != null,
+      ),
+      leading: Icon(
+        linked ? HugeIconsStroke.linkSquare02 : HugeIconsStroke.note01,
+        size: 15,
+        color: linked
+            ? SharePerksColors.primary
+            : SharePerksColors.textSecondaryLight,
+      ),
+      title: Text(
+        // Upstream text — rendered as text, never as HTML.
+        item.title,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 12,
+          height: 1.35,
+          fontWeight: FontWeight.w500,
+          color: linked
+              ? SharePerksColors.textPrimaryLight
+              : SharePerksColors.textSecondaryLight,
+        ),
+      ),
+      subtitle: item.date != null || item.category != null
+          ? Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Row(
                 children: [
-                  Text(
-                    // Upstream text — rendered as text, never as HTML.
-                    item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.35,
-                      fontWeight: FontWeight.w500,
-                      color: linked
-                          ? SharePerksColors.textPrimaryLight
-                          : SharePerksColors.textSecondaryLight,
+                  if (item.date != null) ...[
+                    const Icon(
+                      HugeIconsStroke.calendar03,
+                      size: 11,
+                      color: SharePerksColors.textSecondaryLight,
                     ),
-                  ),
-                  if (item.date != null || item.category != null) ...[
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        if (item.date != null) ...[
-                          const Icon(
-                            HugeIconsStroke.calendar03,
-                            size: 11,
+                    const SizedBox(width: 3),
+                    Text(
+                      fmtIsoDate(item.date),
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: SharePerksColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                  if (item.category != null) ...[
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SharePerksColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: SharePerksColors.borderLight,
+                          ),
+                        ),
+                        child: Text(
+                          item.category!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
                             color: SharePerksColors.textSecondaryLight,
                           ),
-                          const SizedBox(width: 3),
-                          Text(
-                            fmtIsoDate(item.date),
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              color: SharePerksColors.textSecondaryLight,
-                            ),
-                          ),
-                        ],
-                        if (item.category != null) ...[
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: SharePerksColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: SharePerksColors.borderLight,
-                                ),
-                              ),
-                              child: Text(
-                                item.category!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: SharePerksColors.textSecondaryLight,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                        ),
+                      ),
                     ),
                   ],
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              linked ? HugeIconsStroke.linkSquare02 : HugeIconsStroke.note01,
-              size: 15,
-              color: linked
-                  ? SharePerksColors.primary
-                  : SharePerksColors.textSecondaryLight,
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 
@@ -353,52 +352,48 @@ class CompanyCorporateActionsView extends StatelessWidget {
   final CompanyCorporateActions actions;
 
   Widget _item(CorporateActionItem item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.detail ?? item.type,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                    color: SharePerksColors.textPrimaryLight,
+    return GredentListTile(
+      color: SharePerksColors.primary,
+      style: GredentListTileStyle(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        border: const Border(),
+        isThreeLine: item.date != null,
+      ),
+      title: Text(
+        item.detail ?? item.type,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 12,
+          height: 1.35,
+          fontWeight: FontWeight.w500,
+          color: SharePerksColors.textPrimaryLight,
+        ),
+      ),
+      subtitle: item.date != null
+          ? Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    HugeIconsStroke.calendar03,
+                    size: 11,
+                    color: SharePerksColors.textSecondaryLight,
                   ),
-                ),
-                if (item.date != null) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        HugeIconsStroke.calendar03,
-                        size: 11,
-                        color: SharePerksColors.textSecondaryLight,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        fmtIsoDate(item.date),
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: SharePerksColors.textSecondaryLight,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 3),
+                  Text(
+                    fmtIsoDate(item.date),
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: SharePerksColors.textSecondaryLight,
+                    ),
                   ),
                 ],
-              ],
-            ),
-          ),
-          if (item.amount != null) ...[
-            const SizedBox(width: 8),
-            Container(
+              ),
+            )
+          : null,
+      trailing: item.amount != null
+          ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: SharePerksColors.success.withValues(alpha: 0.10),
@@ -412,10 +407,8 @@ class CompanyCorporateActionsView extends StatelessWidget {
                   color: SharePerksColors.success,
                 ),
               ),
-            ),
-          ],
-        ],
-      ),
+            )
+          : null,
     );
   }
 

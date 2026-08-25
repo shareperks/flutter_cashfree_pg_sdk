@@ -4,6 +4,7 @@ import 'package:shareperks/constants/fonts.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/company_data_model.dart';
 import 'package:shareperks/utils/company_format.dart';
+import 'package:soui/elements/border_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// One classification chip: the label a company is filed under, and the group
@@ -48,14 +49,14 @@ class CompanyIdentityCard extends StatelessWidget {
     ];
     final tags = _tags;
 
-    return Container(
+    return BorderCard(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-      decoration: BoxDecoration(
-        color: SharePerksColors.surfaceLight,
-        borderRadius: BorderRadius.circular(CompanyRadii.lg),
-        border: Border.all(color: SharePerksColors.borderLight),
-      ),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+      borderRadius: 25,
+      borderWidth: 1,
+      color: SharePerksColors.primary,
+      backgroundColor: SharePerksColors.surfaceLight,
+      // boxShadow: SharePerksShadows.sm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -334,18 +335,18 @@ class CompanyStatGrid extends StatelessWidget {
     (label: 'ROCE', value: (m) => fmtPct(m.rocePct), tone: null),
     (label: 'ROE', value: (m) => fmtPct(m.roePct), tone: null),
     (label: 'OPM', value: (m) => fmtPct(m.opmPct), tone: null),
-    (label: 'Face Value', value: (m) => fmtRupees(m.faceValue), tone: null),
+    // (label: 'Face Value', value: (m) => fmtRupees(m.faceValue), tone: null),
     (
       label: 'Promoter Holding',
       value: (m) => fmtPct(m.promoterHoldingPct),
       tone: null,
     ),
-    (
-      label: 'Pledged',
-      value: (m) => fmtPct(m.pledgedPct),
-      // Any pledge is worth colouring, however small.
-      tone: (m) => pledgeToneColor(m.pledgedPct),
-    ),
+    // (
+    //   label: 'Pledged',
+    //   value: (m) => fmtPct(m.pledgedPct),
+    //   // Any pledge is worth colouring, however small.
+    //   tone: (m) => pledgeToneColor(m.pledgedPct),
+    // ),
     (
       label: 'Shares Outstanding',
       value: (m) => fmtCompactCount(m.sharesOutstanding),
@@ -366,16 +367,16 @@ class CompanyStatGrid extends StatelessWidget {
             for (final stat in _stats)
               SizedBox(
                 width: width,
-                child: Container(
+                child: BorderCard(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 8,
                   ),
-                  decoration: BoxDecoration(
-                    color: SharePerksColors.surfaceLight,
-                    borderRadius: BorderRadius.circular(CompanyRadii.md),
-                    border: Border.all(color: SharePerksColors.borderLight),
-                  ),
+                  borderRadius: CompanyRadii.md,
+                  borderWidth: 1,
+                  color: SharePerksColors.primary.withAlpha(50),
+                  isGradientBackground: false,
+                  boxShadow: [],
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
