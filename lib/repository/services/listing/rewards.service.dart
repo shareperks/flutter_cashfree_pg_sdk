@@ -20,6 +20,9 @@ class RewardListingDataService {
   static Future<GiftcardDetailResponse> getGiftcardDetail(String id) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/rewards/giftcard/$id',
+      // Detail includes holdings eligibility and related perks; allow more time
+      // than the shared timeout without extending payment or other requests.
+      options: Options(receiveTimeout: const Duration(seconds: 30)),
     );
     final body = response.data;
     if (body == null) {

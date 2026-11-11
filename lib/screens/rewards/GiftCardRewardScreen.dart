@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shareperks/components/BackButton.dart';
@@ -45,9 +46,14 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
   );
 
   Future<void> loadData() async {
-    try {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
       _errorMessage = null;
+    });
+    try {
       data = await RewardListingDataService.getGiftcardDetail(widget.rewardId);
+      if (!mounted) return;
       JourneyContext.setNames(
         rewardName: data?.data?.basicInfo?.title,
         brandName: data?.data?.company?.name,
@@ -73,12 +79,24 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
         'source': 'reward_detail',
       });
       await _trackEligibilityFromData();
-    } catch (e) {
-      _errorMessage = e.toString();
+    } on DioException catch (e) {
+      _errorMessage = switch (e.type) {
+        DioExceptionType.connectionTimeout ||
+        DioExceptionType.sendTimeout ||
+        DioExceptionType.receiveTimeout =>
+          'Loading this perk took too long. Please try again.',
+        DioExceptionType.connectionError =>
+          'Unable to connect. Check your connection and try again.',
+        _ => 'Failed to load perk. Please try again.',
+      };
+    } catch (_) {
+      _errorMessage = 'Failed to load perk. Please try again.';
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -155,7 +173,20 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
           ? const GiftCardRewardShimmer()
           : _errorMessage != null
           ? Center(
-              child: Text('Failed to load perk.', textAlign: TextAlign.center),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_errorMessage!, textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: loadData,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
             )
           : RefreshIndicator(
               onRefresh: () async {
@@ -176,7 +207,9 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                             onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
-                                extra: {"companyId": data?.data?.company?.id},
+                                extra: {
+                                  "ticker": data?.data?.basicInfo?.ticker,
+                                },
                               );
                             },
                             onBrandTap: () {
@@ -230,10 +263,8 @@ class _GiftCardRewardScreenState extends State<GiftCardRewardScreen> {
                             data?.data?.eligibility?.nonHolderRewardRate,
                           ))
                             RewardRatesSection(
-                              shareholderRate: data
-                                  ?.data
-                                  ?.eligibility
-                                  ?.withHolderRewardRate,
+                              shareholderRate:
+                                  data?.data?.eligibility?.withHolderRewardRate,
                               brokerageRate: data
                                   ?.data
                                   ?.eligibility

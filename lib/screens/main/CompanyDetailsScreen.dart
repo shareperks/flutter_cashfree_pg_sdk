@@ -1,46 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hugeicons_pro/hugeicons.dart';
 import 'package:shareperks/components/BackButton.dart';
-import 'package:shareperks/components/company/company_disclosures.dart';
-import 'package:shareperks/components/company/company_growth_blocks.dart';
-import 'package:shareperks/components/company/company_header.dart';
-import 'package:shareperks/components/company/company_peers_view.dart';
-import 'package:shareperks/components/company/company_price_chart.dart';
-import 'package:shareperks/components/company/company_section.dart';
-import 'package:shareperks/components/company/company_shareholding_view.dart';
+import 'package:shareperks/components/company/nested_cash_flow_table.dart';
+import 'package:shareperks/components/company/nested_financial_table.dart';
+import 'package:shareperks/components/company/screener_analysis.dart';
+import 'package:shareperks/components/company/screener_corporate_actions.dart';
+import 'package:shareperks/components/company/screener_documents.dart';
+import 'package:shareperks/components/company/screener_header.dart';
+import 'package:shareperks/components/company/screener_overview_stats.dart';
+import 'package:shareperks/components/company/screener_peers_table.dart';
+import 'package:shareperks/components/company/screener_price_chart.dart';
+import 'package:shareperks/components/company/screener_ratios_table.dart';
+import 'package:shareperks/components/company/screener_segments.dart';
+import 'package:shareperks/components/company/screener_shareholding.dart';
 import 'package:shareperks/components/loader/company_details_loader.dart';
 import 'package:shareperks/constants/assets.dart';
 import 'package:shareperks/constants/fonts.dart';
-import 'package:shareperks/constants/routes.dart';
 import 'package:shareperks/constants/theme_data.dart';
 import 'package:shareperks/repository/models/company_data_model.dart';
+import 'package:shareperks/repository/models/finance_screener_models.dart';
 import 'package:shareperks/repository/services/company/company_data.service.dart';
-import 'package:shareperks/utils/company_format.dart';
 import 'package:soui/elements/SpScafold.dart';
 
-/// The five bottom-bar destinations the company details screen is split
-/// across.
-enum _CompanyTab { overview, financials, shareholding, peers, filings }
-
-/// Screener-style company details: key metrics, price chart, quarterly and
-/// annual statements, ratios, growth, shareholding, peers, segments, filings
-/// and corporate actions.
+/// Screener-style company details, powered by the Finance API.
 ///
-/// **Why tabs rather than one long scroll.** The page carries five financial
-/// tables plus shareholding and peers; rendered together that is several
-/// thousand `Text` widgets laid out in a single pass, which is what made the
-/// original single-column version stutter. Splitting the sections across a
-/// bottom navigation bar means only one tab's widgets exist at a time, and
-/// within a tab sections are built lazily as they scroll into view.
-///
-/// Data is still fetched once: `GET /companies/:symbol` returns all nine
-/// sections in one round trip and lives in this state object, so switching
-/// tabs is pure rendering and never re-hits the network.
+/// Five tabs — Overview, Financials, Holding, Peers, Filings — each rendering
+/// the API's native nested structure. Data is fetched once via
+/// [CompanyDataService.getScreenerPage] which returns [ScreenerCompanyPage].
 class CompanyDetailsScreen extends StatefulWidget {
   const CompanyDetailsScreen({super.key, required this.symbol});
 
-  /// NSE symbol or BSE code, e.g. `ITC`, `M&M`, `543806`.
   final String symbol;
 
   @override
@@ -49,28 +38,15 @@ class CompanyDetailsScreen extends StatefulWidget {
 
 class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
   _CompanyTab _tab = _CompanyTab.overview;
-  Consolidation _consolidation = Consolidation.standalone;
+  Consolidation _consolidation = Consolidation.consolidated;
 
   bool _loading = true;
   CompanyApiException? _error;
-  CompanyPage? _page;
+  ScreenerCompanyPage? _page;
 
-  /// Formatted table rows, keyed by section. Converting a statement's numbers
-  /// to strings is O(rows × columns); caching keeps it off every rebuild —
-  /// otherwise a background fetch completing re-formats every visible table.
-  final Map<String, List<CompanyTableRowData>> _rowsCache = {};
-
-  List<SegmentPeriod>? _segments;
-  CompanyDocuments? _documents;
-  CompanyCorporateActions? _corporateActions;
-
-  // Chart state lives here rather than inside the chart widget: the Overview
-  // tab is rebuilt on every tab switch, and a self-loading chart would refetch
-  // its history each time.
-  CompanyChartRange _chartRange = CompanyChartRange.all.first;
-  CompanyChart? _chart;
-  bool _chartLoading = true;
-  String? _chartError;
+  /// Chart time frame state.
+  String _chartRange = '1Yr';
+  ScreenerChart? _filteredChart;
 
   @override
   void initState() {
@@ -82,11 +58,9 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
     setState(() {
       _loading = true;
       _error = null;
-      _rowsCache.clear();
     });
-
     try {
-      final page = await CompanyDataService.getPage(
+      final page = await CompanyDataService.getScreenerPage(
         widget.symbol,
         consolidation: _consolidation,
       );
@@ -95,8 +69,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
         _page = page;
         _loading = false;
       });
-      _loadExtras();
-      _loadChart(_chartRange);
+      _updateChart(_chartRange);
     } on CompanyApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -115,100 +88,33 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
     }
   }
 
-  /// Extras are additive: if any of them fails the section simply does not
-  /// render, and the page stands.
-  void _loadExtras() {
-    CompanyDataService.getSegments(widget.symbol, consolidation: _consolidation)
-        .then((value) {
-          if (mounted) setState(() => _segments = value);
-        })
-        .catchError((_) => null);
-
-    CompanyDataService.getDocuments(widget.symbol)
-        .then((value) {
-          if (mounted) setState(() => _documents = value);
-        })
-        .catchError((_) => null);
-
-    CompanyDataService.getCorporateActions(widget.symbol)
-        .then((value) {
-          if (mounted) setState(() => _corporateActions = value);
-        })
-        .catchError((_) => null);
-  }
-
-  Future<void> _loadChart(CompanyChartRange range) async {
-    setState(() {
-      _chartRange = range;
-      _chartLoading = true;
-      _chartError = null;
-    });
-    try {
-      final now = DateTime.now().year;
-      final chart = await CompanyDataService.getChart(
-        widget.symbol,
-        // The endpoint takes years, not dates — a date string is a 400.
-        from: range.years == 0 ? null : now - range.years,
-        to: range.years == 0 ? null : now,
-      );
-      if (!mounted) return;
-      setState(() {
-        _chart = chart;
-        _chartLoading = false;
-      });
-    } on CompanyApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _chartError = e.displayMessage;
-        _chartLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _chartError = 'Price history is unavailable right now.';
-        _chartLoading = false;
-      });
+  void _updateChart(String range) {
+    setState(() => _chartRange = range);
+    final chart = _page?.data.chart;
+    if (chart == null) {
+      _filteredChart = null;
+      return;
     }
+    final days = _rangeDays(range);
+    _filteredChart = chart.filtered(days);
+    setState(() {});
   }
+
+  int _rangeDays(String range) => switch (range) {
+    '1M' => 30,
+    '6M' => 180,
+    '1Yr' => 365,
+    '3Yr' => 1095,
+    '5Yr' => 1825,
+    '10Yr' => 3650,
+    _ => 99999,
+  };
 
   Future<void> _setConsolidation(Consolidation value) async {
     if (value == _consolidation) return;
-    setState(() {
-      _consolidation = value;
-      // Segment figures follow the same standalone/consolidated choice.
-      _segments = null;
-    });
+    setState(() => _consolidation = value);
     await _load();
   }
-
-  /// The chart on its own page: zoomable, with volume and per-session OHLC.
-  ///
-  /// The series already on screen goes with it, so the page opens drawn.
-  void _openFullChart(CompanyIdentity identity) {
-    context.pushNamed(
-      RouteNames.COMPANY_CHART_SCREEN,
-      extra: {
-        'symbol': identity.symbol,
-        'name': identity.name,
-        if (_chart != null && _chartRange.years > 0) ...{
-          'chart': _chart,
-          'years': _chartRange.years,
-        },
-      },
-    );
-  }
-
-  /// Sector / industry chips open the companies filed under them — the app's
-  /// equivalent of the web page's `/sector/:value` links.
-  void _openClassification(CompanyClassification tag) {
-    context.pushNamed(
-      RouteNames.COMPANY_SECTOR_SCREEN,
-      extra: {'group': tag.group, 'value': tag.value},
-    );
-  }
-
-  bool _isUnavailable(String section) =>
-      _page?.unavailable.contains(section) ?? false;
 
   @override
   Widget build(BuildContext context) {
@@ -220,9 +126,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
         backgroundColor: SharePerksColors.primary,
         leading: const AppBackButton(),
         toolbarHeight: 40,
-        title: Text(
-          page?.overview.identity.symbol ?? widget.symbol.toUpperCase(),
-        ),
+        title: Text(page?.data.profile.symbol ?? widget.symbol.toUpperCase()),
         actions: [
           Image.asset(Assets.ASSETS_ICONS_APP_BRAND_PNG, height: 16),
           const SizedBox(width: 20),
@@ -244,8 +148,6 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
     );
   }
 
-  /// Material 3 bottom navigation — the standard Android pattern, themed to
-  /// the app's purple.
   Widget _bottomBar() {
     return NavigationBarTheme(
       data: NavigationBarThemeData(
@@ -310,19 +212,17 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
     );
   }
 
-  Widget _tabView(CompanyPage page) {
+  Widget _tabView(ScreenerCompanyPage page) {
     final sections = switch (_tab) {
       _CompanyTab.overview => _overviewSections(page),
       _CompanyTab.financials => _financialSections(page),
       _CompanyTab.shareholding => _shareholdingSections(page),
       _CompanyTab.peers => _peerSections(page),
-      _CompanyTab.filings => _filingSections(),
+      _CompanyTab.filings => _filingSections(page),
     };
 
     return RefreshIndicator(
       onRefresh: _load,
-      // `itemBuilder` is what makes this lazy — a section is only built once it
-      // scrolls into view, and the key restores each tab's scroll offset.
       child: ListView.separated(
         key: PageStorageKey<String>('company-${_tab.name}'),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -334,212 +234,337 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
     );
   }
 
-  List<WidgetBuilder> _overviewSections(CompanyPage page) {
-    final about = page.overview.identity.about;
+  // ─── Overview tab ──────────────────────────────────────────────────────────
+
+  List<WidgetBuilder> _overviewSections(ScreenerCompanyPage page) {
+    final data = page.data;
+    final about = data.profile.description;
     return [
-      // Named up front, the way the web page does it: a section that failed
-      // upstream is otherwise indistinguishable from one a company never
-      // published.
-      if (page.unavailable.isNotEmpty)
-        (context) => CompanyUnavailableBanner(
-          sections: page.unavailable,
-          onRetry: _load,
+      (context) => _card(
+        child: ScreenerHeader(
+          profile: data.profile,
+          quote: data.quote,
+          isin: page.isin,
         ),
-      (context) => CompanyIdentityCard(
-        identity: page.overview.identity,
-        metrics: page.overview.metrics,
-        onTapClassification: _openClassification,
       ),
       if (about != null)
-        (context) => CompanySection(
+        (context) => _section(
           title: 'About',
-          child: CompanyAboutText(about: about),
+          contentPadding: const EdgeInsets.all(14),
+          child: _ExpandableText(text: about),
         ),
-      (context) => CompanySection(
+      (context) => _section(
         title: 'Key Metrics',
         caption: 'Figures in ₹ crore unless noted',
-        // The metrics themselves are standalone/consolidated figures, so the
-        // switch belongs here too and not only on the Financials tab.
         trailing: _consolidationToggle(compact: true),
-        child: CompanyStatGrid(metrics: page.overview.metrics),
+        child: ScreenerOverviewStats(data: data),
       ),
-      (context) => CompanyPriceChart(
-        chart: _chart,
-        loading: _chartLoading,
-        error: _chartError,
-        activeRange: _chartRange,
-        onSelectRange: _loadChart,
-        onRetry: () => _loadChart(_chartRange),
-        onExpand: () => _openFullChart(page.overview.identity),
-      ),
-      (context) => CompanySection(
-        title: 'Pros & Cons',
-        child: CompanyProsAndCons(
-          pros: page.overview.pros,
-          cons: page.overview.cons,
+      (context) => _section(
+        title: 'Price Chart',
+        contentPadding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
+        child: ScreenerPriceChart(
+          chart: _filteredChart ?? data.chart,
+          activeRange: _chartRange,
+          onSelectRange: _updateChart,
         ),
       ),
-
-      if (page.overview.metrics.lastTradedAt != null)
-        (context) => Center(
-          child: Text(
-            'Market data as on '
-            '${fmtIsoDateTime(page.overview.metrics.lastTradedAt)}',
-            style: const TextStyle(
-              fontSize: 10,
-              color: SharePerksColors.textSecondaryLight,
-            ),
-          ),
+      (context) => _section(
+        title: 'Analysis',
+        caption: 'Valuation & cash flow metrics',
+        contentPadding: EdgeInsets.zero,
+        child: ScreenerAnalysis(
+          priceRatios: data.priceRatios,
+          financialMetrics: data.financialMetrics,
         ),
+      ),
     ];
   }
 
-  List<WidgetBuilder> _financialSections(CompanyPage page) {
+  // ─── Financials tab ────────────────────────────────────────────────────────
+
+  List<WidgetBuilder> _financialSections(ScreenerCompanyPage page) {
     return [
       (context) => _consolidationToggle(),
-      (context) => _statement(
-        'Quarterly Results',
-        page.quarterlyResults,
-        'quarterlyResults',
+      if (page.quarterly != null && !page.quarterly!.isEmpty)
+        (context) => _section(
+          title: 'Quarterly Results',
+          caption: _statementCaption(page.quarterly!),
+          contentPadding: EdgeInsets.zero,
+          child: NestedFinancialTable(statement: page.quarterly!),
+        ),
+      if (page.profitAndLoss != null && !page.profitAndLoss!.isEmpty)
+        (context) => _section(
+          title: 'Profit & Loss',
+          caption: _statementCaption(page.profitAndLoss!),
+          contentPadding: EdgeInsets.zero,
+          child: NestedFinancialTable(statement: page.profitAndLoss!),
+        ),
+      if (page.balanceSheet != null && !page.balanceSheet!.isEmpty)
+        (context) => _section(
+          title: 'Balance Sheet',
+          caption: _statementCaption(page.balanceSheet!),
+          contentPadding: EdgeInsets.zero,
+          child: NestedFinancialTable(statement: page.balanceSheet!),
+        ),
+      if (page.cashFlow != null && !page.cashFlow!.isEmpty)
+        (context) => _section(
+          title: 'Cash Flow',
+          caption: _cfCaption(page.cashFlow!),
+          contentPadding: EdgeInsets.zero,
+          child: NestedCashFlowTable(cashFlow: page.cashFlow!),
+        ),
+      (context) => _section(
+        title: 'Financial Ratios',
+        caption: 'Figures in %',
+        contentPadding: EdgeInsets.zero,
+        child: ScreenerRatiosTable(ratios: page.data.ratios),
       ),
-      (context) =>
-          _statement('Profit & Loss', page.profitAndLoss, 'profitAndLoss'),
-      (context) =>
-          _statement('Balance Sheet', page.balanceSheet, 'balanceSheet'),
-      (context) => _statement('Cash Flow', page.cashFlow, 'cashFlow'),
-      (context) => _statement('Ratios', page.ratios, 'ratios'),
-      (context) => page.growth != null
-          ? CompanySection(
-              title: 'Compounded Growth',
-              caption: 'Return on Equity is an average, not a CAGR',
-              child: CompanyGrowthBlocks(growth: page.growth!),
-            )
-          : SectionUnavailable(title: 'Compounded Growth', onRetry: _load),
-      if (_segments != null && _segments!.isNotEmpty)
-        (context) => CompanySection(
-          title: 'Segments',
-          caption: 'Revenue and profit in ₹ crore',
-          child: CompanySegmentsView(periods: _segments!),
+      if (page.profitAndLoss?.longTermMetrics != null)
+        (context) => _longTermMetricsCard(page.profitAndLoss!.longTermMetrics!),
+      if (!page.data.segments.isEmpty)
+        (context) => _section(
+          title: 'Revenue by Segment',
+          caption: 'Figures in ₹',
+          contentPadding: EdgeInsets.zero,
+          child: ScreenerSegmentsTable(segments: page.data.segments),
         ),
     ];
   }
 
-  List<WidgetBuilder> _shareholdingSections(CompanyPage page) {
+  // ─── Shareholding tab ──────────────────────────────────────────────────────
+
+  List<WidgetBuilder> _shareholdingSections(ScreenerCompanyPage page) {
     return [
-      (context) => page.shareholding != null
-          ? CompanySection(
+      (context) => page.data.shareholding.isEmpty
+          ? _unavailable('Shareholding Pattern')
+          : _section(
               title: 'Shareholding Pattern',
-              caption: page.shareholding!.period == ReportPeriod.quarterly
-                  ? 'Quarterly · % of total shares'
-                  : 'Annual · % of total shares',
-              child: CompanyShareholdingView(data: page.shareholding!),
-            )
-          : SectionUnavailable(title: 'Shareholding Pattern', onRetry: _load),
+              caption: 'Quarterly · % of total shares',
+              contentPadding: EdgeInsets.zero,
+              child: ScreenerShareholdingTable(
+                shareholding: page.data.shareholding,
+              ),
+            ),
     ];
   }
 
-  List<WidgetBuilder> _peerSections(CompanyPage page) {
+  // ─── Peers tab ─────────────────────────────────────────────────────────────
+
+  List<WidgetBuilder> _peerSections(ScreenerCompanyPage page) {
     return [
-      (context) => page.peers != null
-          ? CompanySection(
+      (context) => page.data.peers.peers.isEmpty
+          ? _unavailable('Peer Comparison')
+          : _section(
               title: 'Peer Comparison',
-              caption:
-                  'Same ${page.peers!.group} · ${page.peers!.peers.length} peers',
-              child: CompanyPeersView(comparison: page.peers!),
-            )
-          : SectionUnavailable(title: 'Peer Comparison', onRetry: _load),
+              caption: '${page.data.peers.others.length} peers',
+              contentPadding: EdgeInsets.zero,
+              child: ScreenerPeersTable(peers: page.data.peers),
+            ),
     ];
   }
 
-  List<WidgetBuilder> _filingSections() {
+  // ─── Filings tab ───────────────────────────────────────────────────────────
+
+  List<WidgetBuilder> _filingSections(ScreenerCompanyPage page) {
     return [
-      (context) => _documents != null
-          ? CompanySection(
-              title: 'Documents',
-              child: CompanyDocumentsView(documents: _documents!),
-            )
-          : const CompanySection(
-              title: 'Documents',
-              child: SectionEmptyNote(message: 'Loading filings…'),
-            ),
-      (context) => _corporateActions != null
-          ? CompanySection(
-              title: 'Corporate Actions',
-              child: CompanyCorporateActionsView(actions: _corporateActions!),
-            )
-          : const CompanySection(
-              title: 'Corporate Actions',
-              child: SectionEmptyNote(message: 'Loading corporate actions…'),
-            ),
+      (context) => _section(
+        title: 'Documents & Announcements',
+        child: ScreenerDocumentsSection(documents: page.data.documents),
+      ),
+      (context) => _section(
+        title: 'Corporate Actions',
+        child: ScreenerCorporateActionsSection(
+          actions: page.data.corporateActions,
+        ),
+      ),
     ];
   }
 
-  static const Widget _gap = SizedBox(height: SharePerksSpacing.md);
+  // ─── helpers ───────────────────────────────────────────────────────────────
 
-  /// A statement section, or a retry affordance when the service could not
-  /// build it — a silently dropped section reads as "this company has no data".
-  Widget _statement(String title, FinancialTable? table, String key) {
-    if (table == null || table.isEmpty) {
-      return SectionUnavailable(
-        title: title,
-        message: _isUnavailable(key)
-            ? 'We could not load $title just now.'
-            : 'No $title published for this company.',
-        onRetry: _load,
-      );
-    }
-
-    final consolidationLabel = table.consolidation == Consolidation.consolidated
-        ? 'Consolidated'
-        : 'Standalone';
-    final rows = _rowsCache.putIfAbsent(key, () => _formatRows(table));
-
-    return CompanySection(
-      title: title,
-      caption: switch (table) {
-        final t when t.hasCroreRows => '$consolidationLabel · figures in ₹ Cr',
-        final t when t.isAllPercent => '$consolidationLabel · figures in %',
-        _ => consolidationLabel,
-      },
-      child: CompanyDataTable(
-        columns: table.columns,
-        scrollToLatest: true,
-        rows: rows,
+  Widget _card({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: SharePerksColors.backgroundLight,
+        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+        border: Border.all(color: SharePerksColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+        child: child,
       ),
     );
   }
 
-  /// Formats one statement, dropping the rows that report nothing in any
-  /// period.
-  ///
-  /// Upstream models the union of every line item, so a manufacturer's P&L
-  /// carries a dozen bank-only rows ("Interest Earned", "Fees And Commission")
-  /// that are nil everywhere — 74 of the 118 rows in ITC's cash flow. They say
-  /// nothing about the company, so they are not rendered at all.
-  List<CompanyTableRowData> _formatRows(FinancialTable table) {
-    // A table that is percentages end to end says so in its caption instead,
-    // rather than repeating "%" down every label.
-    final allPercent = table.isAllPercent;
-
-    return [
-      for (final row in table.rows)
-        if (rowHasData(row))
-          CompanyTableRowData(
-            // Percent rows carry their unit here so the cells can stay bare.
-            label: allPercent
-                ? row.label
-                : '${row.label}${unitSuffix(row.unit)}',
-            highlight: isHeadlineRow(row.key),
-            // Values are already aligned with columns by index.
-            values: [
-              for (final value in row.values) fmtByUnit(value, row.unit),
-            ],
+  Widget _section({
+    required String title,
+    String? caption,
+    Widget? trailing,
+    EdgeInsets contentPadding = const EdgeInsets.all(12),
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: SharePerksColors.backgroundLight,
+        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+        border: Border.all(color: SharePerksColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-    ];
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: SharePerksFonts.albertSans,
+                          color: SharePerksColors.textPrimaryLight,
+                        ),
+                      ),
+                      if (caption != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          caption,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: SharePerksColors.textSecondaryLight,
+                            fontFamily: SharePerksFonts.inter,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: SharePerksColors.borderLight),
+          Padding(padding: contentPadding, child: child),
+        ],
+      ),
+    );
   }
 
-  /// Standalone / consolidated. [compact] is the version that sits inside a
-  /// section header; the full-width one heads the Financials tab.
+  Widget _longTermMetricsCard(ScreenerLongTermMetrics m) {
+    final metrics = <_MetricTile>[
+      if (m.revenueCagr != null)
+        _MetricTile('Revenue CAGR', '${m.revenueCagr!.toStringAsFixed(2)}%'),
+      if (m.patCagr != null)
+        _MetricTile('PAT CAGR', '${m.patCagr!.toStringAsFixed(2)}%'),
+      if (m.epsCagr != null)
+        _MetricTile('EPS CAGR', '${m.epsCagr!.toStringAsFixed(2)}%'),
+      if (m.patMarginExpansionPp != null)
+        _MetricTile(
+          'PAT Margin Δ',
+          '${m.patMarginExpansionPp!.toStringAsFixed(2)} pp',
+        ),
+    ];
+    if (metrics.isEmpty) return const SizedBox.shrink();
+
+    return _section(
+      title: 'Long-Term Metrics',
+      caption:
+          '${m.fromFiscalYear ?? ''} – ${m.toFiscalYear ?? ''} (${m.periods ?? 0} years)',
+      contentPadding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          for (final t in metrics)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.label,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: SharePerksColors.textSecondaryLight,
+                        fontFamily: SharePerksFonts.inter,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      t.value,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: SharePerksFonts.albertSans,
+                        color: SharePerksColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _statementCaption(ScreenerStatement s) {
+    final consolidation = s.isStandalone ? 'Standalone' : 'Consolidated';
+    return '$consolidation · figures in ₹ Cr';
+  }
+
+  String _cfCaption(ScreenerCashFlow cf) {
+    final consolidation = cf.isStandalone ? 'Standalone' : 'Consolidated';
+    return '$consolidation · figures in ₹ Cr';
+  }
+
+  Widget _unavailable(String title) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: SharePerksColors.backgroundLight,
+        borderRadius: BorderRadius.circular(SharePerksRadii.lg),
+        border: Border.all(color: SharePerksColors.borderLight),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            HugeIconsSolid.packageOpen,
+            size: 40,
+            color: SharePerksColors.textSecondaryLight,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '$title not available',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: SharePerksColors.textSecondaryLight,
+              fontFamily: SharePerksFonts.inter,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _consolidationToggle({bool compact = false}) {
     Widget chip(String label, String short, Consolidation value) {
       final selected = _consolidation == value;
@@ -555,7 +580,6 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
             borderRadius: BorderRadius.circular(CompanyRadii.sm),
           ),
           child: Text(
-            // Both full words do not fit beside a section title.
             compact ? short : label,
             style: TextStyle(
               fontSize: compact ? 10 : 12,
@@ -601,7 +625,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
               size: 56,
               color: SharePerksColors.textSecondaryLight,
             ),
-            _gap,
+            const SizedBox(height: SharePerksSpacing.md),
             Text(
               error.isNotFound
                   ? 'Company not found'
@@ -625,12 +649,79 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
               ),
             ),
             if (!error.isNotFound) ...[
-              _gap,
+              const SizedBox(height: SharePerksSpacing.md),
               ElevatedButton(onPressed: _load, child: const Text('Try again')),
             ],
           ],
         ),
       ),
+    );
+  }
+}
+
+enum _CompanyTab { overview, financials, shareholding, peers, filings }
+
+class _MetricTile {
+  const _MetricTile(this.label, this.value);
+  final String label;
+  final String value;
+}
+
+/// Shows 3 lines of text by default with a "Read more" button to expand
+/// to the full text, and "Read less" to collapse back.
+class _ExpandableText extends StatefulWidget {
+  const _ExpandableText({required this.text});
+
+  final String text;
+
+  @override
+  State<_ExpandableText> createState() => _ExpandableTextState();
+}
+
+class _ExpandableTextState extends State<_ExpandableText> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.text,
+          maxLines: _expanded ? null : 3,
+          overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+            color: SharePerksColors.textPrimaryLight,
+            fontFamily: SharePerksFonts.inter,
+          ),
+        ),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _expanded ? 'Read less' : 'Read more',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: SharePerksColors.primary,
+                  fontFamily: SharePerksFonts.inter,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(
+                _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                size: 14,
+                color: SharePerksColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

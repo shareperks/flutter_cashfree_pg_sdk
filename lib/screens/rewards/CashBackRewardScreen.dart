@@ -225,7 +225,9 @@ class _CashBackRewardScreenState extends State<CashBackRewardScreen> {
                             onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
-                                extra: {"companyId": data?.data?.company?.id},
+                                extra: {
+                                  "ticker": data?.data?.basicInfo?.ticker,
+                                },
                               );
                             },
                             onBrandTap: () {

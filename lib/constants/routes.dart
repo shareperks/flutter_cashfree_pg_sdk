@@ -355,10 +355,10 @@ final List<GoRoute> routes = [
     path: RouteNames.path(RouteNames.COMPANY_SCREEN),
     builder: (BuildContext context, GoRouterState state) {
       final extra = state.extra;
-      final String? companyId = extra is Map<String, dynamic>
-          ? extra['companyId'] as String?
+      final String? ticker = extra is Map<String, dynamic>
+          ? extra['ticker'] as String?
           : null;
-      return CompanyViewScreen(companyId: companyId!);
+      return CompanyViewScreen(ticker: ticker ?? '');
     },
   ),
   GoRoute(

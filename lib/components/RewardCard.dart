@@ -28,6 +28,8 @@ class RewardCard extends StatelessWidget {
   final String type;
   final String? typeName;
   final bool isNew;
+  final String source;
+  final int? position;
 
   // OFFER, CREDIT, BENEFIT
   const RewardCard({
@@ -43,6 +45,8 @@ class RewardCard extends StatelessWidget {
     required this.type,
     this.typeName,
     this.isNew = false,
+    this.source = 'home',
+    this.position,
   });
 
   @override
@@ -169,7 +173,12 @@ class RewardCard extends StatelessWidget {
                 onTap:
                     onTap ??
                     () {
-                      navigateRewardScreen(type, rewardId, source: 'home');
+                      navigateRewardScreen(
+                        type,
+                        rewardId,
+                        source: source,
+                        position: position,
+                      );
                     },
                 child: Container(
                   width: width - 16,

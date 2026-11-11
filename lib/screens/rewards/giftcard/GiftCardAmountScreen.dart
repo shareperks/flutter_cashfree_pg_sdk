@@ -1088,7 +1088,9 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                             onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
-                                extra: {"companyId": data?.data?.company?.id},
+                                extra: {
+                                  "ticker": data?.data?.basicInfo?.ticker,
+                                },
                               );
                             },
                             onBrandTap: () {
@@ -1115,10 +1117,8 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                             data?.data?.eligibility?.nonHolderRewardRate,
                           ))
                             RewardRatesSection(
-                              shareholderRate: data
-                                  ?.data
-                                  ?.eligibility
-                                  ?.withHolderRewardRate,
+                              shareholderRate:
+                                  data?.data?.eligibility?.withHolderRewardRate,
                               brokerageRate: data
                                   ?.data
                                   ?.eligibility
@@ -1128,8 +1128,7 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                               isEligible: _isEligible,
                               isBrokerageEligible: _isBrokerageEligible,
                               listedOnExchange:
-                                  data?.data?.company?.listedOnExchange ??
-                                  true,
+                                  data?.data?.company?.listedOnExchange ?? true,
                               reqReimport: _reqReimport,
                               rewardType:
                                   data?.data?.eligibility?.rewardType ??
@@ -1200,43 +1199,44 @@ class _GiftCardAmountScreenState extends State<GiftCardAmountScreen>
                             finalPayableLabel: _formattedFinalPayable,
                             formatInr: _formatInr,
                           ),
-                          const SizedBox(height: 8),
-                          _WalletPayToggle(
-                            balance: _walletBalance,
-                            eligibleAmount: _previewWalletEligibleAmount,
-                            maxPayPercent: _walletMaxPayPercent,
-                            enabled:
-                                _previewWalletEligibleAmount > 0 && !_paying,
-                            useWallet: _useWallet,
-                            formatInr: _formatInr,
-                            onChanged: (value) async {
-                              final hadCoupon = _appliedCoupon != null;
-                              setState(() {
-                                _useWallet = value;
-                                _clearAppliedWalletSplit();
-                                // Wallet changes the coupon base — clear stale quote.
-                                if (hadCoupon) _appliedCoupon = null;
-                              });
-                              trackAction(
-                                AnalyticsEvent.giftcardWalletToggled,
-                                {
-                                  'enabled': value,
-                                  'wallet_balance': _walletBalance,
-                                  'wallet_max_percent': _walletMaxPayPercent,
-                                  'wallet_eligible_amount':
-                                      _previewWalletEligibleAmount,
-                                  'selected_amount': ?amount,
-                                  'amount_after_shareperks':
-                                      _amountAfterSharePerks,
-                                },
-                              );
-                              // Re-quote coupon against the new wallet tender.
-                              if (hadCoupon &&
-                                  _couponController.text.trim().isNotEmpty) {
-                                await _applyCoupon(silent: true);
-                              }
-                            },
-                          ),
+                          // const SizedBox(height: 8),
+                          // _WalletPayToggle(
+                          //   balance: _walletBalance,
+                          //   eligibleAmount: _previewWalletEligibleAmount,
+                          //   maxPayPercent: _walletMaxPayPercent,
+                          //   enabled:
+                          //       _previewWalletEligibleAmount > 0 && !_paying,
+                          //   useWallet: _useWallet,
+                          //   formatInr: _formatInr,
+                          //   onChanged: (value) async {
+                          //     final hadCoupon = _appliedCoupon != null;
+                          //     setState(() {
+                          //       _useWallet = value;
+                          //       _clearAppliedWalletSplit();
+                          //       // Wallet changes the coupon base — clear stale quote.
+                          //       if (hadCoupon) _appliedCoupon = null;
+                          //     });
+                          //     trackAction(
+                          //       AnalyticsEvent.giftcardWalletToggled,
+                          //       {
+                          //         'enabled': value,
+                          //         'wallet_balance': _walletBalance,
+                          //         'wallet_max_percent': _walletMaxPayPercent,
+                          //         'wallet_eligible_amount':
+                          //             _previewWalletEligibleAmount,
+                          //         'selected_amount': ?amount,
+                          //         'amount_after_shareperks':
+                          //             _amountAfterSharePerks,
+                          //       },
+                          //     );
+                          //     // Re-quote coupon against the new wallet tender.
+                          //     if (hadCoupon &&
+                          //         _couponController.text.trim().isNotEmpty) {
+                          //       await _applyCoupon(silent: true);
+                          //     }
+                          //   },
+                          // ),
+
                           const SizedBox(height: 8),
                           _CouponApplyField(
                             controller: _couponController,

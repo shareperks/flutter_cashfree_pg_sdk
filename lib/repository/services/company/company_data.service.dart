@@ -1,34 +1,55 @@
 import 'package:dio/dio.dart';
 import 'package:shareperks/repository/host.dart';
 import 'package:shareperks/repository/models/company_data_model.dart';
+import 'package:shareperks/repository/models/finance_screener_models.dart';
 import 'package:shareperks/repository/network.dart';
+import 'package:shareperks/repository/services/company/finance_api_mapper.dart';
 
-/// Client for the company-data-service (`/api/v1/companies/*`).
+/// Client for the Finance / Screener API (`Host.financeApi`).
 ///
-/// Every success is wrapped in a `data` key and every failure in an `error`
-/// key, so unwrapping and error mapping live here once — callers only ever see
-/// a typed model or a [CompanyApiException].
+/// Every endpoint is under `/api/company/:ticker`. The aggregate
+/// `/api/company/:ticker` returns profile, quote, raw financials, ratios,
+/// shareholding, peers (symbol list), historical prices, dividends, splits,
+/// bonuses, rights, and announcements in one call. Structured statement
+/// endpoints (`/profit-loss`, `/quarterly`, `/balance-sheet`, `/cash-flow`)
+/// return `lineItems` + `annualFinancials[].display` + `ui.rows` which are
+/// pivoted into [FinancialTable] by [FinanceApiMapper].
+///
+/// All responses are mapped into the existing model classes
+/// ([CompanyPage], [FinancialTable], …) so the UI layer is unchanged.
 class CompanyDataService {
   CompanyDataService._();
 
-  /// The service's own upstream times out at 30s and retries twice; staying
-  /// under that keeps a hung FinEdge call from holding a screen open forever.
-  static final Dio _dio = createDio(Host.companyDataApi)
+  static final Dio _dio = createDio(Host.financeApi)
     ..options.connectTimeout = const Duration(seconds: 15)
     ..options.receiveTimeout = const Duration(seconds: 25);
 
-  /// `M&M` must reach the service as `M%26M` or the `&` starts a new query
-  /// parameter.
+  /// `&` in a symbol (e.g. `M&M`) would start a new query param — encode it.
   static String _symbol(String symbol) =>
       Uri.encodeComponent(symbol.trim().toUpperCase());
 
+  /// Maps [Consolidation] to the finance API's `statement_type` param.
+  static String _statementType(Consolidation c) =>
+      c == Consolidation.standalone ? 's' : 'c';
+
+  static Future<Map<String, dynamic>> _getJson(String path) async {
+    final response = await _dio.get<dynamic>(path);
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    throw const CompanyApiException(
+      status: 500,
+      message: 'Empty response body',
+    );
+  }
+
   static Future<T> _get<T>(
     String path,
-    T Function(dynamic data) parse, {
+    T Function(Map<String, dynamic> data) parse, {
     Map<String, dynamic>? query,
   }) async {
     try {
-      final response = await _dio.get<Map<String, dynamic>>(
+      final response = await _dio.get<dynamic>(
         path,
         queryParameters: {
           if (query != null)
@@ -37,13 +58,13 @@ class CompanyDataService {
         },
       );
       final body = response.data;
-      if (body == null || !body.containsKey('data')) {
+      if (body is! Map) {
         throw const CompanyApiException(
           status: 500,
           message: 'Empty response body',
         );
       }
-      return parse(body['data']);
+      return parse(body.cast<String, dynamic>());
     } on DioException catch (e) {
       throw _mapError(e);
     }
@@ -53,7 +74,23 @@ class CompanyDataService {
     final data = e.response?.data;
     final status = e.response?.statusCode ?? 0;
     if (data is Map) {
-      return CompanyApiException.fromJson(data.cast<String, dynamic>(), status);
+      final error = data['error'];
+      if (error is String) {
+        return CompanyApiException(status: status, message: error);
+      }
+      if (error is Map) {
+        return CompanyApiException.fromJson(
+          error.cast<String, dynamic>(),
+          status,
+        );
+      }
+      // The finance API returns `{ "error": "message" }` on failure.
+      if (data['error'] is String) {
+        return CompanyApiException(
+          status: status,
+          message: data['error'] as String,
+        );
+      }
     }
     return switch (e.type) {
       DioExceptionType.connectionTimeout ||
@@ -69,189 +106,491 @@ class CompanyDataService {
     };
   }
 
-  static Map<String, dynamic> _asMap(dynamic data) =>
-      data is Map ? data.cast<String, dynamic>() : const <String, dynamic>{};
+  // ─── page ─────────────────────────────────────────────────────────────────
 
-  /// `GET /companies/:symbol` — the whole page in one call. Sections that
-  /// failed upstream come back null and are named in `unavailable`.
+  /// Wraps a future so it returns `null` on any error — used for parallel
+  /// section fetches where a single failure should not blank the whole page.
+  static Future<T?> _optional<T>(Future<T> future) async {
+    try {
+      return await future;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// `GET /api/company/:ticker` (aggregate) + structured statement endpoints
+  /// + `/peers` — assembled into a single [CompanyPage].
+  ///
+  /// The aggregate gives profile, quote, ratios, shareholding, documents and
+  /// corporate actions. The structured endpoints give pivoted financial
+  /// tables. All calls run in parallel.
   static Future<CompanyPage> getPage(
     String symbol, {
-    Consolidation consolidation = Consolidation.standalone,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}',
-      (data) => CompanyPage.fromJson(_asMap(data)),
-      query: {'consolidation': consolidation.value},
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    final st = _statementType(consolidation);
+    final sym = _symbol(symbol);
+
+    // Fire all requests in parallel — each degrades independently.
+    final aggregateFuture = _optional(
+      _getJson('/api/company/$sym?statement_type=$st'),
+    );
+    final plFuture = _optional(
+      _get(
+        '/api/company/$sym/profit-loss',
+        (j) => mapStructuredStatement(
+          j,
+          statement: StatementKind.pl,
+          period: ReportPeriod.annual,
+        ),
+        query: {'statement_type': st},
+      ),
+    );
+    final quarterlyFuture = _optional(
+      _get(
+        '/api/company/$sym/quarterly',
+        (j) => mapStructuredStatement(
+          j,
+          statement: StatementKind.pl,
+          period: ReportPeriod.quarterly,
+        ),
+        query: {'statement_type': st},
+      ),
+    );
+    final bsFuture = _optional(
+      _get(
+        '/api/company/$sym/balance-sheet',
+        (j) => mapStructuredStatement(
+          j,
+          statement: StatementKind.bs,
+          period: ReportPeriod.annual,
+        ),
+        query: {'statement_type': st},
+      ),
+    );
+    final cfFuture = _optional(
+      _get(
+        '/api/company/$sym/cash-flow',
+        (j) => mapCashFlow(j),
+        query: {'statement_type': st},
+      ),
+    );
+    final peersFuture = _optional(
+      _get('/api/company/$sym/peers', (j) => mapPeers(j, symbol)),
+    );
+
+    final aggregate = await aggregateFuture;
+    if (aggregate == null) {
+      throw const CompanyApiException(
+        status: 502,
+        message: 'Company data service is unreachable',
+      );
+    }
+
+    return mapCompanyPage(
+      aggregate: aggregate,
+      profitAndLoss: await plFuture,
+      quarterlyResults: await quarterlyFuture,
+      balanceSheet: await bsFuture,
+      cashFlow: await cfFuture,
+      peers: await peersFuture,
     );
   }
 
-  /// `GET /companies/:symbol/overview`
+  // ─── overview ─────────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker` — just the overview (profile + quote + basic).
   static Future<CompanyOverview> getOverview(
     String symbol, {
-    Consolidation consolidation = Consolidation.standalone,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}/overview',
-      (data) => CompanyOverview.fromJson(_asMap(data)),
-      query: {'consolidation': consolidation.value},
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    final st = _statementType(consolidation);
+    final json = await _getJson(
+      '/api/company/${_symbol(symbol)}?statement_type=$st',
+    );
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
+    return mapOverview(
+      data['profile'] is Map
+          ? Map<String, dynamic>.from(data['profile'] as Map)
+          : const {},
+      data['quote'] is Map
+          ? Map<String, dynamic>.from(data['quote'] as Map)
+          : const {},
+      data['basic'] is Map
+          ? Map<String, dynamic>.from(data['basic'] as Map)
+          : const {},
+      symbol,
     );
   }
 
-  /// `GET /companies/:symbol/financials`
+  // ─── financials ───────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker/profit-loss|balance-sheet|cash-flow` —
+  /// structured statement mapped to [FinancialTable].
   static Future<FinancialTable> getFinancials(
     String symbol, {
     StatementKind statement = StatementKind.pl,
     ReportPeriod period = ReportPeriod.annual,
-    Consolidation consolidation = Consolidation.standalone,
-  }) {
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    final st = _statementType(consolidation);
+    final endpoint = switch (statement) {
+      StatementKind.pl => 'profit-loss',
+      StatementKind.bs => 'balance-sheet',
+      StatementKind.cf => 'cash-flow',
+    };
+    final sym = _symbol(symbol);
+
+    if (statement == StatementKind.cf) {
+      return _get(
+        '/api/company/$sym/cash-flow',
+        (j) => mapCashFlow(j),
+        query: {'statement_type': st},
+      );
+    }
     return _get(
-      '/companies/${_symbol(symbol)}/financials',
-      (data) => FinancialTable.fromJson(_asMap(data)),
-      query: {
-        'statement': statement.value,
-        'period': period.value,
-        'consolidation': consolidation.value,
-      },
+      '/api/company/$sym/$endpoint',
+      (j) => mapStructuredStatement(j, statement: statement, period: period),
+      query: {'statement_type': st},
     );
   }
 
-  /// `GET /companies/:symbol/quarters` — P&L forced to quarterly.
+  /// `GET /api/company/:ticker/quarterly` — quarterly P&L.
   static Future<FinancialTable> getQuarters(
     String symbol, {
-    Consolidation consolidation = Consolidation.standalone,
-  }) {
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    final st = _statementType(consolidation);
     return _get(
-      '/companies/${_symbol(symbol)}/quarters',
-      (data) => FinancialTable.fromJson(_asMap(data)),
-      query: {'consolidation': consolidation.value},
+      '/api/company/${_symbol(symbol)}/quarterly',
+      (j) => mapStructuredStatement(
+        j,
+        statement: StatementKind.pl,
+        period: ReportPeriod.quarterly,
+      ),
+      query: {'statement_type': st},
     );
   }
 
-  /// `GET /companies/:symbol/ratios` — every row is `unit: pct`.
+  /// `GET /api/company/:ticker` — ratios from the aggregate.
   static Future<FinancialTable> getRatios(
     String symbol, {
-    Consolidation consolidation = Consolidation.standalone,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}/ratios',
-      (data) => FinancialTable.fromJson(_asMap(data)),
-      query: {'consolidation': consolidation.value},
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    final st = _statementType(consolidation);
+    final json = await _getJson(
+      '/api/company/${_symbol(symbol)}?statement_type=$st',
     );
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
+    if (data['ratios'] is! Map) {
+      return const FinancialTable(
+        statement: StatementKind.pl,
+        period: ReportPeriod.annual,
+        consolidation: Consolidation.consolidated,
+        columns: [],
+        rows: [],
+      );
+    }
+    return mapRatios(Map<String, dynamic>.from(data['ratios'] as Map));
   }
 
-  /// `GET /companies/:symbol/growth` — compounded growth blocks.
+  // ─── growth ───────────────────────────────────────────────────────────────
+
+  /// Growth is not directly available from the finance API. Returns `null`
+  /// via a [CompanyApiException] so the screen shows the unavailable state.
   static Future<CompanyGrowth> getGrowth(
     String symbol, {
-    Consolidation consolidation = Consolidation.standalone,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}/growth',
-      (data) => CompanyGrowth.fromJson(_asMap(data)),
-      query: {'consolidation': consolidation.value},
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    throw const CompanyApiException(
+      status: 404,
+      message: 'Growth data is not available from this data source.',
     );
   }
 
-  /// `GET /companies/:symbol/shareholding` — defaults to quarterly.
+  // ─── shareholding ─────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker` — shareholding from the aggregate.
   static Future<CompanyShareholding> getShareholding(
     String symbol, {
     ReportPeriod period = ReportPeriod.quarterly,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}/shareholding',
-      (data) => CompanyShareholding.fromJson(_asMap(data)),
-      query: {'period': period.value},
+  }) async {
+    final json = await _getJson('/api/company/${_symbol(symbol)}');
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
+    if (data['shareholding'] is! Map) {
+      throw const CompanyApiException(
+        status: 404,
+        message: 'Shareholding data not available',
+      );
+    }
+    return mapShareholding(
+      Map<String, dynamic>.from(data['shareholding'] as Map),
     );
   }
 
-  /// `GET /companies/:symbol/peers`
+  // ─── peers ────────────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker/peers`.
   static Future<PeerComparison> getPeers(
     String symbol, {
     ClassificationGroup group = ClassificationGroup.sector,
     int limit = 10,
-  }) {
+  }) async {
     return _get(
-      '/companies/${_symbol(symbol)}/peers',
-      (data) => PeerComparison.fromJson(_asMap(data)),
-      query: {'group': group.value, 'limit': limit},
+      '/api/company/${_symbol(symbol)}/peers',
+      (j) => mapPeers(j, symbol),
     );
   }
 
-  /// `GET /companies/:symbol/chart` — [from] and [to] are *years*, not dates.
+  // ─── chart ────────────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker` — `historical-price` filtered by year range.
+  /// [from] and [to] are years, not dates.
   static Future<CompanyChart> getChart(String symbol, {int? from, int? to}) {
-    return _get(
-      '/companies/${_symbol(symbol)}/chart',
-      (data) => CompanyChart.fromJson(_asMap(data)),
-      query: {'from': from, 'to': to},
-    );
+    return _get('/api/company/${_symbol(symbol)}', (j) {
+      final data = j['data'] is Map
+          ? Map<String, dynamic>.from(j['data'] as Map)
+          : const <String, dynamic>{};
+      final chart = mapChart(
+        data['historical-price'] is Map
+            ? Map<String, dynamic>.from(data['historical-price'] as Map)
+            : const {},
+        symbol,
+      );
+      if (from == null && to == null) return chart;
+      final filtered = chart.points.where((p) {
+        final year = int.tryParse(p.date.substring(0, 4));
+        if (year == null) return true;
+        if (from != null && year < from) return false;
+        if (to != null && year > to) return false;
+        return true;
+      }).toList();
+      return CompanyChart(
+        symbol: chart.symbol,
+        from: filtered.isNotEmpty ? filtered.first.date : null,
+        to: filtered.isNotEmpty ? filtered.last.date : null,
+        points: filtered,
+      );
+    });
   }
 
-  /// `GET /companies/:symbol/segments` — a bare array, newest period first.
+  // ─── segments ─────────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker` — revenue segments from the aggregate.
   static Future<List<SegmentPeriod>> getSegments(
     String symbol, {
-    Consolidation consolidation = Consolidation.standalone,
+    Consolidation consolidation = Consolidation.consolidated,
     ReportPeriod period = ReportPeriod.annual,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}/segments',
-      (data) => data is List
-          ? data
-                .whereType<Map>()
-                .map((e) => SegmentPeriod.fromJson(e.cast<String, dynamic>()))
-                .toList()
-          : <SegmentPeriod>[],
-      query: {'consolidation': consolidation.value, 'period': period.value},
+  }) async {
+    final st = _statementType(consolidation);
+    final json = await _getJson(
+      '/api/company/${_symbol(symbol)}?statement_type=$st',
     );
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
+    final segData = data['revenue-segment'];
+    if (segData is! Map) return const <SegmentPeriod>[];
+
+    final segRevenues = segData['segment_revenues'];
+    if (segRevenues is! List) return const <SegmentPeriod>[];
+
+    return segRevenues.whereType<Map>().map((e) {
+      final m = Map<String, dynamic>.from(e);
+      final segments = <SegmentEntry>[];
+      for (final key in m.keys) {
+        if (key == 'header' || key == 'year' || key == 'symbol') continue;
+        final v = m[key];
+        if (v is Map) {
+          segments.add(
+            SegmentEntry(
+              name: key,
+              revenueCr: asDouble(v['revenue']),
+              profitCr: asDouble(v['profit']),
+            ),
+          );
+        } else if (v is num) {
+          segments.add(SegmentEntry(name: key, revenueCr: asDouble(v)));
+        }
+      }
+      return SegmentPeriod(
+        period: m['header'] as String? ?? m['year']?.toString() ?? '',
+        segments: segments,
+      );
+    }).toList();
   }
 
-  /// `GET /companies/:symbol/documents`
+  // ─── documents ────────────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker` — announcements, transcripts, presentations,
+  /// credit ratings from the aggregate.
   static Future<CompanyDocuments> getDocuments(
     String symbol, {
     String? fromDate,
     String? toDate,
-  }) {
-    return _get(
-      '/companies/${_symbol(symbol)}/documents',
-      (data) => CompanyDocuments.fromJson(_asMap(data)),
-      query: {'from_date': fromDate, 'to_date': toDate},
-    );
+  }) async {
+    final json = await _getJson('/api/company/${_symbol(symbol)}');
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
+    return mapDocuments(data);
   }
 
-  /// `GET /companies/:symbol/corporate-actions`
-  static Future<CompanyCorporateActions> getCorporateActions(String symbol) {
-    return _get(
-      '/companies/${_symbol(symbol)}/corporate-actions',
-      (data) => CompanyCorporateActions.fromJson(_asMap(data)),
-    );
+  // ─── corporate actions ────────────────────────────────────────────────────
+
+  /// `GET /api/company/:ticker` — dividends, splits, bonuses, rights.
+  static Future<CompanyCorporateActions> getCorporateActions(
+    String symbol,
+  ) async {
+    final json = await _getJson('/api/company/${_symbol(symbol)}');
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
+    return mapCorporateActions(data);
   }
 
-  /// `GET /companies/search` — backed by a 24h symbol master, fast enough for
-  /// type-ahead once debounced.
-  static Future<List<SearchHit>> search(String query, {int limit = 20}) {
-    return _get(
-      '/companies/search',
-      (data) => data is List
-          ? data
-                .whereType<Map>()
-                .map((e) => SearchHit.fromJson(e.cast<String, dynamic>()))
-                .toList()
-          : <SearchHit>[],
-      query: {
-        'q': query.trim().substring(0, query.trim().length.clamp(0, 60)),
-        'limit': limit,
-      },
-    );
+  // ─── search ───────────────────────────────────────────────────────────────
+
+  /// The finance API has no dedicated search endpoint. We attempt a direct
+  /// ticker lookup via `/api/company/:ticker/profile` — if it succeeds, the
+  /// query is an exact (or near-exact) NSE symbol and we return a single hit.
+  /// Fuzzy search is not supported.
+  static Future<List<SearchHit>> search(String query, {int limit = 20}) async {
+    final sym = query.trim().toUpperCase();
+    if (sym.isEmpty) return const <SearchHit>[];
+    try {
+      final json = await _getJson('/api/company/${_symbol(sym)}/profile');
+      final profile = json['profile'] is Map
+          ? Map<String, dynamic>.from(json['profile'] as Map)
+          : const <String, dynamic>{};
+      if (profile.isEmpty) return const <SearchHit>[];
+      return [
+        SearchHit(
+          symbol: profile['symbol'] as String? ?? sym,
+          name: profile['name'] as String? ?? sym,
+          nseCode: profile['nse_code'] as String?,
+          bseCode: profile['bse_code'] as String?,
+        ),
+      ];
+    } catch (_) {
+      return const <SearchHit>[];
+    }
   }
 
-  /// `GET /companies/classification` — symbols in a sector/industry.
+  // ─── classification ───────────────────────────────────────────────────────
+
+  /// The finance API does not expose a classification listing endpoint.
+  /// Returns an empty list so the sector screen degrades gracefully.
   static Future<List<String>> classification(
     ClassificationGroup group,
     String value,
-  ) {
-    return _get(
-      '/companies/classification',
-      (data) =>
-          data is List ? data.map((e) => e.toString()).toList() : <String>[],
-      query: {'group': group.value, 'value': value},
+  ) async {
+    return const <String>[];
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Screener models — native nested structure, no flattening.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /// Fetches the full company page using native screener models.
+  ///
+  /// Returns a [ScreenerCompanyData] (aggregate) plus structured statements
+  /// ([ScreenerStatement] for P&L, quarterly, balance sheet; [ScreenerCashFlow]
+  /// for cash flow) and [ScreenerPeers].
+  static Future<ScreenerCompanyPage> getScreenerPage(
+    String symbol, {
+    Consolidation consolidation = Consolidation.consolidated,
+  }) async {
+    final st = _statementType(consolidation);
+    final sym = _symbol(symbol);
+
+    // Fire all requests in parallel — each degrades independently.
+    final aggregateFuture = _optional(
+      _getJson('/api/company/$sym?statement_type=$st'),
+    );
+    final plFuture = _optional(
+      _get(
+        '/api/company/$sym/profit-loss',
+        (j) => ScreenerStatement.fromJson(j, isQuarterly: false),
+        query: {'statement_type': st},
+      ),
+    );
+    final quarterlyFuture = _optional(
+      _get(
+        '/api/company/$sym/quarterly',
+        (j) => ScreenerStatement.fromJson(j, isQuarterly: true),
+        query: {'statement_type': st},
+      ),
+    );
+    final bsFuture = _optional(
+      _get(
+        '/api/company/$sym/balance-sheet',
+        (j) => ScreenerStatement.fromJson(j, isQuarterly: false),
+        query: {'statement_type': st},
+      ),
+    );
+    final cfFuture = _optional(
+      _get(
+        '/api/company/$sym/cash-flow',
+        (j) => ScreenerCashFlow.fromJson(j),
+        query: {'statement_type': st},
+      ),
+    );
+    final peersFuture = _optional(
+      _get('/api/company/$sym/peers', (j) => ScreenerPeers.fromJson(j, symbol)),
+    );
+    final isinFuture = _optional(
+      _get('/api/company/$sym/isin', (j) => ScreenerIsin.fromJson(j)),
+    );
+
+    final aggregate = await aggregateFuture;
+    if (aggregate == null) {
+      throw const CompanyApiException(
+        status: 502,
+        message: 'Company data service is unreachable',
+      );
+    }
+
+    final peers =
+        await peersFuture ?? ScreenerPeers(ticker: symbol, peers: const []);
+    final companyData = ScreenerCompanyData.fromAggregate(
+      aggregate,
+      peers: peers,
+    );
+    final isin = await isinFuture;
+
+    return ScreenerCompanyPage(
+      data: companyData,
+      profitAndLoss: await plFuture,
+      quarterly: await quarterlyFuture,
+      balanceSheet: await bsFuture,
+      cashFlow: await cfFuture,
+      isin: isin,
     );
   }
+}
+
+/// Full company page using native screener models.
+class ScreenerCompanyPage {
+  const ScreenerCompanyPage({
+    required this.data,
+    this.profitAndLoss,
+    this.quarterly,
+    this.balanceSheet,
+    this.cashFlow,
+    this.isin,
+  });
+
+  final ScreenerCompanyData data;
+  final ScreenerStatement? profitAndLoss;
+  final ScreenerStatement? quarterly;
+  final ScreenerStatement? balanceSheet;
+  final ScreenerCashFlow? cashFlow;
+  final ScreenerIsin? isin;
 }

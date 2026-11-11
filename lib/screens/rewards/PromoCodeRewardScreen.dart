@@ -240,7 +240,9 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                             onCompanyTap: () {
                               context.pushNamed(
                                 RouteNames.COMPANY_SCREEN,
-                                extra: {"companyId": data?.data?.company?.id},
+                                extra: {
+                                  "ticker": data?.data?.basicInfo?.ticker,
+                                },
                               );
                             },
                             onBrandTap: () {
@@ -294,10 +296,8 @@ class _PromoCodeRewardScreenState extends State<PromoCodeRewardScreen> {
                             data?.data?.eligibility?.nonHolderRewardRate,
                           ))
                             RewardRatesSection(
-                              shareholderRate: data
-                                  ?.data
-                                  ?.eligibility
-                                  ?.withHolderRewardRate,
+                              shareholderRate:
+                                  data?.data?.eligibility?.withHolderRewardRate,
                               brokerageRate: data
                                   ?.data
                                   ?.eligibility

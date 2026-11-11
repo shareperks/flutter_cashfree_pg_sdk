@@ -154,10 +154,7 @@ class RelatedPerksCard extends StatelessWidget {
       context.pushNamed(RouteNames.CATEGORY_SCREEN);
       return;
     }
-    context.pushNamed(
-      RouteNames.CATEGORY_SCREEN,
-      extra: {'categoryId': id},
-    );
+    context.pushNamed(RouteNames.CATEGORY_SCREEN, extra: {'categoryId': id});
   }
 
   @override
@@ -225,7 +222,8 @@ class RelatedPerksCard extends StatelessWidget {
                       isEligible: reward.isEligible ?? false,
                       isBrokerageEligible: reward.isBrokerageEligible ?? false,
                       eligibility: reward.companyName ?? "--",
-                      onTap: () => _openCategory(context),
+                      source: 'similar_perks',
+                      position: index,
                     );
                   }),
                   SizedBox(width: 6),

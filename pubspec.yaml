@@ -1,6 +1,6 @@
 name: shareperks
 description: "A clone of the shareplus package."
-version: 1.0.64+58
+version: 1.0.67+61
 
 environment:
   sdk: ^3.11.4
@@ -63,7 +63,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-
   assets:
     - assets/
     - assets/splash/
@@ -72,7 +71,6 @@ flutter:
     - assets/icons/
     - assets/brokers/
     - shorebird.yaml
-
 
   fonts:
     - family: AlbertSans
@@ -169,7 +167,6 @@ flutter:
         - asset: fonts/Inter/Inter_18pt-BlackItalic.ttf
           weight: 900
           style: italic
-
 
 flutter_assets:
   assets_path: assets/
